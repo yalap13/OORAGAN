@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "resonatoranalysis"
+version = "0.1.0"
+description = ""
+authors = ["yalap13 <yannicklapointe77@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+graphinglib = {git = "https://github.com/GraphingLib/GraphingLib.git"}
+h5py = "^3.11.0"
+easygui = "^0.98.3"
+resonator = {git = "https://github.com/danielflanigan/resonator.git"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
