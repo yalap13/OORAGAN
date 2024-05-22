@@ -1,2 +1,6 @@
 .venv
 poetry.lock
+*.py
+__pycache__
+
+!resonatoranalysis/*.py
