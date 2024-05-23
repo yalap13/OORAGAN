@@ -2,5 +2,7 @@
 poetry.lock
 *.py
 __pycache__
+Images
+Fit results
 
 !resonatoranalysis/*.py

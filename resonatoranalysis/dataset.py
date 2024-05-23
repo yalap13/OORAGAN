@@ -3,6 +3,7 @@ from os import PathLike
 
 from .file_handler import datapicker, gethdf5info
 from .util import calculate_power, get_freq_info
+from .analysis import fit_resonateur_test
 
 
 class Dataset:
@@ -53,7 +54,7 @@ class Dataset:
         """
         self.data = datapicker(path, file_extension, comments, delimiter)
         hdf5info = gethdf5info(path)
-        self.files = hdf5info.keys()
+        self.files = list(hdf5info.keys())
         self.vna_average = {
             key: hdf5info[key]["vna_info"]["VNA Average"] for key in self.files
         }

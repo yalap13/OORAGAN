@@ -70,22 +70,26 @@ def datapicker(
                     real = np.squeeze(hdf5_data["VNA"]["s21_real"][:])
                     imag = np.squeeze(hdf5_data["VNA"]["s21_imag"][:])
                     if real.ndim > 1:
+                        arr_list = []
                         for i in range(len(real)):
                             arr = np.stack((freq.T, real[i].T, imag[i].T))
-                            data[file] = arr
+                            arr_list.append(arr)
+                        data[file] = arr_list
                     else:
                         arr = np.stack((freq.T, real.T, imag.T))
-                        data[file] = arr
+                        data[file] = [arr]
                 except KeyError:
                     mag = np.squeeze(hdf5_data["VNA"]["s21_mag"][:])
                     phase = np.squeeze(hdf5_data["VNA"]["s21_phase"][:])
                     if mag.ndim > 1:
+                        arr_list = []
                         for i in range(len(mag)):
                             arr = np.stack((freq.T, mag[i].T, phase[i].T))
-                            data[file] = arr
+                            arr_list.append(arr)
+                        data[file] = arr_list
                     else:
                         arr = np.stack((freq.T, mag.T, phase.T))
-                        data[file] = arr
+                        data[file] = [arr]
                 hdf5_data.close()
         else:
             raise ValueError(
