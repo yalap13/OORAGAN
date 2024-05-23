@@ -21,7 +21,7 @@ For instructions on how to install Poetry, see [their website](https://python-po
 ## Usage
 
 Here is a simple use case :
-```Python
+```python
 from resonatoranalysis import Dataset, fit_resonator_test
 import matplotlib.pyplot as plt
 
