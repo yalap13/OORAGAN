@@ -52,9 +52,8 @@ class Dataset:
         delimiter : str, optional
             Defines the .txt data file delimiter.
         """
-        self.data = datapicker(path, file_extension, comments, delimiter)
+        self.data, self.files = datapicker(path, file_extension, comments, delimiter)
         hdf5info = gethdf5info(path)
-        self.files = list(hdf5info.keys())
         self.vna_average = {
             key: hdf5info[key]["vna_info"]["VNA Average"] for key in self.files
         }

@@ -233,6 +233,9 @@ def fit_resonateur_test(
     params.add(name="coupling_loss", value=couploss)
     params.add(name="resonance_frequency", value=f_r, min=1e9, max=1e10)
 
+    if isinstance(filelist, str):
+        filelist = [filelist]
+
     number_of_power_points = powers.shape[1] if len(powers.shape) > 1 else len(powers)
 
     for i in range(number_of_power_points):

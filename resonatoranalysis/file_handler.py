@@ -57,12 +57,11 @@ def datapicker(
 
     data = {}
     for file in files_list:
+        arr_list = []
         if file_extension == "txt":
             arr = np.loadtxt(file, comments=comments, delimiter=delimiter).T
-            data[file] = arr
         elif file_extension == "csv":
             arr = np.genfromtxt(file, delimiter=delimiter, skip_header=3).T
-            data[file] = arr
         elif file_extension == "hdf5":
             with h5py.File(file, "r") as hdf5_data:
                 freq = hdf5_data["VNA"]["VNA Frequency"][:]
@@ -70,33 +69,30 @@ def datapicker(
                     real = np.squeeze(hdf5_data["VNA"]["s21_real"][:])
                     imag = np.squeeze(hdf5_data["VNA"]["s21_imag"][:])
                     if real.ndim > 1:
-                        arr_list = []
                         for i in range(len(real)):
                             arr = np.stack((freq.T, real[i].T, imag[i].T))
                             arr_list.append(arr)
-                        data[file] = arr_list
                     else:
                         arr = np.stack((freq.T, real.T, imag.T))
-                        data[file] = [arr]
+                        arr_list.append(arr)
                 except KeyError:
                     mag = np.squeeze(hdf5_data["VNA"]["s21_mag"][:])
                     phase = np.squeeze(hdf5_data["VNA"]["s21_phase"][:])
                     if mag.ndim > 1:
-                        arr_list = []
                         for i in range(len(mag)):
                             arr = np.stack((freq.T, mag[i].T, phase[i].T))
                             arr_list.append(arr)
-                        data[file] = arr_list
                     else:
                         arr = np.stack((freq.T, mag.T, phase.T))
-                        data[file] = [arr]
+                        arr_list.append(arr)
                 hdf5_data.close()
         else:
             raise ValueError(
                 "Unrecognized file extension. Program currently support .csv, .txt and .hdf5 files."
             )
+        data[file] = arr_list
 
-    return data
+    return data, files_list
 
 
 def writer(data: dict, path: str, name: str = "%T", nodialog: bool = False):
