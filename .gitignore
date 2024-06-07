@@ -5,6 +5,6 @@ poetry.lock
 __pycache__
 Images
 Fit results
-unit_testing
 
 !resonatoranalysis/*.py
+!unit_testing/*.py
