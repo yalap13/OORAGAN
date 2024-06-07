@@ -1,4 +1,4 @@
-from .file_handler import datapicker, gethdf5info
+from .file_handler import datapicker, gethdf5info, getter
 from .analysis import fit_resonateur_test
 from .util import (
     strtime,

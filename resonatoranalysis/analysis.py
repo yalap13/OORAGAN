@@ -288,7 +288,7 @@ def fit_resonateur_test(
                 r,
                 save=savepic,
                 savepath=savepath,
-                name=f"{a}GHz_{powers[0][i]}_dBm",
+                name=f"{a}GHz_{powers[0][i] if len(powers.shape) > 1 else powers[i]}_dBm",
                 nodialog=nodialog,
                 cut=True,
                 cutted_data={
@@ -313,10 +313,11 @@ def fit_resonateur_test(
             )
         if write:
             a = str(np.mean(freq / 1e9))[:5].replace(".", "_")
+            power_tag = powers[0][i] if len(powers.shape) > 1 else powers[i]
             writer(
                 dictio,
                 os.path.join(basepath, "Fit results"),
-                name=f"{a}GHz_{powers[0][i]}_dBm",
+                name=f"{a}GHz_{power_tag}_dBm",
                 nodialog=nodialog,
             )
 
