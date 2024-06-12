@@ -146,7 +146,7 @@ def check_fit(result, threshold=1, verbose=False):
     return tag
 
 
-def fit_resonateur_test(
+def fit_resonator_test(
     datalist: list,
     filelist: list,
     powers,
@@ -279,7 +279,7 @@ def fit_resonateur_test(
             # Filter out bad fits
 
             if check_fit(r.result, verbose=False, threshold=threshold):
-                dictoflist = dictfiller(dictio, data_store)
+                dictoflist = dict_filler(dictio, data_store)
                 break
 
         if savepic:
@@ -325,7 +325,7 @@ def fit_resonateur_test(
     return dictofarr
 
 
-def dictfiller(dictio, another_dict):
+def dict_filler(dictio, another_dict):
     """
     Fills a dictionary (in the way I want) with results info provided in dictio
 

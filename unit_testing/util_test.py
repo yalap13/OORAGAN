@@ -1,23 +1,25 @@
 import unittest
 
-from resonatoranalysis.util import calculate_power
-from resonatoranalysis.file_handler import datapicker
+from numpy import array
+
+from resonatoranalysis.util import *
+from resonatoranalysis.file_handler import datapicker, gethdf5info
 
 
 class TestUtil(unittest.TestCase):
     def setUp(self):
-        self.info_dict = {
-            "C:/test/file/": {"vna_info": {"VNA Power": -30, "Variable Attenuator": 30}}
-        }
-        self.att_cryo = -80
-        self.data_dict = {}
+        self.fname = "unit_testing/Test sets/2023-08-29 22-14-04 VNA Power.hdf5"
+        self.data_dict, self.files = datapicker(self.fname)
+        self.vna_info, self.temps = gethdf5info(self.fname)
 
-    def test_power_is_calculated(self):
-        calculated_power = calculate_power(self.att_cryo, self.info_dict)
-        self.assertDictEqual(calculated_power, {"C:/test/file/": -140})
-
-    def test_freq_info(self):
-        pass
+    def test_calculate_power(self):
+        calculated_power = calculate_power(
+            -80, {self.fname: {"vna_info": self.vna_info, "temps": self.temps}}
+        )
+        self.assertEqual(
+            list(calculated_power[self.fname]),
+            [-100.0, -95.0, -90.0, -85.0, -80.0, -75.0, -70.0],
+        )
 
 
 if __name__ == "__main__":
