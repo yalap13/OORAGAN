@@ -98,6 +98,44 @@ class Dataset:
             Defines the comment symbol in the data file. Defaults to "#".
         delimiter : str, optional
             Defines the .txt data file delimiter.
+
+        Attributes
+        ----------
+        cryostat_info : dict[str, dict]
+            Dictionnary in which the keys are the file paths and the values are a dictionnary of
+            the cryostat temperature data.
+        data : dict[str, list[NDArray]]
+            Dictionnary in which the keys are the file paths and the values are the list of data
+            arrays from this file.
+        end_time : dict[str, time.struct_time]
+            Dictionnary in which the keys are the file paths and the values are the end time of the
+            measurement.
+        files : list[str]
+            List of the files path included in the dataset.
+        frequency_range : dict[str, dict]
+            Dictionnary in which the keys are the file paths and the values are a dictionnary containing
+            the "start" and the "end" of the frequency range.
+        mixing_temp : dict[str, float]
+            Dictionnary in which the keys are the file paths and the values are the temperature of the
+            mixing stage in Kelvins.
+        power : dict[str, NDArray]
+            Dictionnary in which the keys are the file paths and the values are an array of the values for
+            the total power in dB.
+        start_time : dict[str, time.struct_time]
+            Dictionnary in which the keys are the file paths and the values are the start time of the
+            measurement.
+        variable_attenuator : dict[str, NDArray]
+            Dictionnary in which the keys are the file paths and the values are an array of the values of
+            attenuation on the variable attenuator in dB.
+        vna_average : dict[str, NDArray]
+            Dictionnary in which the keys are the file paths and the values are an array of the values for
+            the VNA averaging number.
+        vna_bandwidth : dict[str, NDArray]
+            Dictionnary in which the keys are the file paths and the values are an array of the values for
+            the VNA bandwidth in Hz.
+        vna_power : dict[str, NDArray]
+            Dictionnary in which the keys are the file paths and the values are an array of the values for
+            the VNA output power in dB.
         """
         self.data, self.files = datapicker(path, file_extension, comments, delimiter)
         hdf5info = self._get_info_from_hdf5s(path)
@@ -121,9 +159,12 @@ class Dataset:
             for key in self.files
         }
         self.power = calculate_power(attenuation_cryostat, hdf5info)
-        self.frequency_range = self._get_freq_info()
+        self.frequency_range = self._get_freq_range()
 
     def __str__(self) -> str:
+        """
+        Customized printing function.
+        """
         output = "Files :\n"
         i = 1
         for file in self.files:
@@ -145,6 +186,10 @@ class Dataset:
         return output
 
     def _make_table_array(self) -> NDArray:
+        """
+        Utilitary function used to generate the table for the customized
+        printing function.
+        """
         file_no_arr = np.array([i + 1 for i in range(len(self.files))])
         start_arr = np.array(
             [
@@ -187,20 +232,8 @@ class Dataset:
 
     def _get_info_from_hdf5s(self, path) -> dict[str, dict]:
         """
-        Get all datasets info about VNA measurement apart from the VNA S21 data itself.
-        Returns the info in a dictionary.
-
-        Parameters
-        ----------
-        fname : str
-            Full path to the HDF5 file.
-        show : bool, optional
-            Prints the keys found in the HDF5 file. The default is False.
-
-        Returns
-        -------
-        {info : value, ...}
-
+        Utilitary function to get the metadata from the HDF5 files and store it into
+        a dictionnary of the format {file path: info dictionnary}.
         """
         if Path(path).suffix == "":
             files_list = []
@@ -223,7 +256,10 @@ class Dataset:
             global_dict[file] = {"vna_info": info_dict, "temps": atr_dict}
         return global_dict
 
-    def _get_freq_info(self):
+    def _get_freq_range(self) -> dict[str, dict]:
+        """
+        Utilitary function used to get the frequency range for the measurement.
+        """
         freq_info = {}
         for file in self.files:
             start = self.data[file][0][0, :][0]
