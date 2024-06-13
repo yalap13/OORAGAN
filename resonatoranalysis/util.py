@@ -194,17 +194,3 @@ def calculate_power(att_cryo: float, info: dict):
             - info[file]["vna_info"]["Variable Attenuator"]
         )
     return powers
-
-
-def get_freq_info(data: dict):
-    freq_info = {}
-    for file in data:
-        start = data[file][0][0]
-        stop = data[file][0][-1]
-        freq_info[file] = {"start": start, "stop": stop}
-    return freq_info
-
-
-def data_joiner(data: dict, info: dict):
-    freq_info = get_freq_info(data)
-    raise NotImplementedError("Function is not yet implemented")

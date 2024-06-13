@@ -211,14 +211,14 @@ def getter(path):
     return result
 
 
-def gethdf5info(path, show=False):
+def gethdf5info(filename, show=False):
     """
     Get all datasets info about VNA measurement apart from the VNA S21 data itself.
     Returns the info in a dictionary.
 
     Parameters
     ----------
-    fname : str
+    filename : str
         Full path to the HDF5 file.
     show : bool, optional
         Prints the keys found in the HDF5 file. The default is False.
@@ -228,47 +228,29 @@ def gethdf5info(path, show=False):
     {info : value, ...}
 
     """
-    if Path(path).suffix == "":
-        files_list = []
-        for paths, _, _ in os.walk(path):
-            for file in glob.glob(os.path.join(paths, f"*.hdf5")):
-                files_list.append(file)
-    else:
-        files_list = [path]
-
-    files_list.sort()
-
-    if len(files_list) == 0:
-        raise FileNotFoundError("No files were found")
-    elif len(files_list) > 1:
-        print(f"Found {len(files_list)} files")
-
-    global_dict = {}
-    for file in files_list:
-        with h5py.File(file, "r") as f:
-            keylst = [key for key in f.keys()]
-            atrlst = [atr for atr in f.attrs.keys()]
-            keylst.remove("VNA")
-            info_dict = {element: None for element in keylst}
-            atr_dict = {element: None for element in atrlst}
-            for key in keylst:
+    with h5py.File(filename, "r") as file:
+        keylst = [key for key in file.keys()]
+        atrlst = [atr for atr in file.attrs.keys()]
+        keylst.remove("VNA")
+        info_dict = {element: None for element in keylst}
+        atr_dict = {element: None for element in atrlst}
+        for key in keylst:
+            try:
+                info_dict[key] = file[key][:]
+            except TypeError:
+                info_dict[key] = file[key][key][0]
+            except Exception as err:
+                print("Unexpected error : ", err)
+        for atr in atrlst:
+            try:
+                atr_dict[atr] = file.attrs[atr]
+            except TypeError:
                 try:
-                    info_dict[key] = f[key][:]
+                    atr_dict[atr] = file.attrs[atr][:]
                 except TypeError:
-                    info_dict[key] = f[key][key][0]
-                except Exception as err:
-                    print("Unexpected error : ", err)
-            for atr in atrlst:
-                try:
-                    atr_dict[atr] = f.attrs[atr]
-                except TypeError:
-                    try:
-                        atr_dict[atr] = f.attrs[atr][:]
-                    except TypeError:
-                        atr_dict[atr] = f.attrs[atr][atr][0]
-                except Exception as err:
-                    print("Unexpected error : ", err)
-            if show:
-                print("All hdf5 keys : ", keylst)
-        global_dict[file] = {"vna_info": info_dict, "temps": atr_dict}
-    return global_dict
+                    atr_dict[atr] = file.attrs[atr][atr][0]
+            except Exception as err:
+                print("Unexpected error : ", err)
+        if show:
+            print("All hdf5 keys : ", keylst)
+    return info_dict, atr_dict
