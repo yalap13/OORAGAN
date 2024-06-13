@@ -9,6 +9,7 @@ from resonator import background
 from tabulate import tabulate
 from numpy.typing import NDArray
 from datetime import datetime
+from matplotlib import pyplot as plt
 
 from .file_handler import datapicker, gethdf5info
 from .util import calculate_power, strtime
@@ -267,19 +268,8 @@ class Dataset:
             freq_info[file] = {"start": start, "stop": stop}
         return freq_info
 
-    def fit_resonators(
-        self,
-        f_r=None,
-        couploss=1e-6,
-        intloss=1e-6,
-        bg=background.MagnitudePhaseDelay(),
-        savepic=False,
-        savepath="",
-        write=False,
-        basepath=os.getcwd(),
-        threshold=0.5,
-        start=0,
-        jump=10,
-        nodialog=False,
-    ):
-        raise NotImplementedError("Not yet implemented")
+    def _get_multi_data(self, path: Union[str, PathLike]) -> list:
+        """
+        Utilitary function to get data from multiple files at once.
+        """
+        raise NotImplementedError
