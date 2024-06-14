@@ -66,7 +66,7 @@ class Resonator:
     type: str = "lambda4"
 
     def __post_init__(self) -> None:
-        thick_micron = self.thickness * 10**-3
+        thick_micron = self.thickness * 1e-3
         k_zero = self.conductor_width / (self.conductor_width + 2 * self.gap_to_ground)
         k1_zero = np.sqrt(1 - k_zero**2)
         k = self._u1(thick_micron, self.conductor_width, self.gap_to_ground) / self._u2(
@@ -146,7 +146,58 @@ class Resonator:
 
 
 class ResonatorAttribution:
+    """
+    Resonator attribution takes the fit results and tries to attribute the resonance peaks
+    to physical resonators present on the feedline.
+
+    Parameters
+    ----------
+    fit_results : ArrayLike
+        Results from the fit of the resonators given by the ResonatorFitter class.
+    dc_kinetic_inductance : float
+        DC measured sheet kinetic inductance in nH/square.
+    resonators : Resonator
+        The physical resonators present on the feedline.
+
+    Attributes
+    ----------
+    _fit_results : ArrayLike
+        Results from the fit of the resonators given by the ResonatorFitter class.
+    _dc_Lkin : float
+        DC measured sheet kinetic inductance in nH/square.
+    _res_on_line : Resonator
+        The physical resonators present on the feedline.
+    """
+
     def __init__(
-        self, fit_results: ArrayLike, dc_kinetic_induct: float, *resonators: Resonator
+        self,
+        fit_results: ArrayLike,
+        dc_kinetic_induct: float,
+        *resonators: Resonator,
     ):
-        pass
+        """
+        Resonator attribution takes the fit results and tries to attribute the resonance peaks
+        to physical resonators present on the feedline.
+
+        Parameters
+        ----------
+        fit_results : ArrayLike
+            Results from the fit of the resonators given by the ResonatorFitter class.
+        dc_kinetic_inductance : float
+            DC measured sheet kinetic inductance in nH/square.
+        resonators : Resonator
+            The physical resonators present on the feedline.
+
+        Attributes
+        ----------
+        _fit_results : ArrayLike
+            Results from the fit of the resonators given by the ResonatorFitter class.
+        _dc_Lkin : float
+            DC measured sheet kinetic inductance in nH/square.
+        _res_on_line : Resonator
+            The physical resonators present on the feedline.
+        """
+
+        self._fit_results = fit_results
+        self._res_on_line = [res for res in resonators]
+        self._dc_Lkin = dc_kinetic_induct * 1e-9
