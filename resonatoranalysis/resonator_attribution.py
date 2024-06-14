@@ -201,3 +201,9 @@ class ResonatorAttribution:
         self._fit_results = fit_results
         self._res_on_line = [res for res in resonators]
         self._dc_Lkin = dc_kinetic_induct * 1e-9
+
+    def minimize_lambda_eff(self):
+        raise NotImplementedError
+
+    def minimize_Qc(self):
+        raise NotImplementedError
