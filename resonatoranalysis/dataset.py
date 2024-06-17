@@ -5,15 +5,17 @@ from typing import Optional, Union
 from os import PathLike
 from glob import glob
 from pathlib import Path
-from resonator import background
 from tabulate import tabulate
 from numpy.typing import NDArray
 from datetime import datetime
-from matplotlib import pyplot as plt
 
 from .file_handler import datapicker, gethdf5info
-from .util import calculate_power, strtime
-from .analysis import fit_resonator_test
+from .util import (
+    calculate_power,
+    strtime,
+    convert_complex_to_dB,
+    convert_magang_to_complex,
+)
 
 
 class Dataset:
@@ -138,7 +140,9 @@ class Dataset:
             Dictionnary in which the keys are the file paths and the values are an array of the values for
             the VNA output power in dB.
         """
-        self.data, self.files = datapicker(path, file_extension, comments, delimiter)
+        self.data, self.files = self._get_data_from_hdf5s(
+            path, file_extension, comments, delimiter
+        )
         hdf5info = self._get_info_from_hdf5s(path)
         self.vna_average = {
             key: hdf5info[key]["vna_info"]["VNA Average"] for key in self.files
@@ -268,8 +272,51 @@ class Dataset:
             freq_info[file] = {"start": start, "stop": stop}
         return freq_info
 
-    def _get_multi_data(self, path: Union[str, PathLike]) -> list:
+    def _get_data_from_hdf5s(
+        self,
+        path: Union[str, PathLike],
+        file_extension: str = ".hdf5",
+        comments: str = "#",
+        delimiter: Optional[str] = None,
+    ) -> dict:
         """
         Utilitary function to get data from multiple files at once.
         """
-        raise NotImplementedError
+        if Path(path).suffix == "":
+            files_list = []
+            for paths, _, _ in os.walk(path):
+                for file in glob(os.path.join(paths, f"*.{file_extension}")):
+                    files_list.append(file)
+        else:
+            files_list = [path]
+
+        files_list.sort()
+
+        if len(files_list) == 0:
+            raise FileNotFoundError("No files were found")
+        elif len(files_list) > 1:
+            print(f"Found {len(files_list)} files")
+
+        data = {}
+        for file in files_list:
+            data[file], _ = datapicker(file, comments, delimiter)
+        return data, files_list
+
+    def convert_complex_to_dB(self, deg: bool = False) -> None:
+        """
+        Converts the Dataset's data from complex to power in dB.
+        """
+        for file in self.files:
+            for arr in self.data[file]:
+                arr[1, :], arr[2, :] = convert_complex_to_dB(
+                    arr[1, :], arr[2, :], deg=deg
+                )
+
+    def convert_magang_to_complex(self) -> None:
+        """
+        Converts the Dataset's data from magnitude and angle to complex.
+        """
+        for file in self.files:
+            for arr in self.data[file]:
+                complex = convert_magang_to_complex(arr)
+                arr[1, :], arr[2, :] = np.real(complex), np.imag(complex)

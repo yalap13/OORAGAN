@@ -9,61 +9,70 @@ import numpy as np
 import h5py
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
+from os import PathLike
+from numpy.typing import NDArray
+
 from .util import choice
 
 
 def datapicker(
-    path: str,
-    file_extension: str = "hdf5",
+    path: Union[str, PathLike],
     comments: str = "#",
     delimiter: Optional[str] = None,
-):
+    multidir: bool = False,
+) -> NDArray | list:
     """
-    Used to extract data from raw files. Returns a dictionnary in which the keys are the filenames
-    and the values are the NDArrays of the data.
+    Used to create numpy array from a data file. Inspired by readfile function from pyHegel.
+    Can be multiple files.
 
     Parameters
     ----------
-    path : str
-        Path to folder containing data files or full path to specific data file.
-    file_extension : str
-        File extension to search for in given path. Supports "hdf5", "txt" and "csv".
-        Defaults to "hdf5".
-    comments : str
-        Defines the comment symbol in the data file. Defaults to "#".
-    delimiter : str, optional
-        Defines the .txt data file delimiter.
-
-    Returns
-    -------
-    Dictionnary in which the keys are the filenames and the values are the NDArrays of the data.
-
+    path : str, optional
+        Full path to data file. Can be a glob parameter for multiple files. The default is None.
+    comments : str, optional
+        Defines the comment symbol in the data file. The default is "#".
+    delimiter : str or None, optional
+        Defines the .txt data file delimiter. The default is None.
+    multidir : bool, optional
+        I don't think I ever tested this. Supposed to be an option for which it searches for your datafiles in other
+        directories. The default is False
     """
-    if Path(path).suffix == "":
-        files_list = []
-        for paths, _, _ in os.walk(path):
-            for file in glob.glob(os.path.join(paths, f"*.{file_extension}")):
-                files_list.append(file)
+    extention = Path(path).suffix
+    if multidir:
+        listo = []
+        for paths, subdir, files in os.walk(path):
+            for file in glob.glob(os.path.join(paths, f"*.{extention}")):
+                listo.append(file)
+
     else:
-        files_list = [path]
+        listo = glob.glob(path)
 
-    files_list.sort()
+    listo.sort()
+    filelist = []
+    filelist.extend(listo)
+    data = []
 
-    if len(files_list) == 0:
-        raise FileNotFoundError("No files were found")
-    elif len(files_list) > 1:
-        print(f"Found {len(files_list)} files")
+    if len(filelist) == 0:
 
-    data = {}
-    for file in files_list:
-        arr_list = []
-        if file_extension == "txt":
-            arr = np.loadtxt(file, comments=comments, delimiter=delimiter).T
-        elif file_extension == "csv":
-            arr = np.genfromtxt(file, delimiter=delimiter, skip_header=3).T
-        elif file_extension == "hdf5":
-            with h5py.File(file, "r") as hdf5_data:
+        print("No file found")
+        return
+
+    elif len(filelist) > 1:
+
+        print(f"Found {len(listo)} files")
+        multidir = True
+
+    for fn in listo:
+
+        if extention == ".txt":
+            arr = np.loadtxt(fn, comments=comments, delimiter=delimiter).T
+
+        elif extention == ".csv":
+            arr = np.genfromtxt(fn, delimiter=delimiter, skip_header=3).T
+
+        elif extention == ".hdf5":
+            with h5py.File(fn, "r") as hdf5_data:
                 freq = hdf5_data["VNA"]["VNA Frequency"][:]
                 try:
                     real = np.squeeze(hdf5_data["VNA"]["s21_real"][:])
@@ -71,31 +80,59 @@ def datapicker(
                     if real.ndim > 1:
                         for i in range(len(real)):
                             arr = np.stack((freq.T, real[i].T, imag[i].T))
-                            arr_list.append(arr)
+                            data.append(arr)
                     else:
                         arr = np.stack((freq.T, real.T, imag.T))
-                        arr_list.append(arr)
+                        data.append(arr)
                 except KeyError:
                     mag = np.squeeze(hdf5_data["VNA"]["s21_mag"][:])
                     phase = np.squeeze(hdf5_data["VNA"]["s21_phase"][:])
                     if mag.ndim > 1:
                         for i in range(len(mag)):
                             arr = np.stack((freq.T, mag[i].T, phase[i].T))
-                            arr_list.append(arr)
+                            data.append(arr)
                     else:
                         arr = np.stack((freq.T, mag.T, phase.T))
-                        arr_list.append(arr)
+                        data.append(arr)
                 hdf5_data.close()
+                return data, filelist
+
+        elif extention == ".dat":
+            arr = None
+            with open(fn) as f:
+                for num, line in enumerate(f):
+                    if "[Data]" in line:
+                        arr = np.genfromtxt(
+                            path,
+                            delimiter=delimiter,
+                            skip_header=num + 2,
+                            missing_values="",
+                            filling_values=None,
+                        ).T
+                        break
+
         else:
-            raise ValueError(
-                "Unrecognized file extension. Program currently support .csv, .txt and .hdf5 files."
+            raise TypeError(
+                "Unrecognized file extension. Program currently support .csv, .txt, .dat and .hdf5 files."
             )
-        data[file] = arr_list
 
-    return data, files_list
+        data.append(arr)
+
+    if multidir:
+        return data, filelist
+
+    if len(filelist) == 1:
+        return np.array(data)[0], filelist
+
+    return np.array(data), filelist
 
 
-def writer(data: dict, path: str, name: str = "%T", nodialog: bool = False):
+def writer(
+    data: dict[str, float],
+    path: Union[str, PathLike],
+    name: str = "%T",
+    nodialog: bool = False,
+) -> None:
     """
     Writes data results in a txt file.
 
@@ -110,11 +147,6 @@ def writer(data: dict, path: str, name: str = "%T", nodialog: bool = False):
     nodialog : bool
         Set to True if you don't want the pop-up window for overwrite. Defaults to False.
         Warning : if the file already exists, will overwrite.
-
-    Returns
-    -------
-    None.
-
     """
     full_path = os.path.join(path, name + "_results.txt")
 
@@ -133,7 +165,7 @@ def writer(data: dict, path: str, name: str = "%T", nodialog: bool = False):
         f.close()
 
 
-def getter(path):
+def getter(path: Union[str, PathLike]) -> dict[str, float]:
     """
     If for some reason you want to recreate the dictionary with the fit results, you can do that.
 
@@ -141,11 +173,6 @@ def getter(path):
     ----------
     path : str
         Path to text file with fit results
-
-    Returns
-    -------
-    None.
-
     """
 
     with open(path, "r") as f:
@@ -211,7 +238,7 @@ def getter(path):
     return result
 
 
-def gethdf5info(filename, show=False):
+def gethdf5info(filename: Union[str, PathLike], show: bool = False) -> dict:
     """
     Get all datasets info about VNA measurement apart from the VNA S21 data itself.
     Returns the info in a dictionary.
