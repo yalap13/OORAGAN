@@ -1,11 +1,13 @@
 import os
 import lmfit
 from pathlib import Path
-
+import numpy as np
 from resonator import background, shunt, reflection
 
 from .dataset import Dataset
 from .util import convert_complex_to_dB, convert_magang_to_complex, convert_magang_to_dB
+from .analysis import dict_filler, plot_fit, lst_to_arrays
+from .file_handler import writer
 
 
 class ResonatorFitter:
@@ -15,6 +17,7 @@ class ResonatorFitter:
 
     def fit_resonator(
         self,
+        datalist,
         powers,
         f_r=None,
         couploss=1e-6,
@@ -146,7 +149,7 @@ class ResonatorFitter:
 
                 # Filter out bad fits
 
-                if check_fit(r.result, verbose=False, threshold=threshold):
+                if self._test_fit(r.result, verbose=False, threshold=threshold):
                     dictoflist = dict_filler(dictio, data_store)
                     break
 
