@@ -14,7 +14,7 @@ class DatasetGrapher:
         Dataset containing the data to graph.
     """
 
-    def __init__(self, dataset: any) -> None:
+    def __init__(self, dataset: Dataset) -> None:
         """
         Grapher for a Dataset object containing raw data.
 
@@ -29,10 +29,16 @@ class DatasetGrapher:
     def plot_complex(self):
         raise NotImplementedError
 
-    def plot_all_S_params(self):
+    def plot_mag_vs_phase(self):
         raise NotImplementedError
 
-    def plot_triptique(self):
+    def plot_S21_vs_freq(self):
+        raise NotImplementedError
+
+    def plot_phase_vs_freq(self):
+        raise NotImplementedError
+
+    def plot_complex_circle(self):
         raise NotImplementedError
 
 
@@ -61,6 +67,9 @@ class ResonatorFitterGrapher:
         raise NotImplementedError
 
     def plot_Qc_vs_power(self, photon: bool = False):
+        raise NotImplementedError
+
+    def plot_Q_vs_power(self, photon: bool = False):
         raise NotImplementedError
 
     def plot_triptique(self):
