@@ -1,15 +1,15 @@
 import os
 import numpy as np
+import h5py
 
 from typing import Optional, Union
 from os import PathLike
 from glob import glob
 from pathlib import Path
 from tabulate import tabulate
-from numpy.typing import NDArray
+from numpy.typing import NDArray, ArrayLike
 from datetime import datetime
 
-from .file_handler import datapicker, gethdf5info
 from .util import (
     calculate_power,
     strtime,
@@ -19,6 +19,121 @@ from .util import (
 
 
 class Dataset:
+    """
+    General data set container extracting data and information on measurements
+    from .hdf5 or .txt files.
+
+    Parameters
+    ----------
+    path : str
+        Path of the folder for multiple data files or for a single data file.
+    attenuation_cryostat : float
+        Total attenuation present on the cryostat. Must be a negative number.
+    """
+
+    def __init__(
+        self,
+        path: Union[str, PathLike],
+        attenuation_cryostat: float,
+    ) -> None:
+        """
+        General data set container extracting data and information on measurements
+        from .hdf5 or .txt files.
+
+        Parameters
+        ----------
+        path : str
+            Path of the folder for multiple data files or for a single data file.
+        attenuation_cryostat : float
+            Total attenuation present on the cryostat. Must be a negative number.
+        """
+        if attenuation_cryostat > 0:
+            raise ValueError("Attenuation value must be negative")
+        self._data_container = HDF5Data(path, attenuation_cryostat)
+
+    @property
+    def data(self) -> dict | list:
+        if len(self._data_container.files) == 1:
+            return self._data_container.data[self.files]
+        return self._data_container.data
+
+    @property
+    def cryostat_info(self) -> dict:
+        if len(self._data_container.files) == 1:
+            return self._data_container.cryostat_info[self.files]
+        return self._data_container.cryostat_info
+
+    @property
+    def files(self) -> list:
+        if len(self._data_container.files) == 1:
+            return self._data_container.files[0]
+        return self._data_container.files
+
+    @property
+    def vna_average(self) -> dict | ArrayLike:
+        if len(self._data_container.files) == 1:
+            return self._data_container.vna_average[self.files]
+        return self._data_container.vna_average
+
+    @property
+    def vna_bandwidth(self) -> dict | ArrayLike:
+        if len(self._data_container.files) == 1:
+            return self._data_container.vna_bandwidth[self.files]
+        return self._data_container.vna_bandwidth
+
+    @property
+    def vna_power(self) -> dict | ArrayLike:
+        if len(self._data_container.files) == 1:
+            return self._data_container.vna_power[self.files]
+        return self._data_container.vna_power
+
+    @property
+    def variable_attenuator(self) -> dict | ArrayLike:
+        if len(self._data_container.files) == 1:
+            return self._data_container.variable_attenuator[self.files]
+        return self._data_container.variable_attenuator
+
+    @property
+    def start_time(self) -> dict | ArrayLike:
+        if len(self._data_container.files) == 1:
+            return self._data_container.start_time[self.files]
+        return self._data_container.start_time
+
+    @property
+    def end_time(self) -> dict | ArrayLike:
+        if len(self._data_container.files) == 1:
+            return self._data_container.end_time[self.files]
+        return self._data_container.end_time
+
+    @property
+    def mixing_temp(self) -> dict | ArrayLike:
+        if len(self._data_container.files) == 1:
+            return self._data_container.mixing_temp[self.files]
+        return self._data_container.mixing_temp
+
+    @property
+    def power(self) -> dict | ArrayLike:
+        if len(self._data_container.files) == 1:
+            return self._data_container.power[self.files]
+        return self._data_container.power
+
+    @property
+    def frequency_range(self) -> dict | ArrayLike:
+        if len(self._data_container.files) == 1:
+            return self._data_container.frequency_range[self.files]
+        return self._data_container.frequency_range
+
+    def __str__(self) -> None:
+        return self._data_container.__str__()
+
+    def convert_magang_to_complex(self) -> None:
+        self._data_container.convert_magang_to_complex()
+
+    def convert_complex_to_dB(self) -> None:
+        self._data_container.convert_complex_to_dB()
+
+
+class HDF5Data:
     """
     Class representing a complete dataset extracted from a folder. Properties are automatically
     extracted from the data files.
@@ -78,11 +193,8 @@ class Dataset:
 
     def __init__(
         self,
-        path: Union[str, PathLike],
+        path: str,
         attenuation_cryostat: float,
-        file_extension: str = "hdf5",
-        comments: str = "#",
-        delimiter: Optional[str] = None,
     ) -> None:
         """
         Class representing a complete dataset extracted from a folder. Properties are automatically
@@ -140,30 +252,26 @@ class Dataset:
             Dictionnary in which the keys are the file paths and the values are an array of the values for
             the VNA output power in dB.
         """
-        self.data, self.files = self._get_data_from_hdf5s(
-            path, file_extension, comments, delimiter
-        )
-        hdf5info = self._get_info_from_hdf5s(path)
+        self.data, self.files = self._get_data_from_hdf5(path)
+        info = self._get_info_from_hdf5()
         self.vna_average = {
-            key: hdf5info[key]["vna_info"]["VNA Average"] for key in self.files
+            key: info[key]["vna_info"]["VNA Average"] for key in self.files
         }
         self.vna_bandwidth = {
-            key: hdf5info[key]["vna_info"]["VNA Bandwidth"] for key in self.files
+            key: info[key]["vna_info"]["VNA Bandwidth"] for key in self.files
         }
-        self.vna_power = {
-            key: hdf5info[key]["vna_info"]["VNA Power"] for key in self.files
-        }
+        self.vna_power = {key: info[key]["vna_info"]["VNA Power"] for key in self.files}
         self.variable_attenuator = {
-            key: hdf5info[key]["vna_info"]["Variable Attenuator"] for key in self.files
+            key: info[key]["vna_info"]["Variable Attenuator"] for key in self.files
         }
-        self.cryostat_info = {key: hdf5info[key]["temps"] for key in self.files}
-        self.start_time = {key: hdf5info[key]["temps"]["Started"] for key in self.files}
-        self.end_time = {key: hdf5info[key]["temps"]["Ended"] for key in self.files}
+        self.cryostat_info = {key: info[key]["temps"] for key in self.files}
+        self.start_time = {key: info[key]["temps"]["Started"] for key in self.files}
+        self.end_time = {key: info[key]["temps"]["Ended"] for key in self.files}
         self.mixing_temp = {
-            key: hdf5info[key]["temps"]["Temperature mixing LT End (Kelvin)"]
+            key: info[key]["temps"]["Temperature mixing LT End (Kelvin)"]
             for key in self.files
         }
-        self.power = calculate_power(attenuation_cryostat, hdf5info)
+        self.power = calculate_power(attenuation_cryostat, info)
         self.frequency_range = self._get_freq_range()
 
     def __str__(self) -> str:
@@ -235,29 +343,36 @@ class Dataset:
         )
         return table.T
 
-    def _get_info_from_hdf5s(self, path) -> dict[str, dict]:
+    def _get_info_from_hdf5(self) -> dict[str, dict]:
         """
         Utilitary function to get the metadata from the HDF5 files and store it into
         a dictionnary of the format {file path: info dictionnary}.
         """
-        if Path(path).suffix == "":
-            files_list = []
-            for paths, _, _ in os.walk(path):
-                for file in glob(os.path.join(paths, f"*.hdf5")):
-                    files_list.append(file)
-        else:
-            files_list = [path]
-
-        files_list.sort()
-
-        if len(files_list) == 0:
-            raise FileNotFoundError("No files were found")
-        elif len(files_list) > 1:
-            print(f"Found {len(files_list)} files")
-
         global_dict = {}
-        for file in files_list:
-            info_dict, atr_dict = gethdf5info(file)
+        for file in self.files:
+            with h5py.File(file, "r") as f:
+                keylst = [key for key in f.keys()]
+                atrlst = [atr for atr in f.attrs.keys()]
+                keylst.remove("VNA")
+                info_dict = {element: None for element in keylst}
+                atr_dict = {element: None for element in atrlst}
+                for key in keylst:
+                    try:
+                        info_dict[key] = f[key][:]
+                    except TypeError:
+                        info_dict[key] = f[key][key][0]
+                    except Exception as err:
+                        print("Unexpected error : ", err)
+                for atr in atrlst:
+                    try:
+                        atr_dict[atr] = f.attrs[atr]
+                    except TypeError:
+                        try:
+                            atr_dict[atr] = f.attrs[atr][:]
+                        except TypeError:
+                            atr_dict[atr] = f.attrs[atr][atr][0]
+                    except Exception as err:
+                        print("Unexpected error : ", err)
             global_dict[file] = {"vna_info": info_dict, "temps": atr_dict}
         return global_dict
 
@@ -272,35 +387,51 @@ class Dataset:
             freq_info[file] = {"start": start, "stop": stop}
         return freq_info
 
-    def _get_data_from_hdf5s(
-        self,
-        path: Union[str, PathLike],
-        file_extension: str = ".hdf5",
-        comments: str = "#",
-        delimiter: Optional[str] = None,
-    ) -> dict:
+    def _get_data_from_hdf5(self, path: str) -> dict | list:
         """
-        Utilitary function to get data from multiple files at once.
+        Utilitary function to get data from multiple hdf5 files at once.
         """
         if Path(path).suffix == "":
             files_list = []
             for paths, _, _ in os.walk(path):
-                for file in glob(os.path.join(paths, f"*.{file_extension}")):
+                for file in glob(os.path.join(paths, "*.hdf5")):
                     files_list.append(file)
         else:
             files_list = [path]
-
-        files_list.sort()
 
         if len(files_list) == 0:
             raise FileNotFoundError("No files were found")
         elif len(files_list) > 1:
             print(f"Found {len(files_list)} files")
 
-        data = {}
+        data_dict = {}
         for file in files_list:
-            data[file], _ = datapicker(file, comments, delimiter)
-        return data, files_list
+            data = []
+            with h5py.File(file, "r") as hdf5_data:
+                freq = hdf5_data["VNA"]["VNA Frequency"][:]
+                try:
+                    real = np.squeeze(hdf5_data["VNA"]["s21_real"][:])
+                    imag = np.squeeze(hdf5_data["VNA"]["s21_imag"][:])
+                    if real.ndim > 1:
+                        for i in range(len(real)):
+                            arr = np.stack((freq.T, real[i].T, imag[i].T))
+                            data.append(arr)
+                    else:
+                        arr = np.stack((freq.T, real.T, imag.T))
+                        data.append(arr)
+                except KeyError:
+                    mag = np.squeeze(hdf5_data["VNA"]["s21_mag"][:])
+                    phase = np.squeeze(hdf5_data["VNA"]["s21_phase"][:])
+                    if mag.ndim > 1:
+                        for i in range(len(mag)):
+                            arr = np.stack((freq.T, mag[i].T, phase[i].T))
+                            data.append(arr)
+                    else:
+                        arr = np.stack((freq.T, mag.T, phase.T))
+                        data.append(arr)
+                hdf5_data.close()
+            data_dict[file] = data
+        return data_dict, files_list
 
     def convert_complex_to_dB(self, deg: bool = False) -> None:
         """
