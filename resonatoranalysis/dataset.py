@@ -30,6 +30,8 @@ class Dataset:
         Path of the folder for multiple data files or for a single data file.
     attenuation_cryostat : float
         Total attenuation present on the cryostat. Must be a negative number.
+    print_out : bool, optional
+        If ``True`` the dataset information will be printed. Defaults to ``True``.
     file_extension : str, optional
         Optional parameter to specify the file extension in the case where there is
         "hdf5" and "txt" files in the same directory.
@@ -82,6 +84,7 @@ class Dataset:
         self,
         path: Union[str, PathLike],
         attenuation_cryostat: float,
+        print_out: bool = True,
         file_extension: Optional[str] = None,
         comments: str = "#",
         delimiter: Optional[str] = None,
@@ -96,6 +99,8 @@ class Dataset:
             Path of the folder for multiple data files or for a single data file.
         attenuation_cryostat : float
             Total attenuation present on the cryostat. Must be a negative number.
+        print_out : bool, optional
+            If ``True`` the dataset information will be printed. Defaults to ``True``.
         file_extension : str, optional
             Optional parameter to specify the file extension in the case where there is
             "hdf5" and "txt" files in the same directory.
@@ -201,6 +206,8 @@ class Dataset:
             raise RuntimeError(
                 f"Extension '.{Path(path).suffix}' not supported. Supported file types are '.hdf5' and '.txt'"
             )
+        if print_out:
+            print(self)
 
     @property
     def data(self) -> dict | list:
@@ -436,11 +443,9 @@ class HDF5Data:
         headers = [
             "File no.",
             "Start time",
-            "End time",
             "Start freq. (GHz)",
             "Stop freq. (GHz)",
-            "Power min (dB)",
-            "Power max (dB)",
+            "Power (dB)",
             "Mixing temp. (K)",
         ]
         output += tabulate(table, headers)
@@ -460,18 +465,6 @@ class HDF5Data:
                 for file in self.files
             ]
         )
-        end_arr = np.array(
-            [
-                (
-                    datetime.fromtimestamp(strtime(self.end_time[file])).strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    )
-                    if self.end_time[file] is not None
-                    else None
-                )
-                for file in self.files
-            ]
-        )
         freq_start_arr = np.array(
             [self.frequency_range[file]["start"] for file in self.files]
         )
@@ -479,17 +472,23 @@ class HDF5Data:
             [self.frequency_range[file]["stop"] for file in self.files]
         )
         mxc_temp_arr = np.array([self.mixing_temp[file] for file in self.files])
-        min_power_arr = np.array([np.min(self.power[file]) for file in self.files])
-        max_power_arr = np.array([np.max(self.power[file]) for file in self.files])
+        power_arr = np.array(
+            [
+                (
+                    str(list(self.power[file])).lstrip("[").rstrip("]")
+                    if len(self.power[file].shape) == 1
+                    else str(list(self.power[file][0])).lstrip("[").rstrip("]")
+                )
+                for file in self.files
+            ]
+        )
         table = np.array(
             [
                 file_no_arr,
                 start_arr,
-                end_arr,
                 freq_start_arr / 1e9,
                 freq_stop_arr / 1e9,
-                min_power_arr,
-                max_power_arr,
+                power_arr,
                 mxc_temp_arr,
             ]
         )
@@ -658,9 +657,7 @@ class TXTData:
         self.vna_average = info["vna_average"]
         self.vna_bandwidth = info["vna_bandwidth"]
         self.vna_power = info["vna_power"]
-        self.start_time = (
-            info["start_time"][0] if isinstance(info["start_time"], NDArray) else None
-        )
+        self.start_time = info["start_time"]
         files = self._sweep_info_files + self._standalone_files
         self.frequency_range = {
             key: {"start": info["start_freq"][key], "stop": info["stop_freq"][key]}
@@ -669,7 +666,7 @@ class TXTData:
         # TODO: Verify if there is support for a variable attenuator in Eva's or in pyHegel or if the power only depends
         #       on the physical attenuation prensent on the cryostat and the VNA output power.
         self.power = {
-            key: info["vna_power"][key] - attenuation_cryostat for key in files
+            key: info["vna_power"][key] + attenuation_cryostat for key in files
         }
 
     def __str__(self) -> str:
@@ -681,7 +678,7 @@ class TXTData:
             output += f"  {i+1}. {file}\n"
         sifnbr = len(self._sweep_info_files)
         for i, file in enumerate(self._standalone_files):
-            output += f"  {i+sifnbr}. {file}\n"
+            output += f"  {i+sifnbr+1}. {file}\n"
         output += "File infos :\n"
         table = self._make_table_array()
         headers = [
@@ -689,8 +686,7 @@ class TXTData:
             "Start time",
             "Start freq. (GHz)",
             "Stop freq. (GHz)",
-            "Power min (dB)",
-            "Power max (dB)",
+            "Power (dB)",
         ]
         output += tabulate(table, headers)
         return output
@@ -705,7 +701,7 @@ class TXTData:
         start_arr = np.array(
             [
                 (
-                    datetime.fromtimestamp(strtime(self.start_time[file])).strftime(
+                    datetime.fromtimestamp(self.start_time[file][0]).strftime(
                         "%Y-%m-%d %H:%M:%S"
                     )
                     if self.start_time[file] is not None
@@ -718,16 +714,16 @@ class TXTData:
             [self.frequency_range[file]["start"] for file in files]
         )
         freq_stop_arr = np.array([self.frequency_range[file]["stop"] for file in files])
-        min_power_arr = np.array([np.min(self.power[file]) for file in files])
-        max_power_arr = np.array([np.max(self.power[file]) for file in files])
+        power_arr = np.array(
+            [str(list(self.power[file])).lstrip("[").rstrip("]") for file in files]
+        )
         table = np.array(
             [
                 file_no_arr,
                 start_arr,
                 freq_start_arr / 1e9,
                 freq_stop_arr / 1e9,
-                min_power_arr,
-                max_power_arr,
+                power_arr,
             ]
         )
         return table.T
@@ -797,10 +793,10 @@ class TXTData:
             info["vna_power"][file] = (
                 np.array([file_info["power_dbm_port1"]])
                 if "power_dbm_port1" in file_info
-                else np.array([file_info["port_attenuation"][0]])
+                else np.array([float(file_info["port_attenuation"][0])])
             )
-            info["start_freq"][file] = np.array([file_info["freq_start"]])
-            info["stop_freq"][file] = np.array([file_info["freq_stop"]])
+            info["start_freq"][file] = file_info["freq_start"]
+            info["stop_freq"][file] = file_info["freq_stop"]
         return data, info
 
     def convert_complex_to_dB(self, deg: bool = False) -> None:
