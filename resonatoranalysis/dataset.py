@@ -41,6 +41,36 @@ class Dataset:
         Delimiter for the txt file columns. If ``None``, considers any whitespaces as
         delimiter. Defaults to ``None``.
 
+    Examples
+    --------
+    You can create a ``Dataset`` from a hdf5 or txt file simply by passing your file path as
+
+    >>> from resonatoranalysis import Dataset
+    >>> dataset = Dataset("path/to/your/file.hdf5", -80)
+    Files :
+      1. path/to/your/file.hdf5
+    File infos :
+      File no.  Start time             Start freq. (GHz)    Stop freq. (GHz)  Power (dB)                     Mixing temp. (K)
+    ----------  -------------------  -------------------  ------------------  ---------------------------  ------------------
+             1  2023-08-29 22:14:04              5.35653             5.36653  -100.0, -90.0, -80.0, -70.0           0.0154368
+
+    You can also create a ``Dataset`` from a directory containing multiple hdf5 or txt files
+
+    >>> dataset = Dataset("path/to/data/foder", -80)
+    Found 4 files
+    Files :
+      1. path/to/data/folder/file_1.hdf5
+      2. path/to/data/folder/file_2.hdf5
+      3. path/to/data/folder/file_3.hdf5
+      4. path/to/data/folder/file_4.hdf5
+    File infos :
+      File no.  Start time             Start freq. (GHz)    Stop freq. (GHz)  Power (dB)                             Mixing temp. (K)
+    ----------  -------------------  -------------------  ------------------  -----------------------------------  ------------------
+             1  2023-08-29 22:14:04              5.35653             5.36653  -100.0, -90.0, -80.0, -70.0                   0.0154368
+             2  2023-08-31 01:48:44              4.89003             4.89053  -100.0, -90.0, -80.0, -70.0                   0.0136144
+             3  2023-10-02 09:12:53              2                  18        -110.0, -100.0, -90.0, -80.0, -70.0
+             4  2023-11-05 03:04:30              5.95844             5.96844  -110.0, -100.0, -90.0, -80.0                  0.0142297
+
     Attributes
     ----------
     cryostat_info : dict[str, dict]
@@ -89,65 +119,6 @@ class Dataset:
         comments: str = "#",
         delimiter: Optional[str] = None,
     ) -> None:
-        """
-        General data container extracting data and information on measurements
-        from .hdf5 or .txt files.
-
-        Parameters
-        ----------
-        path : str
-            Path of the folder for multiple data files or for a single data file.
-        attenuation_cryostat : float
-            Total attenuation present on the cryostat. Must be a negative number.
-        print_out : bool, optional
-            If ``True`` the dataset information will be printed. Defaults to ``True``.
-        file_extension : str, optional
-            Optional parameter to specify the file extension in the case where there is
-            "hdf5" and "txt" files in the same directory.
-        comments : str, optional
-            Character indicating a commented line in txt files. Defaults to "#".
-        delimiter : str, optional
-            Delimiter for the txt file columns. If ``None``, considers any whitespaces as
-            delimiter. Defaults to ``None``.
-
-        Attributes
-        ----------
-        cryostat_info : dict[str, dict]
-            Dictionnary in which the keys are the file paths and the values are a dictionnary of
-            the cryostat temperature data.
-        data : dict[str, list[NDArray]] | list[NDArray]
-            Dictionnary in which the keys are the file paths and the values are the list of data
-            arrays from this file.
-        end_time : dict[str, time.struct_time] | time.struct_time
-            Dictionnary in which the keys are the file paths and the values are the end time of the
-            measurement.
-        files : list[str] | str
-            List of the files path included in the dataset.
-        frequency_range : dict[str, dict]
-            Dictionnary in which the keys are the file paths and the values are a dictionnary containing
-            the "start" and the "end" of the frequency range.
-        mixing_temp : dict[str, float] | float
-            Dictionnary in which the keys are the file paths and the values are the temperature of the
-            mixing stage in Kelvins.
-        power : dict[str, NDArray] | NDArray
-            Dictionnary in which the keys are the file paths and the values are an array of the values for
-            the total power in dB.
-        start_time : dict[str, time.struct_time] | time.struct_time
-            Dictionnary in which the keys are the file paths and the values are the start time of the
-            measurement.
-        variable_attenuator : dict[str, NDArray] | NDArray
-            Dictionnary in which the keys are the file paths and the values are an array of the values of
-            attenuation on the variable attenuator in dB.
-        vna_average : dict[str, NDArray] | NDArray
-            Dictionnary in which the keys are the file paths and the values are an array of the values for
-            the VNA averaging number.
-        vna_bandwidth : dict[str, NDArray] | NDArray
-            Dictionnary in which the keys are the file paths and the values are an array of the values for
-            the VNA bandwidth in Hz.
-        vna_power : dict[str, NDArray] | NDArray
-            Dictionnary in which the keys are the file paths and the values are an array of the values for
-            the VNA output power in dB.
-        """
         if attenuation_cryostat > 0:
             raise ValueError("Attenuation value must be negative")
 
@@ -379,16 +350,6 @@ class HDF5Data:
         files_list: list,
         attenuation_cryostat: float,
     ) -> None:
-        """
-        Data container for hdf5 files.
-
-        Parameters
-        ----------
-        files_list : list
-            List of files.
-        attenuation_cryostat : float
-            Total attenuation present on the cryostat. Must be a negative number.
-        """
         self.files = files_list
         self.data = self._get_data_from_hdf5()
         info = self._get_info_from_hdf5()
@@ -623,21 +584,6 @@ class TXTData:
         comments: str,
         delimiter: str,
     ) -> None:
-        """
-        Data container for txt files.
-
-        Parameters
-        ----------
-        files_list : list
-            List of txt files.
-        attenuation_cryostat : float
-            Total attenuation present on the cryostat. Must be a negative number.
-        comments : str, optional
-            Character indicating a commented line in txt files. Defaults to "#".
-        delimiter : str, optional
-            Delimiter for the txt file columns. If ``None``, considers any whitespaces as
-            delimiter. Defaults to ``None``.
-        """
         self.files = files_list
         self._sweep_info_files = []
         for file in self.files:
