@@ -30,6 +30,8 @@ class Dataset:
         Path of the folder for multiple data files or for a single data file.
     attenuation_cryostat : float
         Total attenuation present on the cryostat. Must be a negative number.
+    print_out : bool, optional
+        If ``True`` the dataset information will be printed. Defaults to ``True``.
     file_extension : str, optional
         Optional parameter to specify the file extension in the case where there is
         "hdf5" and "txt" files in the same directory.
@@ -41,108 +43,82 @@ class Dataset:
 
     Attributes
     ----------
-    cryostat_info : dict[str, dict]
+    cryostat_info : dict of dict
         Dictionnary in which the keys are the file paths and the values are a dictionnary of
         the cryostat temperature data.
-    data : dict[str, list[NDArray]] | list[NDArray]
+    data : dict of list of NDArray or list of NDArray
         Dictionnary in which the keys are the file paths and the values are the list of data
         arrays from this file.
-    end_time : dict[str, time.struct_time] | time.struct_time
+    end_time : dict of time.struct_time or time.struct_time
         Dictionnary in which the keys are the file paths and the values are the end time of the
         measurement.
-    files : list[str] | str
+    files : list of str or str
         List of the files path included in the dataset.
-    frequency_range : dict[str, dict]
+    frequency_range : dict of dict
         Dictionnary in which the keys are the file paths and the values are a dictionnary containing
         the "start" and the "end" of the frequency range.
-    mixing_temp : dict[str, float] | float
+    mixing_temp : dict of float or float
         Dictionnary in which the keys are the file paths and the values are the temperature of the
         mixing stage in Kelvins.
-    power : dict[str, NDArray] | NDArray
+    power : dict of NDArray or NDArray
         Dictionnary in which the keys are the file paths and the values are an array of the values for
         the total power in dB.
-    start_time : dict[str, time.struct_time] | time.struct_time
+    start_time : dict of time.struct_time or time.struct_time
         Dictionnary in which the keys are the file paths and the values are the start time of the
         measurement.
-    variable_attenuator : dict[str, NDArray] | NDArray
+    variable_attenuator : dict of NDArray or NDArray
         Dictionnary in which the keys are the file paths and the values are an array of the values of
         attenuation on the variable attenuator in dB.
-    vna_average : dict[str, NDArray] | NDArray
+    vna_average : dict of NDArray or NDArray
         Dictionnary in which the keys are the file paths and the values are an array of the values for
         the VNA averaging number.
-    vna_bandwidth : dict[str, NDArray] | NDArray
+    vna_bandwidth : dict of NDArray or NDArray
         Dictionnary in which the keys are the file paths and the values are an array of the values for
         the VNA bandwidth in Hz.
-    vna_power : dict[str, NDArray] | NDArray
+    vna_power : dict of NDArray or NDArray
         Dictionnary in which the keys are the file paths and the values are an array of the values for
         the VNA output power in dB.
+
+    Examples
+    --------
+    You can create a ``Dataset`` from a hdf5 or txt file simply by passing your file path as
+
+    >>> from resonatoranalysis import Dataset
+    >>> dataset = Dataset("path/to/your/file.hdf5", -80)
+    Files :
+      1. path/to/your/file.hdf5
+    File infos :
+      File no.  Start time             Start freq. (GHz)    Stop freq. (GHz)  Power (dB)                     Mixing temp. (K)
+    ----------  -------------------  -------------------  ------------------  ---------------------------  ------------------
+             1  2023-08-29 22:14:04              5.35653             5.36653  -100.0, -90.0, -80.0, -70.0           0.0154368
+
+    You can also create a ``Dataset`` from a directory containing multiple hdf5 or txt files
+
+    >>> dataset = Dataset("path/to/data/foder", -80)
+    Found 4 files
+    Files :
+      1. path/to/data/folder/file_1.hdf5
+      2. path/to/data/folder/file_2.hdf5
+      3. path/to/data/folder/file_3.hdf5
+      4. path/to/data/folder/file_4.hdf5
+    File infos :
+      File no.  Start time             Start freq. (GHz)    Stop freq. (GHz)  Power (dB)                             Mixing temp. (K)
+    ----------  -------------------  -------------------  ------------------  -----------------------------------  ------------------
+             1  2023-08-29 22:14:04              5.35653             5.36653  -100.0, -90.0, -80.0, -70.0                   0.0154368
+             2  2023-08-31 01:48:44              4.89003             4.89053  -100.0, -90.0, -80.0, -70.0                   0.0136144
+             3  2023-10-02 09:12:53              2                  18        -110.0, -100.0, -90.0, -80.0, -70.0
+             4  2023-11-05 03:04:30              5.95844             5.96844  -110.0, -100.0, -90.0, -80.0                  0.0142297
     """
 
     def __init__(
         self,
         path: Union[str, PathLike],
         attenuation_cryostat: float,
+        print_out: bool = True,
         file_extension: Optional[str] = None,
         comments: str = "#",
         delimiter: Optional[str] = None,
     ) -> None:
-        """
-        General data container extracting data and information on measurements
-        from .hdf5 or .txt files.
-
-        Parameters
-        ----------
-        path : str
-            Path of the folder for multiple data files or for a single data file.
-        attenuation_cryostat : float
-            Total attenuation present on the cryostat. Must be a negative number.
-        file_extension : str, optional
-            Optional parameter to specify the file extension in the case where there is
-            "hdf5" and "txt" files in the same directory.
-        comments : str, optional
-            Character indicating a commented line in txt files. Defaults to "#".
-        delimiter : str, optional
-            Delimiter for the txt file columns. If ``None``, considers any whitespaces as
-            delimiter. Defaults to ``None``.
-
-        Attributes
-        ----------
-        cryostat_info : dict[str, dict]
-            Dictionnary in which the keys are the file paths and the values are a dictionnary of
-            the cryostat temperature data.
-        data : dict[str, list[NDArray]] | list[NDArray]
-            Dictionnary in which the keys are the file paths and the values are the list of data
-            arrays from this file.
-        end_time : dict[str, time.struct_time] | time.struct_time
-            Dictionnary in which the keys are the file paths and the values are the end time of the
-            measurement.
-        files : list[str] | str
-            List of the files path included in the dataset.
-        frequency_range : dict[str, dict]
-            Dictionnary in which the keys are the file paths and the values are a dictionnary containing
-            the "start" and the "end" of the frequency range.
-        mixing_temp : dict[str, float] | float
-            Dictionnary in which the keys are the file paths and the values are the temperature of the
-            mixing stage in Kelvins.
-        power : dict[str, NDArray] | NDArray
-            Dictionnary in which the keys are the file paths and the values are an array of the values for
-            the total power in dB.
-        start_time : dict[str, time.struct_time] | time.struct_time
-            Dictionnary in which the keys are the file paths and the values are the start time of the
-            measurement.
-        variable_attenuator : dict[str, NDArray] | NDArray
-            Dictionnary in which the keys are the file paths and the values are an array of the values of
-            attenuation on the variable attenuator in dB.
-        vna_average : dict[str, NDArray] | NDArray
-            Dictionnary in which the keys are the file paths and the values are an array of the values for
-            the VNA averaging number.
-        vna_bandwidth : dict[str, NDArray] | NDArray
-            Dictionnary in which the keys are the file paths and the values are an array of the values for
-            the VNA bandwidth in Hz.
-        vna_power : dict[str, NDArray] | NDArray
-            Dictionnary in which the keys are the file paths and the values are an array of the values for
-            the VNA output power in dB.
-        """
         if attenuation_cryostat > 0:
             raise ValueError("Attenuation value must be negative")
 
@@ -201,6 +177,8 @@ class Dataset:
             raise RuntimeError(
                 f"Extension '.{Path(path).suffix}' not supported. Supported file types are '.hdf5' and '.txt'"
             )
+        if print_out:
+            print(self)
 
     @property
     def data(self) -> dict | list:
@@ -319,8 +297,8 @@ class Dataset:
     @property
     def power(self) -> dict | ArrayLike:
         """
-        Total power including VNA output power, physical attenuation in the setup and variable attenuator,
-        if present. Given in dBm.
+        Total power including VNA output power, physical attenuation in the setup and
+        variable attenuator, if present. Given in dBm.
         """
         if len(self._data_container.files) == 1:
             return self._data_container.power[self.files]
@@ -335,6 +313,26 @@ class Dataset:
 
     def __str__(self) -> None:
         return self._data_container.__str__()
+
+    def get_data(
+        self,
+        file_index: Optional[int | list[int]] = None,
+        power: Optional[float | list[float]] = None,
+    ) -> dict | ArrayLike:
+        """
+        Extracts either all data or, if indices are specified, a part of the data.
+
+        Parameters
+        ----------
+        file_index : int | list[int], optional
+            Index or list of indices (as displayed in the Dataset table) of files to
+            get data from. Defaults to ``None``.
+        power_index : int | list[int], optional
+            If specified, will fetch data for those power values. Defaults to ``None``.
+        """
+        if file_index is None and power is None:
+            return self.data
+        return self._data_container.get_data(file_index=file_index, power=power)
 
     def convert_magang_to_complex(self) -> None:
         """
@@ -352,7 +350,7 @@ class Dataset:
             If ``True`` the angle array will be in degrees. Defaults to ``False``,
             making the angles in radians.
         """
-        self._data_container.convert_complex_to_dB()
+        self._data_container.convert_complex_to_dB(deg=deg)
 
 
 class HDF5Data:
@@ -372,17 +370,8 @@ class HDF5Data:
         files_list: list,
         attenuation_cryostat: float,
     ) -> None:
-        """
-        Data container for hdf5 files.
-
-        Parameters
-        ----------
-        files_list : list
-            List of files.
-        attenuation_cryostat : float
-            Total attenuation present on the cryostat. Must be a negative number.
-        """
         self.files = files_list
+        self._file_index_dict = {str(i + 1): file for i, file in enumerate(self.files)}
         self.data = self._get_data_from_hdf5()
         info = self._get_info_from_hdf5()
         self.vna_average = {
@@ -436,11 +425,9 @@ class HDF5Data:
         headers = [
             "File no.",
             "Start time",
-            "End time",
             "Start freq. (GHz)",
             "Stop freq. (GHz)",
-            "Power min (dB)",
-            "Power max (dB)",
+            "Power (dB)",
             "Mixing temp. (K)",
         ]
         output += tabulate(table, headers)
@@ -460,18 +447,6 @@ class HDF5Data:
                 for file in self.files
             ]
         )
-        end_arr = np.array(
-            [
-                (
-                    datetime.fromtimestamp(strtime(self.end_time[file])).strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    )
-                    if self.end_time[file] is not None
-                    else None
-                )
-                for file in self.files
-            ]
-        )
         freq_start_arr = np.array(
             [self.frequency_range[file]["start"] for file in self.files]
         )
@@ -479,17 +454,23 @@ class HDF5Data:
             [self.frequency_range[file]["stop"] for file in self.files]
         )
         mxc_temp_arr = np.array([self.mixing_temp[file] for file in self.files])
-        min_power_arr = np.array([np.min(self.power[file]) for file in self.files])
-        max_power_arr = np.array([np.max(self.power[file]) for file in self.files])
+        power_arr = np.array(
+            [
+                (
+                    str(list(self.power[file])).lstrip("[").rstrip("]")
+                    if len(self.power[file].shape) == 1
+                    else str(list(self.power[file][0])).lstrip("[").rstrip("]")
+                )
+                for file in self.files
+            ]
+        )
         table = np.array(
             [
                 file_no_arr,
                 start_arr,
-                end_arr,
                 freq_start_arr / 1e9,
                 freq_stop_arr / 1e9,
-                min_power_arr,
-                max_power_arr,
+                power_arr,
                 mxc_temp_arr,
             ]
         )
@@ -580,6 +561,130 @@ class HDF5Data:
             )
         return powers
 
+    def get_data(
+        self, file_index: int | list[int] = None, power: int | list[int] = None
+    ) -> ArrayLike:
+        """
+        Extracts either all data or, if indices are specified, a part of the data.
+        """
+        output = {}
+        if file_index is not None and power is None:
+            try:
+                if isinstance(file_index, list):
+                    for fi in file_index:
+                        self._file_index_dict[str(fi)]
+                else:
+                    self._file_index_dict[str(file_index)]
+            except KeyError as err:
+                print("Invalid file_index", err)
+                return None
+            if isinstance(file_index, list):
+                for fi in file_index:
+                    output[self._file_index_dict[str(fi)]] = self.data[
+                        self._file_index_dict[str(fi)]
+                    ]
+                return output
+            else:
+                return self.data[self._file_index_dict[str(file_index)]]
+        elif power is not None and file_index is None:
+            for file in self.files:
+                if isinstance(power, list):
+                    file_data_temp = []
+                    for p in power:
+                        try:
+                            file_data_temp.append(
+                                self.data[file][np.where(self.power[file] == p)[0][0]]
+                            )
+                        except IndexError:
+                            continue
+                    if len(file_data_temp) > 0:
+                        output[file] = file_data_temp
+                else:
+                    try:
+                        output[file] = self.data[file][
+                            np.where(self.power[file] == power)[0][0]
+                        ]
+                    except IndexError:
+                        continue
+            if output == {}:
+                raise ValueError(f"No power value(s) {power} in any file")
+            return output
+        else:
+            try:
+                if isinstance(file_index, list):
+                    for fi in file_index:
+                        self._file_index_dict[str(fi)]
+                else:
+                    self._file_index_dict[str(file_index)]
+            except KeyError as err:
+                print("Invalid file_index", err)
+                return None
+            if isinstance(file_index, list):
+                for fi in file_index:
+                    if isinstance(power, list):
+                        file_data_temp = []
+                        for p in power:
+                            try:
+                                file_data_temp.append(
+                                    self.data[self._file_index_dict[str(fi)]][
+                                        np.where(
+                                            self.power[self._file_index_dict[str(fi)]]
+                                            == p
+                                        )[0][0]
+                                    ]
+                                )
+                            except IndexError:
+                                continue
+                        if len(file_data_temp) > 0:
+                            output[self._file_index_dict[str(fi)]] = file_data_temp
+                    else:
+                        try:
+                            output[self._file_index_dict[str(fi)]] = self.data[
+                                self._file_index_dict[str(fi)]
+                            ][
+                                np.where(
+                                    self.power[self._file_index_dict[str(fi)]] == power
+                                )[0][0]
+                            ]
+                        except IndexError:
+                            continue
+            else:
+                if isinstance(power, list):
+                    file_data_temp = []
+                    for p in power:
+                        try:
+                            file_data_temp.append(
+                                self.data[self._file_index_dict[str(file_index)]][
+                                    np.where(
+                                        self.power[
+                                            self._file_index_dict[str(file_index)]
+                                        ]
+                                        == p
+                                    )[0][0]
+                                ]
+                            )
+                        except IndexError:
+                            continue
+                    if len(file_data_temp) > 0:
+                        output[self._file_index_dict[str(file_index)]] = file_data_temp
+                else:
+                    try:
+                        output[self._file_index_dict[str(file_index)]] = self.data[
+                            self._file_index_dict[str(file_index)]
+                        ][
+                            np.where(
+                                self.power[self._file_index_dict[str(file_index)]]
+                                == power
+                            )[0][0]
+                        ]
+                    except IndexError:
+                        pass
+            if output == {}:
+                raise ValueError(
+                    f"No power value(s) {power} in any of the specified file"
+                )
+            return output
+
     def convert_complex_to_dB(self, deg: bool = False) -> None:
         """
         Converts the Dataset's data from complex to power in dB.
@@ -624,21 +729,6 @@ class TXTData:
         comments: str,
         delimiter: str,
     ) -> None:
-        """
-        Data container for txt files.
-
-        Parameters
-        ----------
-        files_list : list
-            List of txt files.
-        attenuation_cryostat : float
-            Total attenuation present on the cryostat. Must be a negative number.
-        comments : str, optional
-            Character indicating a commented line in txt files. Defaults to "#".
-        delimiter : str, optional
-            Delimiter for the txt file columns. If ``None``, considers any whitespaces as
-            delimiter. Defaults to ``None``.
-        """
         self.files = files_list
         self._sweep_info_files = []
         for file in self.files:
@@ -658,19 +748,21 @@ class TXTData:
         self.vna_average = info["vna_average"]
         self.vna_bandwidth = info["vna_bandwidth"]
         self.vna_power = info["vna_power"]
-        self.start_time = (
-            info["start_time"][0] if isinstance(info["start_time"], NDArray) else None
-        )
+        self.start_time = info["start_time"]
         files = self._sweep_info_files + self._standalone_files
         self.frequency_range = {
             key: {"start": info["start_freq"][key], "stop": info["stop_freq"][key]}
             for key in files
         }
-        # TODO: Verify if there is support for a variable attenuator in Eva's or in pyHegel or if the power only depends
-        #       on the physical attenuation prensent on the cryostat and the VNA output power.
         self.power = {
-            key: info["vna_power"][key] - attenuation_cryostat for key in files
+            key: (
+                info["vna_power"][key] + attenuation_cryostat
+                if info["vna_power"][key] is not None
+                else None
+            )
+            for key in files
         }
+        self._file_index_dict = {str(i + 1): file for i, file in enumerate(files)}
 
     def __str__(self) -> str:
         """
@@ -681,7 +773,7 @@ class TXTData:
             output += f"  {i+1}. {file}\n"
         sifnbr = len(self._sweep_info_files)
         for i, file in enumerate(self._standalone_files):
-            output += f"  {i+sifnbr}. {file}\n"
+            output += f"  {i+sifnbr+1}. {file}\n"
         output += "File infos :\n"
         table = self._make_table_array()
         headers = [
@@ -689,8 +781,7 @@ class TXTData:
             "Start time",
             "Start freq. (GHz)",
             "Stop freq. (GHz)",
-            "Power min (dB)",
-            "Power max (dB)",
+            "Power (dB)",
         ]
         output += tabulate(table, headers)
         return output
@@ -705,7 +796,7 @@ class TXTData:
         start_arr = np.array(
             [
                 (
-                    datetime.fromtimestamp(strtime(self.start_time[file])).strftime(
+                    datetime.fromtimestamp(self.start_time[file][0]).strftime(
                         "%Y-%m-%d %H:%M:%S"
                     )
                     if self.start_time[file] is not None
@@ -718,16 +809,23 @@ class TXTData:
             [self.frequency_range[file]["start"] for file in files]
         )
         freq_stop_arr = np.array([self.frequency_range[file]["stop"] for file in files])
-        min_power_arr = np.array([np.min(self.power[file]) for file in files])
-        max_power_arr = np.array([np.max(self.power[file]) for file in files])
+        power_arr = np.array(
+            [
+                (
+                    str(list(self.power[file])).lstrip("[").rstrip("]")
+                    if self.power[file] is not None
+                    else None
+                )
+                for file in files
+            ]
+        )
         table = np.array(
             [
                 file_no_arr,
                 start_arr,
                 freq_start_arr / 1e9,
                 freq_stop_arr / 1e9,
-                min_power_arr,
-                max_power_arr,
+                power_arr,
             ]
         )
         return table.T
@@ -752,8 +850,11 @@ class TXTData:
             sweep_files = [
                 f for f in self.files if file.rstrip(".txt") in f and "readval" in f
             ]
-            # TODO: Verify if the power is given the same way in the sweep info file in the case
-            #       the VNA is the R&S instead of the Keysight.
+            power_indices_present = []
+            for sf in sweep_files:
+                match = re.search(r"readval_(\d+)", sf)
+                if match:
+                    power_indices_present.append(match.group(1))
             sweep_params = np.loadtxt(file, comments=comments, delimiter=delimiter)
             sweep_data = []
             sweep_durations = []
@@ -778,7 +879,9 @@ class TXTData:
             info["duration"][file] = np.array(sweep_durations)
             info["vna_average"][file] = np.array(sweep_averages)
             info["vna_bandwidth"][file] = np.array(sweep_bandwidths)
-            info["vna_power"][file] = sweep_params[:, 0].T
+            info["vna_power"][file] = np.array(
+                [sweep_params[int(i), 0] for i in power_indices_present]
+            )
             info["start_freq"][file] = sweep_start_freq
             info["stop_freq"][file] = sweep_stop_freq
         self._standalone_files = standalone_files
@@ -797,11 +900,137 @@ class TXTData:
             info["vna_power"][file] = (
                 np.array([file_info["power_dbm_port1"]])
                 if "power_dbm_port1" in file_info
-                else np.array([file_info["port_attenuation"][0]])
+                else None
             )
-            info["start_freq"][file] = np.array([file_info["freq_start"]])
-            info["stop_freq"][file] = np.array([file_info["freq_stop"]])
+            info["start_freq"][file] = file_info["freq_start"]
+            info["stop_freq"][file] = file_info["freq_stop"]
         return data, info
+
+    def get_data(
+        self, file_index: int | list[int] = None, power: int | list[int] = None
+    ) -> ArrayLike:
+        """
+        Extracts either all data or, if indices are specified, a part of the data.
+        """
+        output = {}
+        files = self._sweep_info_files + self._standalone_files
+        if file_index is not None and power is None:
+            try:
+                if isinstance(file_index, list):
+                    for fi in file_index:
+                        self._file_index_dict[str(fi)]
+                else:
+                    self._file_index_dict[str(file_index)]
+            except KeyError as err:
+                print("Invalid file_index", err)
+                return None
+            if isinstance(file_index, list):
+                for fi in file_index:
+                    output[self._file_index_dict[str(fi)]] = self.data[
+                        self._file_index_dict[str(fi)]
+                    ]
+                return output
+            else:
+                return self.data[self._file_index_dict[str(file_index)]]
+        elif power is not None and file_index is None:
+            for file in files:
+                if isinstance(power, list):
+                    file_data_temp = []
+                    for p in power:
+                        try:
+                            file_data_temp.append(
+                                self.data[file][np.where(self.power[file] == p)[0][0]]
+                            )
+                        except IndexError as err:
+                            print(err)
+                            continue
+                    if len(file_data_temp) > 0:
+                        output[file] = file_data_temp
+                else:
+                    try:
+                        output[file] = self.data[file][
+                            np.where(self.power[file] == power)[0][0]
+                        ]
+                    except IndexError:
+                        continue
+            if output == {}:
+                raise ValueError(f"No power value(s) {power} in any file")
+            return output
+        else:
+            try:
+                if isinstance(file_index, list):
+                    for fi in file_index:
+                        self._file_index_dict[str(fi)]
+                else:
+                    self._file_index_dict[str(file_index)]
+            except KeyError as err:
+                print("Invalid file_index", err)
+                return None
+            if isinstance(file_index, list):
+                for fi in file_index:
+                    if isinstance(power, list):
+                        file_data_temp = []
+                        for p in power:
+                            try:
+                                file_data_temp.append(
+                                    self.data[self._file_index_dict[str(fi)]][
+                                        np.where(
+                                            self.power[self._file_index_dict[str(fi)]]
+                                            == p
+                                        )[0][0]
+                                    ]
+                                )
+                            except IndexError:
+                                continue
+                        if len(file_data_temp) > 0:
+                            output[self._file_index_dict[str(fi)]] = file_data_temp
+                    else:
+                        try:
+                            output[self._file_index_dict[str(fi)]] = self.data[
+                                self._file_index_dict[str(fi)]
+                            ][
+                                np.where(
+                                    self.power[self._file_index_dict[str(fi)]] == power
+                                )[0][0]
+                            ]
+                        except IndexError:
+                            continue
+            else:
+                if isinstance(power, list):
+                    file_data_temp = []
+                    for p in power:
+                        try:
+                            file_data_temp.append(
+                                self.data[self._file_index_dict[str(file_index)]][
+                                    np.where(
+                                        self.power[
+                                            self._file_index_dict[str(file_index)]
+                                        ]
+                                        == p
+                                    )[0][0]
+                                ]
+                            )
+                        except IndexError:
+                            continue
+                    if len(file_data_temp) > 0:
+                        output[self._file_index_dict[str(file_index)]] = file_data_temp
+                else:
+                    try:
+                        output[self._file_index_dict[str(file_index)]] = self.data[
+                            self._file_index_dict[str(file_index)]
+                        ][
+                            np.where(
+                                self.power[self._file_index_dict[str(file_index)]]
+                                == power
+                            )[0][0]
+                        ]
+                    except IndexError:
+                        pass
+            if output == {}:
+                raise ValueError(
+                    f"No power value(s) {power} in any of the specified file"
+                )
+            return output
 
     def convert_complex_to_dB(self, deg: bool = False) -> None:
         """
