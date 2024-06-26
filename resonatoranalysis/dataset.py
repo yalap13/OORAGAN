@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import h5py
+import re
 
 from typing import Optional, Union
 from os import PathLike
@@ -9,6 +10,7 @@ from pathlib import Path
 from tabulate import tabulate
 from numpy.typing import NDArray, ArrayLike
 from datetime import datetime
+from copy import deepcopy
 
 from .util import (
     strtime,
@@ -19,7 +21,7 @@ from .util import (
 
 class Dataset:
     """
-    General data set container extracting data and information on measurements
+    General data container extracting data and information on measurements
     from .hdf5 or .txt files.
 
     Parameters
@@ -31,6 +33,49 @@ class Dataset:
     file_extension : str, optional
         Optional parameter to specify the file extension in the case where there is
         "hdf5" and "txt" files in the same directory.
+    comments : str, optional
+        Character indicating a commented line in txt files. Defaults to "#".
+    delimiter : str, optional
+        Delimiter for the txt file columns. If ``None``, considers any whitespaces as
+        delimiter. Defaults to ``None``.
+
+    Attributes
+    ----------
+    cryostat_info : dict[str, dict]
+        Dictionnary in which the keys are the file paths and the values are a dictionnary of
+        the cryostat temperature data.
+    data : dict[str, list[NDArray]] | list[NDArray]
+        Dictionnary in which the keys are the file paths and the values are the list of data
+        arrays from this file.
+    end_time : dict[str, time.struct_time] | time.struct_time
+        Dictionnary in which the keys are the file paths and the values are the end time of the
+        measurement.
+    files : list[str] | str
+        List of the files path included in the dataset.
+    frequency_range : dict[str, dict]
+        Dictionnary in which the keys are the file paths and the values are a dictionnary containing
+        the "start" and the "end" of the frequency range.
+    mixing_temp : dict[str, float] | float
+        Dictionnary in which the keys are the file paths and the values are the temperature of the
+        mixing stage in Kelvins.
+    power : dict[str, NDArray] | NDArray
+        Dictionnary in which the keys are the file paths and the values are an array of the values for
+        the total power in dB.
+    start_time : dict[str, time.struct_time] | time.struct_time
+        Dictionnary in which the keys are the file paths and the values are the start time of the
+        measurement.
+    variable_attenuator : dict[str, NDArray] | NDArray
+        Dictionnary in which the keys are the file paths and the values are an array of the values of
+        attenuation on the variable attenuator in dB.
+    vna_average : dict[str, NDArray] | NDArray
+        Dictionnary in which the keys are the file paths and the values are an array of the values for
+        the VNA averaging number.
+    vna_bandwidth : dict[str, NDArray] | NDArray
+        Dictionnary in which the keys are the file paths and the values are an array of the values for
+        the VNA bandwidth in Hz.
+    vna_power : dict[str, NDArray] | NDArray
+        Dictionnary in which the keys are the file paths and the values are an array of the values for
+        the VNA output power in dB.
     """
 
     def __init__(
@@ -38,9 +83,11 @@ class Dataset:
         path: Union[str, PathLike],
         attenuation_cryostat: float,
         file_extension: Optional[str] = None,
+        comments: str = "#",
+        delimiter: Optional[str] = None,
     ) -> None:
         """
-        General data set container extracting data and information on measurements
+        General data container extracting data and information on measurements
         from .hdf5 or .txt files.
 
         Parameters
@@ -52,6 +99,49 @@ class Dataset:
         file_extension : str, optional
             Optional parameter to specify the file extension in the case where there is
             "hdf5" and "txt" files in the same directory.
+        comments : str, optional
+            Character indicating a commented line in txt files. Defaults to "#".
+        delimiter : str, optional
+            Delimiter for the txt file columns. If ``None``, considers any whitespaces as
+            delimiter. Defaults to ``None``.
+
+        Attributes
+        ----------
+        cryostat_info : dict[str, dict]
+            Dictionnary in which the keys are the file paths and the values are a dictionnary of
+            the cryostat temperature data.
+        data : dict[str, list[NDArray]] | list[NDArray]
+            Dictionnary in which the keys are the file paths and the values are the list of data
+            arrays from this file.
+        end_time : dict[str, time.struct_time] | time.struct_time
+            Dictionnary in which the keys are the file paths and the values are the end time of the
+            measurement.
+        files : list[str] | str
+            List of the files path included in the dataset.
+        frequency_range : dict[str, dict]
+            Dictionnary in which the keys are the file paths and the values are a dictionnary containing
+            the "start" and the "end" of the frequency range.
+        mixing_temp : dict[str, float] | float
+            Dictionnary in which the keys are the file paths and the values are the temperature of the
+            mixing stage in Kelvins.
+        power : dict[str, NDArray] | NDArray
+            Dictionnary in which the keys are the file paths and the values are an array of the values for
+            the total power in dB.
+        start_time : dict[str, time.struct_time] | time.struct_time
+            Dictionnary in which the keys are the file paths and the values are the start time of the
+            measurement.
+        variable_attenuator : dict[str, NDArray] | NDArray
+            Dictionnary in which the keys are the file paths and the values are an array of the values of
+            attenuation on the variable attenuator in dB.
+        vna_average : dict[str, NDArray] | NDArray
+            Dictionnary in which the keys are the file paths and the values are an array of the values for
+            the VNA averaging number.
+        vna_bandwidth : dict[str, NDArray] | NDArray
+            Dictionnary in which the keys are the file paths and the values are an array of the values for
+            the VNA bandwidth in Hz.
+        vna_power : dict[str, NDArray] | NDArray
+            Dictionnary in which the keys are the file paths and the values are an array of the values for
+            the VNA output power in dB.
         """
         if attenuation_cryostat > 0:
             raise ValueError("Attenuation value must be negative")
@@ -72,7 +162,12 @@ class Dataset:
                         )
                         print(f"Found {len(hdf5_files)} files")
                     elif file_extension == "txt":
-                        self._data_container = TXTData(txt_files, attenuation_cryostat)
+                        self._data_container = TXTData(
+                            txt_files,
+                            attenuation_cryostat,
+                            comments=comments,
+                            delimiter=delimiter,
+                        )
                         print(f"Found {len(txt_files)} files")
                     else:
                         raise ValueError(
@@ -87,14 +182,21 @@ class Dataset:
                 self._data_container = HDF5Data(hdf5_files, attenuation_cryostat)
                 print(f"Found {len(hdf5_files)} files")
             elif txt_files:
-                self._data_container = TXTData(txt_files, attenuation_cryostat)
+                self._data_container = TXTData(
+                    txt_files,
+                    attenuation_cryostat,
+                    comments=comments,
+                    delimiter=delimiter,
+                )
                 print(f"Found {len(txt_files)} files")
             else:
                 raise FileNotFoundError("No '.hdf5' or '.txt' files were found")
         elif Path(path).suffix == ".hdf5":
-            self._data_container = HDF5Data(list(path), attenuation_cryostat)
+            self._data_container = HDF5Data([path], attenuation_cryostat)
         elif Path(path).suffix == ".txt":
-            self._data_container = TXTData(list(path), attenuation_cryostat)
+            self._data_container = TXTData(
+                [path], attenuation_cryostat, comments=comments, delimiter=delimiter
+            )
         else:
             raise RuntimeError(
                 f"Extension '.{Path(path).suffix}' not supported. Supported file types are '.hdf5' and '.txt'"
@@ -102,72 +204,131 @@ class Dataset:
 
     @property
     def data(self) -> dict | list:
+        """Raw data"""
         if len(self._data_container.files) == 1:
             return self._data_container.data[self.files]
         return self._data_container.data
 
     @property
     def cryostat_info(self) -> dict:
-        if len(self._data_container.files) == 1:
-            return self._data_container.cryostat_info[self.files]
-        return self._data_container.cryostat_info
+        """
+        Various informations about the cryostat
+
+        Warning
+        -------
+        Available only for Dataset created from hdf5 files.
+        """
+        if isinstance(self._data_container, HDF5Data):
+            if len(self._data_container.files) == 1:
+                return self._data_container.cryostat_info[self.files]
+            return self._data_container.cryostat_info
+        else:
+            raise AttributeError(
+                "Attribute 'cryostat_info' not defined for Dataset from txt files"
+            )
 
     @property
     def files(self) -> list:
+        """Files in the Dataset"""
         if len(self._data_container.files) == 1:
             return self._data_container.files[0]
         return self._data_container.files
 
     @property
     def vna_average(self) -> dict | ArrayLike:
+        """VNA averaging count"""
         if len(self._data_container.files) == 1:
             return self._data_container.vna_average[self.files]
         return self._data_container.vna_average
 
     @property
     def vna_bandwidth(self) -> dict | ArrayLike:
+        """VNA bandwith in Hz"""
         if len(self._data_container.files) == 1:
             return self._data_container.vna_bandwidth[self.files]
         return self._data_container.vna_bandwidth
 
     @property
     def vna_power(self) -> dict | ArrayLike:
+        """VNA output power in dBm"""
         if len(self._data_container.files) == 1:
             return self._data_container.vna_power[self.files]
         return self._data_container.vna_power
 
     @property
     def variable_attenuator(self) -> dict | ArrayLike:
-        if len(self._data_container.files) == 1:
-            return self._data_container.variable_attenuator[self.files]
-        return self._data_container.variable_attenuator
+        """
+        Attenuation value of the variable attenuator
+
+        Warning
+        -------
+        Available only for Dataset created from hdf5 files.
+        """
+        if isinstance(self._data_container, HDF5Data):
+            if len(self._data_container.files) == 1:
+                return self._data_container.variable_attenuator[self.files]
+            return self._data_container.variable_attenuator
+        else:
+            raise AttributeError(
+                "Attribute 'variable_attenuator' not defined for Dataset from txt files"
+            )
 
     @property
     def start_time(self) -> dict | ArrayLike:
+        """Start time of the measurement"""
         if len(self._data_container.files) == 1:
             return self._data_container.start_time[self.files]
         return self._data_container.start_time
 
     @property
     def end_time(self) -> dict | ArrayLike:
-        if len(self._data_container.files) == 1:
-            return self._data_container.end_time[self.files]
-        return self._data_container.end_time
+        """
+        End time of the measurement
+
+        Warning
+        -------
+        Available only for Dataset created from hdf5 files.
+        """
+        if isinstance(self._data_container, HDF5Data):
+            if len(self._data_container.files) == 1:
+                return self._data_container.end_time[self.files]
+            return self._data_container.end_time
+        else:
+            raise AttributeError(
+                "Attribute 'end_time' not defined for Dataset from txt files"
+            )
 
     @property
     def mixing_temp(self) -> dict | ArrayLike:
-        if len(self._data_container.files) == 1:
-            return self._data_container.mixing_temp[self.files]
-        return self._data_container.mixing_temp
+        """
+        Mixing stage temperature
+
+        Warning
+        -------
+        Available only for Dataset created from hdf5 files.
+        """
+        if isinstance(self._data_container, HDF5Data):
+            if len(self._data_container.files) == 1:
+                return self._data_container.mixing_temp[self.files]
+            return self._data_container.mixing_temp
+        else:
+            raise AttributeError(
+                "Attribute 'mixing_temp' not defined for Dataset from txt files"
+            )
 
     @property
     def power(self) -> dict | ArrayLike:
+        """
+        Total power including VNA output power, physical attenuation in the setup and variable attenuator,
+        if present. Given in dBm.
+        """
         if len(self._data_container.files) == 1:
             return self._data_container.power[self.files]
         return self._data_container.power
 
     @property
     def frequency_range(self) -> dict | ArrayLike:
+        """Start and stop frequency of the measurement"""
         if len(self._data_container.files) == 1:
             return self._data_container.frequency_range[self.files]
         return self._data_container.frequency_range
@@ -176,68 +337,34 @@ class Dataset:
         return self._data_container.__str__()
 
     def convert_magang_to_complex(self) -> None:
+        """
+        Converts the Dataset's data from magnitude-angle to complex format.
+        """
         self._data_container.convert_magang_to_complex()
 
-    def convert_complex_to_dB(self) -> None:
+    def convert_complex_to_dB(self, deg: bool = False) -> None:
+        """
+        Converts the Dataset's data from complex to dB.
+
+        Parameters
+        ----------
+        deg : bool, optional
+            If ``True`` the angle array will be in degrees. Defaults to ``False``,
+            making the angles in radians.
+        """
         self._data_container.convert_complex_to_dB()
 
 
 class HDF5Data:
     """
-    Class representing a complete dataset extracted from a folder. Properties are automatically
-    extracted from the data files.
+    Data container for hdf5 files.
 
     Parameters
     ----------
-    path : str
-        Path to folder containing data files or full path to specific data file.
+    files_list : list
+        List of files.
     attenuation_cryostat : float
         Total attenuation present on the cryostat. Must be a negative number.
-    file_extension : str
-        File extension to search for in given path. Supports "hdf5", "txt" and "csv".
-        Defaults to "hdf5".
-    comments : str
-        Defines the comment symbol in the data file. Defaults to "#".
-    delimiter : str, optional
-        Defines the .txt data file delimiter.
-
-    Attributes
-    ----------
-    cryostat_info : dict[str, dict]
-        Dictionnary in which the keys are the file paths and the values are a dictionnary of
-        the cryostat temperature data.
-    data : dict[str, list[NDArray]]
-        Dictionnary in which the keys are the file paths and the values are the list of data
-        arrays from this file.
-    end_time : dict[str, time.struct_time]
-        Dictionnary in which the keys are the file paths and the values are the end time of the
-        measurement.
-    files : list[str]
-        List of the files path included in the dataset.
-    frequency_range : dict[str, dict]
-        Dictionnary in which the keys are the file paths and the values are a dictionnary containing
-        the "start" and the "end" of the frequency range.
-    mixing_temp : dict[str, float]
-        Dictionnary in which the keys are the file paths and the values are the temperature of the
-        mixing stage in Kelvins.
-    power : dict[str, NDArray]
-        Dictionnary in which the keys are the file paths and the values are an array of the values for
-        the total power in dB.
-    start_time : dict[str, time.struct_time]
-        Dictionnary in which the keys are the file paths and the values are the start time of the
-        measurement.
-    variable_attenuator : dict[str, NDArray]
-        Dictionnary in which the keys are the file paths and the values are an array of the values of
-        attenuation on the variable attenuator in dB.
-    vna_average : dict[str, NDArray]
-        Dictionnary in which the keys are the file paths and the values are an array of the values for
-        the VNA averaging number.
-    vna_bandwidth : dict[str, NDArray]
-        Dictionnary in which the keys are the file paths and the values are an array of the values for
-        the VNA bandwidth in Hz.
-    vna_power : dict[str, NDArray]
-        Dictionnary in which the keys are the file paths and the values are an array of the values for
-        the VNA output power in dB.
     """
 
     def __init__(
@@ -246,60 +373,14 @@ class HDF5Data:
         attenuation_cryostat: float,
     ) -> None:
         """
-        Class representing a complete dataset extracted from a folder. Properties are automatically
-        extracted from the data files.
+        Data container for hdf5 files.
 
         Parameters
         ----------
-        path : str
-            Path to folder containing data files or full path to specific data file.
+        files_list : list
+            List of files.
         attenuation_cryostat : float
             Total attenuation present on the cryostat. Must be a negative number.
-        file_extension : str
-            File extension to search for in given path. Supports "hdf5", "txt" and "csv".
-            Defaults to "hdf5".
-        comments : str
-            Defines the comment symbol in the data file. Defaults to "#".
-        delimiter : str, optional
-            Defines the .txt data file delimiter.
-
-        Attributes
-        ----------
-        cryostat_info : dict[str, dict]
-            Dictionnary in which the keys are the file paths and the values are a dictionnary of
-            the cryostat temperature data.
-        data : dict[str, list[NDArray]]
-            Dictionnary in which the keys are the file paths and the values are the list of data
-            arrays from this file.
-        end_time : dict[str, time.struct_time]
-            Dictionnary in which the keys are the file paths and the values are the end time of the
-            measurement.
-        files : list[str]
-            List of the files path included in the dataset.
-        frequency_range : dict[str, dict]
-            Dictionnary in which the keys are the file paths and the values are a dictionnary containing
-            the "start" and the "end" of the frequency range.
-        mixing_temp : dict[str, float]
-            Dictionnary in which the keys are the file paths and the values are the temperature of the
-            mixing stage in Kelvins.
-        power : dict[str, NDArray]
-            Dictionnary in which the keys are the file paths and the values are an array of the values for
-            the total power in dB.
-        start_time : dict[str, time.struct_time]
-            Dictionnary in which the keys are the file paths and the values are the start time of the
-            measurement.
-        variable_attenuator : dict[str, NDArray]
-            Dictionnary in which the keys are the file paths and the values are an array of the values of
-            attenuation on the variable attenuator in dB.
-        vna_average : dict[str, NDArray]
-            Dictionnary in which the keys are the file paths and the values are an array of the values for
-            the VNA averaging number.
-        vna_bandwidth : dict[str, NDArray]
-            Dictionnary in which the keys are the file paths and the values are an array of the values for
-            the VNA bandwidth in Hz.
-        vna_power : dict[str, NDArray]
-            Dictionnary in which the keys are the file paths and the values are an array of the values for
-            the VNA output power in dB.
         """
         self.files = files_list
         self.data = self._get_data_from_hdf5()
@@ -348,10 +429,8 @@ class HDF5Data:
         Customized printing function.
         """
         output = "Files :\n"
-        i = 1
-        for file in self.files:
-            output += f"  {i}. {file}\n"
-            i += 1
+        for i, file in enumerate(self.files):
+            output += f"  {i+1}. {file}\n"
         output += "File infos :\n"
         table = self._make_table_array()
         headers = [
@@ -522,36 +601,263 @@ class HDF5Data:
 
 
 class TXTData:
-    def __init__(self, files_list: list, attenuation_cryostat: float) -> None:
+    """
+    Data container for txt files.
+
+    Parameters
+    ----------
+    files_list : list
+        List of txt files.
+    attenuation_cryostat : float
+        Total attenuation present on the cryostat. Must be a negative number.
+    comments : str, optional
+        Character indicating a commented line in txt files. Defaults to "#".
+    delimiter : str, optional
+        Delimiter for the txt file columns. If ``None``, considers any whitespaces as
+        delimiter. Defaults to ``None``.
+    """
+
+    def __init__(
+        self,
+        files_list: list,
+        attenuation_cryostat: float,
+        comments: str,
+        delimiter: str,
+    ) -> None:
+        """
+        Data container for txt files.
+
+        Parameters
+        ----------
+        files_list : list
+            List of txt files.
+        attenuation_cryostat : float
+            Total attenuation present on the cryostat. Must be a negative number.
+        comments : str, optional
+            Character indicating a commented line in txt files. Defaults to "#".
+        delimiter : str, optional
+            Delimiter for the txt file columns. If ``None``, considers any whitespaces as
+            delimiter. Defaults to ``None``.
+        """
         self.files = files_list
+        self._sweep_info_files = []
+        for file in self.files:
+            if not "readval" in file:
+                with open(file, "r") as f:
+                    for line in f:
+                        if line.startswith("#"):
+                            if line.endswith("time\n"):
+                                self._sweep_info_files.append(file)
+                                break
+                        else:
+                            break
+                    f.close()
+        self.data, info = self._get_data_info_from_txt(
+            comments=comments, delimiter=delimiter
+        )
+        self.vna_average = info["vna_average"]
+        self.vna_bandwidth = info["vna_bandwidth"]
+        self.vna_power = info["vna_power"]
+        self.start_time = (
+            info["start_time"][0] if isinstance(info["start_time"], NDArray) else None
+        )
+        files = self._sweep_info_files + self._standalone_files
+        self.frequency_range = {
+            key: {"start": info["start_freq"][key], "stop": info["stop_freq"][key]}
+            for key in files
+        }
+        # TODO: Verify if there is support for a variable attenuator in Eva's or in pyHegel or if the power only depends
+        #       on the physical attenuation prensent on the cryostat and the VNA output power.
+        self.power = {
+            key: info["vna_power"][key] - attenuation_cryostat for key in files
+        }
 
     def __str__(self) -> str:
-        output = ""
-        for file in self.files:
-            output += f"{file}\n"
+        """
+        Customized printing function.
+        """
+        output = "Files :\n"
+        for i, file in enumerate(self._sweep_info_files):
+            output += f"  {i+1}. {file}\n"
+        sifnbr = len(self._sweep_info_files)
+        for i, file in enumerate(self._standalone_files):
+            output += f"  {i+sifnbr}. {file}\n"
+        output += "File infos :\n"
+        table = self._make_table_array()
+        headers = [
+            "File no.",
+            "Start time",
+            "Start freq. (GHz)",
+            "Stop freq. (GHz)",
+            "Power min (dB)",
+            "Power max (dB)",
+        ]
+        output += tabulate(table, headers)
         return output
 
-    def _get_data_info_from_txt(self, path: str) -> dict:
-        if Path(path).suffix == "":
-            files_list = []
-            for paths, _, _ in os.walk(path):
-                for file in glob(os.path.join(paths, "*.txt")):
-                    files_list.append(file)
-        else:
-            files_list = [path]
+    def _make_table_array(self) -> NDArray:
+        """
+        Utilitary function used to generate the table for the customized
+        printing function.
+        """
+        files = self._sweep_info_files + self._standalone_files
+        file_no_arr = np.array([i + 1 for i in range(len(files))])
+        start_arr = np.array(
+            [
+                (
+                    datetime.fromtimestamp(strtime(self.start_time[file])).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                    if self.start_time[file] is not None
+                    else None
+                )
+                for file in files
+            ]
+        )
+        freq_start_arr = np.array(
+            [self.frequency_range[file]["start"] for file in files]
+        )
+        freq_stop_arr = np.array([self.frequency_range[file]["stop"] for file in files])
+        min_power_arr = np.array([np.min(self.power[file]) for file in files])
+        max_power_arr = np.array([np.max(self.power[file]) for file in files])
+        table = np.array(
+            [
+                file_no_arr,
+                start_arr,
+                freq_start_arr / 1e9,
+                freq_stop_arr / 1e9,
+                min_power_arr,
+                max_power_arr,
+            ]
+        )
+        return table.T
 
-        if len(files_list) == 0:
-            raise FileNotFoundError("No files were found")
-        elif len(files_list) > 1:
-            print(f"Found {len(files_list)} files")
-
+    def _get_data_info_from_txt(self, comments: str, delimiter: str) -> dict:
+        """
+        Utilitary function extracting the data and VNA parameters.
+        """
         data = {}
-        info = {}
-        for file in files_list:
-            print(file)
+        info = {
+            "start_time": {},
+            "duration": {},
+            "vna_average": {},
+            "vna_bandwidth": {},
+            "vna_power": {},
+            "start_freq": {},
+            "stop_freq": {},
+        }
+        standalone_files = deepcopy(self.files)
+        for file in self._sweep_info_files:
+            standalone_files.remove(file)
+            sweep_files = [
+                f for f in self.files if file.rstrip(".txt") in f and "readval" in f
+            ]
+            # TODO: Verify if the power is given the same way in the sweep info file in the case
+            #       the VNA is the R&S instead of the Keysight.
+            sweep_params = np.loadtxt(file, comments=comments, delimiter=delimiter)
+            sweep_data = []
+            sweep_durations = []
+            sweep_averages = []
+            sweep_bandwidths = []
+            for sf in sweep_files:
+                standalone_files.remove(sf)
+                arr = np.loadtxt(sf, comments=comments, delimiter=delimiter).T
+                sweep_data.append(arr)
+                sweep_file_info = self._parse_parameters(sf)
+                sweep_durations.append(sweep_file_info["sweep_time"])
+                sweep_averages.append(
+                    sweep_file_info["average_count"]
+                    if "average_count" in sweep_file_info
+                    else sweep_file_info["sweep_average_count"]
+                )
+                sweep_bandwidths.append(sweep_file_info["bandwidth"])
+                sweep_start_freq = sweep_file_info["freq_start"]
+                sweep_stop_freq = sweep_file_info["freq_stop"]
+            data[file] = sweep_data
+            info["start_time"][file] = sweep_params[:, 2].T
+            info["duration"][file] = np.array(sweep_durations)
+            info["vna_average"][file] = np.array(sweep_averages)
+            info["vna_bandwidth"][file] = np.array(sweep_bandwidths)
+            info["vna_power"][file] = sweep_params[:, 0].T
+            info["start_freq"][file] = sweep_start_freq
+            info["stop_freq"][file] = sweep_stop_freq
+        self._standalone_files = standalone_files
+        for file in standalone_files:
+            data[file] = [np.loadtxt(file, comments=comments, delimiter=delimiter).T]
+            file_info = self._parse_parameters(file)
+            info["start_time"][file] = None
+            info["duration"][file] = np.array([file_info["sweep_time"]])
+            info["vna_average"][file] = (
+                np.array([file_info["average_count"]])
+                if "average_count" in file_info
+                else np.array([file_info["sweep_average_count"]])
+            )
+            info["vna_bandwidth"][file] = np.array([file_info["bandwidth"]])
+            # TODO: Verify if 'port_attenuation' really is the same as 'power_dbm_port1'
+            info["vna_power"][file] = (
+                np.array([file_info["power_dbm_port1"]])
+                if "power_dbm_port1" in file_info
+                else np.array([file_info["port_attenuation"][0]])
+            )
+            info["start_freq"][file] = np.array([file_info["freq_start"]])
+            info["stop_freq"][file] = np.array([file_info["freq_stop"]])
+        return data, info
 
-    def convert_complex_to_dB(self) -> None:
-        pass
+    def convert_complex_to_dB(self, deg: bool = False) -> None:
+        """
+        Converts the Dataset's data from complex to power in dB.
+        """
+        files = self._sweep_info_files + self._standalone_files
+        for file in files:
+            for arr in self.data[file]:
+                arr[1, :], arr[2, :] = convert_complex_to_dB(
+                    arr[1, :], arr[2, :], deg=deg
+                )
 
     def convert_magang_to_complex(self) -> None:
-        pass
+        """
+        Converts the Dataset's data from magnitude and angle to complex.
+        """
+        files = self._sweep_info_files + self._standalone_files
+        for file in files:
+            for arr in self.data[file]:
+                complex = convert_magang_to_complex(arr)
+                arr[1, :], arr[2, :] = np.real(complex), np.imag(complex)
+
+    def _parse_parameters(self, file_path: str) -> dict:
+        """
+        Utilitary function to parse the information given in commented lines of txt files.
+        """
+        parameters = {}
+
+        with open(file_path, "r") as file:
+            lines = file.readlines()
+            file.close()
+
+        # Regular expression to match the parameter lines
+        pattern = re.compile(r"^#(?P<key>[^=]+)=(?P<value>.+)$")
+
+        for line in lines:
+            match = pattern.match(line.strip())
+            if match:
+                key = match.group("key").strip()
+                value = match.group("value").strip()
+
+                # Convert the value to the appropriate type
+                if value.lower() == "true":
+                    value = True
+                elif value.lower() == "false":
+                    value = False
+                elif re.match(r"^-?\d+\.?\d*$", value):  # match integers and floats
+                    value = float(value) if "." in value else int(value)
+                elif value.startswith("[") and value.endswith("]"):
+                    value = value[1:-1].split(",")
+                    value = [v.strip() for v in value]
+                elif value.startswith("{") and value.endswith("}"):
+                    value = eval(value)  # Evaluate dictionaries, assuming trusted input
+                else:
+                    value = value.strip('"')
+
+                parameters[key] = value
+
+        return parameters
