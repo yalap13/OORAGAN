@@ -14,8 +14,8 @@ from copy import deepcopy
 
 from .util import (
     strtime,
-    convert_complex_to_dB,
-    convert_magang_to_complex,
+    convert_complex_to_magphase,
+    convert_magphase_to_complex,
 )
 
 
@@ -35,6 +35,9 @@ class Dataset:
     file_extension : str, optional
         Optional parameter to specify the file extension in the case where there is
         "hdf5" and "txt" files in the same directory.
+    format : str, optional
+        Specifies the format in which to load the data. Can be ``"complex"`` or
+        ``"magphase"``. Defaults to ``"complex"``.
     comments : str, optional
         Character indicating a commented line in txt files. Defaults to "#".
     delimiter : str, optional
@@ -116,6 +119,7 @@ class Dataset:
         attenuation_cryostat: float,
         print_out: bool = True,
         file_extension: Optional[str] = None,
+        format: str = "complex",
         comments: str = "#",
         delimiter: Optional[str] = None,
     ) -> None:
@@ -134,13 +138,14 @@ class Dataset:
                 if file_extension is not None:
                     if file_extension == "hdf5":
                         self._data_container = HDF5Data(
-                            hdf5_files, attenuation_cryostat
+                            hdf5_files, attenuation_cryostat, format=format
                         )
                         print(f"Found {len(hdf5_files)} files")
                     elif file_extension == "txt":
                         self._data_container = TXTData(
                             txt_files,
                             attenuation_cryostat,
+                            format=format,
                             comments=comments,
                             delimiter=delimiter,
                         )
@@ -155,12 +160,15 @@ class Dataset:
                         + "Optional parameter 'file_extension' must be specified"
                     )
             elif hdf5_files:
-                self._data_container = HDF5Data(hdf5_files, attenuation_cryostat)
+                self._data_container = HDF5Data(
+                    hdf5_files, attenuation_cryostat, format=format
+                )
                 print(f"Found {len(hdf5_files)} files")
             elif txt_files:
                 self._data_container = TXTData(
                     txt_files,
                     attenuation_cryostat,
+                    format=format,
                     comments=comments,
                     delimiter=delimiter,
                 )
@@ -168,10 +176,14 @@ class Dataset:
             else:
                 raise FileNotFoundError("No '.hdf5' or '.txt' files were found")
         elif Path(path).suffix == ".hdf5":
-            self._data_container = HDF5Data([path], attenuation_cryostat)
+            self._data_container = HDF5Data([path], attenuation_cryostat, format=format)
         elif Path(path).suffix == ".txt":
             self._data_container = TXTData(
-                [path], attenuation_cryostat, comments=comments, delimiter=delimiter
+                [path],
+                attenuation_cryostat,
+                format=format,
+                comments=comments,
+                delimiter=delimiter,
             )
         else:
             raise RuntimeError(
@@ -186,6 +198,11 @@ class Dataset:
         if len(self._data_container.files) == 1:
             return self._data_container.data[self.files]
         return self._data_container.data
+
+    @property
+    def format(self) -> str:
+        """Data format, either ``"complex"`` or ``"magphase"``"""
+        return self._data_container.format
 
     @property
     def cryostat_info(self) -> dict:
@@ -334,23 +351,23 @@ class Dataset:
             return self.data
         return self._data_container.get_data(file_index=file_index, power=power)
 
-    def convert_magang_to_complex(self) -> None:
+    def convert_magphase_to_complex(self) -> None:
         """
-        Converts the Dataset's data from magnitude-angle to complex format.
+        Converts the Dataset's data from magnitude and phase to complex format.
         """
-        self._data_container.convert_magang_to_complex()
+        self._data_container.convert_magphase_to_complex()
 
-    def convert_complex_to_dB(self, deg: bool = False) -> None:
+    def convert_complex_to_magphase(self, deg: bool = False) -> None:
         """
-        Converts the Dataset's data from complex to dB.
+        Converts the Dataset's data from complex to magnitude and phase.
 
         Parameters
         ----------
-        deg : bool, optional
-            If ``True`` the angle array will be in degrees. Defaults to ``False``,
-            making the angles in radians.
+        deg : bool
+            If ``True`` the phase is returned in degrees, else in radians.
+            Defaults to ``False``.
         """
-        self._data_container.convert_complex_to_dB(deg=deg)
+        self._data_container.convert_complex_to_magphase(deg=deg)
 
 
 class HDF5Data:
@@ -363,16 +380,23 @@ class HDF5Data:
         List of files.
     attenuation_cryostat : float
         Total attenuation present on the cryostat. Must be a negative number.
+    format : str
+        Specifies the format in which to load the data. Can be ``"complex"`` or
+        ``"magphase"``. Defaults to ``"complex"``.
     """
 
     def __init__(
         self,
         files_list: list,
         attenuation_cryostat: float,
+        format: str,
     ) -> None:
+        self.format = format
         self.files = files_list
         self._file_index_dict = {str(i + 1): file for i, file in enumerate(self.files)}
         self.data = self._get_data_from_hdf5()
+        if self.format == "magphase":
+            self.convert_complex_to_magphase()
         info = self._get_info_from_hdf5()
         self.vna_average = {
             key: (
@@ -544,10 +568,12 @@ class HDF5Data:
                     phase = np.squeeze(hdf5_data["VNA"]["s21_phase"][:])
                     if mag.ndim > 1:
                         for i in range(len(mag)):
-                            arr = np.stack((freq.T, mag[i].T, phase[i].T))
+                            real, imag = convert_magphase_to_complex(mag[i], phase[i])
+                            arr = np.stack((freq.T, real[i].T, imag[i].T))
                             data.append(arr)
                     else:
-                        arr = np.stack((freq.T, mag.T, phase.T))
+                        real, imag = convert_magphase_to_complex(mag, phase)
+                        arr = np.stack((freq.T, real.T, imag.T))
                         data.append(arr)
                 hdf5_data.close()
             data_dict[file] = data
@@ -685,24 +711,44 @@ class HDF5Data:
                 )
             return output
 
-    def convert_complex_to_dB(self, deg: bool = False) -> None:
+    def convert_complex_to_magphase(self, deg: bool = False) -> None:
         """
-        Converts the Dataset's data from complex to power in dB.
+        Converts the Dataset's data from complex to magnitude and phase.
+
+        Parameters
+        ----------
+        deg : bool
+            If ``True`` the phase is returned in degrees, else in radians.
+            Defaults to ``False``.
         """
+        if self.format == "magphase":
+            return
         for file in self.files:
             for arr in self.data[file]:
-                arr[1, :], arr[2, :] = convert_complex_to_dB(
+                arr[1, :], arr[2, :] = convert_complex_to_magphase(
                     arr[1, :], arr[2, :], deg=deg
                 )
+        self.format = "magphase"
 
-    def convert_magang_to_complex(self) -> None:
+    def convert_magphase_to_complex(self, deg: bool = False, dBm: bool = False) -> None:
         """
-        Converts the Dataset's data from magnitude and angle to complex.
+        Converts the Dataset's data from magnitude and phase to complex.
+
+        Parameters
+        ----------
+        deg : bool, optional
+            Set to ``True`` if the phase is in degrees. Defaults to ``False``.
+        dBm : bool, optional
+            Set to ``True`` if the magnitude is in dBm. Defaults to ``False``.
         """
+        if self.format == "complex":
+            return
         for file in self.files:
             for arr in self.data[file]:
-                complex = convert_magang_to_complex(arr)
-                arr[1, :], arr[2, :] = np.real(complex), np.imag(complex)
+                arr[1, :], arr[2, :] = convert_magphase_to_complex(
+                    arr[1, :], arr[2, :], deg=deg, dBm=dBm
+                )
+        self.format = "complex"
 
 
 class TXTData:
@@ -715,9 +761,12 @@ class TXTData:
         List of txt files.
     attenuation_cryostat : float
         Total attenuation present on the cryostat. Must be a negative number.
-    comments : str, optional
+    format : str
+        Specifies the format in which to load the data. Can be ``"complex"`` or
+        ``"magphase"``. Defaults to ``"complex"``.
+    comments : str
         Character indicating a commented line in txt files. Defaults to "#".
-    delimiter : str, optional
+    delimiter : str
         Delimiter for the txt file columns. If ``None``, considers any whitespaces as
         delimiter. Defaults to ``None``.
     """
@@ -726,9 +775,11 @@ class TXTData:
         self,
         files_list: list,
         attenuation_cryostat: float,
+        format: str,
         comments: str,
         delimiter: str,
     ) -> None:
+        self.format = format
         self.files = files_list
         self._sweep_info_files = []
         for file in self.files:
@@ -745,6 +796,8 @@ class TXTData:
         self.data, info = self._get_data_info_from_txt(
             comments=comments, delimiter=delimiter
         )
+        if self.format == "magphase":
+            self.convert_complex_to_magphase()
         self.vna_average = info["vna_average"]
         self.vna_bandwidth = info["vna_bandwidth"]
         self.vna_power = info["vna_power"]
@@ -862,8 +915,6 @@ class TXTData:
             sweep_bandwidths = []
             for sf in sweep_files:
                 standalone_files.remove(sf)
-                arr = np.loadtxt(sf, comments=comments, delimiter=delimiter).T
-                sweep_data.append(arr)
                 sweep_file_info = self._parse_parameters(sf)
                 sweep_durations.append(sweep_file_info["sweep_time"])
                 sweep_averages.append(
@@ -874,6 +925,15 @@ class TXTData:
                 sweep_bandwidths.append(sweep_file_info["bandwidth"])
                 sweep_start_freq = sweep_file_info["freq_start"]
                 sweep_stop_freq = sweep_file_info["freq_stop"]
+                arr = np.loadtxt(sf, comments=comments, delimiter=delimiter).T
+                try:
+                    if sweep_file_info["options"]["unit"] == "db_deg":
+                        arr[1, :], arr[2, :] = convert_magphase_to_complex(
+                            arr[1, :], arr[2, :], deg=True
+                        )
+                except KeyError:
+                    continue
+                sweep_data.append(arr)
             data[file] = sweep_data
             info["start_time"][file] = sweep_params[:, 2].T
             info["duration"][file] = np.array(sweep_durations)
@@ -886,7 +946,6 @@ class TXTData:
             info["stop_freq"][file] = sweep_stop_freq
         self._standalone_files = standalone_files
         for file in standalone_files:
-            data[file] = [np.loadtxt(file, comments=comments, delimiter=delimiter).T]
             file_info = self._parse_parameters(file)
             info["start_time"][file] = None
             info["duration"][file] = np.array([file_info["sweep_time"]])
@@ -904,6 +963,15 @@ class TXTData:
             )
             info["start_freq"][file] = file_info["freq_start"]
             info["stop_freq"][file] = file_info["freq_stop"]
+            arr = np.loadtxt(file, comments=comments, delimiter=delimiter).T
+            try:
+                if file_info["options"]["unit"] == "db_deg":
+                    arr[1, :], arr[2, :] = convert_magphase_to_complex(
+                        arr[1, :], arr[2, :], deg=True
+                    )
+            except KeyError:
+                continue
+            data[file] = [arr]
         return data, info
 
     def get_data(
@@ -1032,26 +1100,38 @@ class TXTData:
                 )
             return output
 
-    def convert_complex_to_dB(self, deg: bool = False) -> None:
+    def convert_complex_to_magphase(self, deg: bool = False) -> None:
         """
-        Converts the Dataset's data from complex to power in dB.
+        Converts the Dataset's data from complex to magnitude and phase.
+
+        Parameters
+        ----------
+        deg : bool
+            If ``True`` the phase is returned in degrees, else in radians.
+            Defaults to ``False``.
         """
+        if self.format == "magphase":
+            return
         files = self._sweep_info_files + self._standalone_files
         for file in files:
             for arr in self.data[file]:
-                arr[1, :], arr[2, :] = convert_complex_to_dB(
+                arr[1, :], arr[2, :] = convert_complex_to_magphase(
                     arr[1, :], arr[2, :], deg=deg
                 )
+        self.format = "magphase"
 
-    def convert_magang_to_complex(self) -> None:
+    def convert_magphase_to_complex(self) -> None:
         """
-        Converts the Dataset's data from magnitude and angle to complex.
+        Converts the Dataset's data from magnitude and phase to complex.
         """
+        if self.format == "complex":
+            return
         files = self._sweep_info_files + self._standalone_files
         for file in files:
             for arr in self.data[file]:
-                complex = convert_magang_to_complex(arr)
+                complex = convert_magphase_to_complex(arr)
                 arr[1, :], arr[2, :] = np.real(complex), np.imag(complex)
+        self.format = "complex"
 
     def _parse_parameters(self, file_path: str) -> dict:
         """

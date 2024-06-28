@@ -2,10 +2,13 @@
 .vscode
 poetry.lock
 *.py
+*.ipynb
 __pycache__
-Images
-Fit results
+Image*
+Fit result*
 .pytest_cache
+TODO.md
+complete_dataset_print.txt
 
 !resonatoranalysis/*.py
 !unit_testing/*.py
