@@ -2,8 +2,10 @@ import time
 import easygui as eg
 import numpy as np
 
+from numpy.typing import NDArray
 
-def choice(title=None, msg=None):
+
+def choice(title: str = None, msg: str = None) -> bool:
     """
     Function that opens a choice box for the user to choose between yes or no.
     Returns True if yes, False if no.
@@ -19,7 +21,7 @@ def choice(title=None, msg=None):
     return user_choice
 
 
-def strtime(s):
+def strtime(s: str) -> float:
     """
     Converts the string from time.struct_time that MeaVis outputs in the hdf5 metadata to an
     understandable format.
@@ -73,40 +75,31 @@ def strtime(s):
     return time.mktime((year, month, mday, hour, mins, sec, wday, yday, dst))
 
 
-def convert_magang_to_complex(data, deg=False, dBm=False):
+def convert_magphase_to_complex(
+    mag: NDArray, phase: NDArray, deg: bool = False, dBm: bool = False
+) -> NDArray:
     """
-    Converts a numpy array that has a magnitude array and an angle array to
-    an array of complex values.
+    Converts magnitude and phase data into real and imaginary.
 
     Parameters
     ----------
-    data : numpy.array
-        Raw data array to convert.
+    mag : NDArray
+        Magnitude array.
+    phase : NDArray
+        Phase array
     deg : bool, optional
-        If data angle array is in degrees. The default is False.
+        Set to ``True`` if the phase is in degrees. Defaults to ``False``.
     dBm : bool, optional
-        If data magnitude array is in dBm. The default is False.
-
-    Returns
-    -------
-    np.array(complex_values)
-
+        Set to ``True`` if the magnitude is in dBm. Defaults to ``False``.
     """
-    mag = data[1]
-
     if deg:
-        ang = np.deg2rad(data[2])
-
-    else:
-        ang = data[2]
-
+        phase = np.deg2rad(phase)
     if dBm:
-        s21_complex = 10 ** (mag / 20) * np.exp(1j * ang)
-
+        s21_complex = 10 ** (mag / 20) * np.exp(1j * phase)
     else:
-        s21_complex = mag * np.exp(1j * ang)
+        s21_complex = mag * np.exp(1j * phase)
 
-    return s21_complex
+    return s21_complex.real, s21_complex.imag
 
 
 def convert_magang_to_dB(data, deg=False, dBm=False):
@@ -145,24 +138,20 @@ def convert_magang_to_dB(data, deg=False, dBm=False):
     return s21
 
 
-def convert_complex_to_dB(real, imag, deg=False):
+def convert_complex_to_magphase(
+    real: NDArray, imag: NDArray, deg: bool = False
+) -> NDArray:
     """
-    Converts a numpy array that has a magnitude array and an angle array to
-    an array of power values in dBm.
+    Converts real and imaginary data into magnitude (dB) and phase.
 
     Parameters
     ----------
-    real : numpy.array
-        Raw data array of real values to convert.
-    imag : numpy.array
-        Raw data array of imaginary values to convert.
+    real : NDArray
+        Real data array.
+    imag : NDArray
+        Imaginary data array.
     deg : bool, optional
-        If you want the phase to be returned in degrees. The default is False.
-
-    Returns
-    -------
-    magnitude_array, phase_array
-
+        If ``True`` the phase is returned in degrees. Defaults to ``False``.
     """
 
     phase = np.angle(real + 1j * imag, deg=deg)
