@@ -3,17 +3,25 @@ import lmfit
 from pathlib import Path
 import numpy as np
 from resonator import background, shunt, reflection
+from numpy.typing import ArrayLike, NDArray
 
 from .dataset import Dataset
-from .util import convert_complex_to_dB, convert_magang_to_complex, convert_magang_to_dB
+from .util import convert_complex_to_dB, convert_magang_to_complex, choice
 from .analysis import dict_filler, plot_fit, lst_to_arrays
-from .file_handler import writer
 
 
 class ResonatorFitter:
+    """
+    Resonator fitting object
+
+    Parameters
+    ----------
+    dataset : Dataset
+        Dataset of the data to fit.
+    """
+
     def __init__(self, dataset: Dataset):
         self.dataset = dataset
-        self._data = self.dataset.data
 
     def fit_resonator(
         self,
@@ -33,18 +41,17 @@ class ResonatorFitter:
         nodialog=False,
     ):
         """
-
+        Fitting specified resonator data.
 
         Parameters
         ----------
-        datalist : list
-            List of data arrays to analyse.
-        filelist : list
-            List of all filenames of datafiles.
+        file_index : int | list[int], optional
+            Index or list of indices (as displayed in the Dataset table) of files to
+            get data from. Defaults to ``None``.
+        power : int | list[int], optional
+            If specified, will fetch data for those power values. Defaults to ``None``.
         basepath : str
             Path to the folder of all data and Images, Fit results and Codes folders.
-        powers : np.array
-            Powers at which resonances are observed.
         f_r : int, optional
             Value of resonance frequency, adds to fit parameters. The default is None.
         couploss : int, optional
@@ -185,7 +192,7 @@ class ResonatorFitter:
             if write:
                 a = str(np.mean(freq / 1e9))[:5].replace(".", "_")
                 power_tag = powers[0][i] if len(powers.shape) > 1 else powers[i]
-                writer(
+                self._write_fit(
                     dictio,
                     os.path.join(basepath, "Fit results"),
                     name=f"{a}GHz_{power_tag}_dBm",
@@ -222,9 +229,9 @@ class ResonatorFitter:
             Fit method to be used, can be "reflection", "shunt" or . The default is "shunt".
         bg : class-like object, optional
             Background model from resonator library. The default is background.MagnitudePhaseDelay().
-        coupe : list, optional
+        cut : list, optional
             List describing where data wants to be cut for analysis [start, end]. All data is fitted
-            but the corresponding area will be fitted separately.The default is [].
+            but the corresponding area will be fitted separately. The default is ``None``.
 
         Returns
         -------
@@ -325,3 +332,32 @@ class ResonatorFitter:
                         )
                     )
         return tag
+
+    def _write_fit(
+        self, data: ArrayLike, path: str, filename: str, nodialog: bool = True
+    ) -> None:
+        """
+        Utility function to write the fit results to txt files.
+        """
+        full_path = os.path.join(path, filename + "_results.txt")
+
+        if os.path.exists(full_path) and not nodialog:
+            decision = choice(
+                "Overwrite warning", "Text file already exists, overwrite?"
+            )
+
+            if not decision:
+                return
+
+        with open(full_path, "w") as f:
+            f.write(
+                filename
+                + "\n\n"
+                + "------------------------------------------"
+                + "\n\n"
+            )
+
+            for key, value in data.items():
+                f.write(str(key) + " : " + str(value) + "\n\n")
+
+            f.close()
