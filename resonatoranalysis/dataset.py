@@ -3,7 +3,7 @@ import numpy as np
 import h5py
 import re
 
-from typing import Optional, Union
+from typing import Optional, Union, Self
 from os import PathLike
 from glob import glob
 from pathlib import Path
@@ -331,25 +331,31 @@ class Dataset:
     def __str__(self) -> None:
         return self._data_container.__str__()
 
-    def get_data(
-        self,
-        file_index: Optional[int | list[int]] = None,
-        power: Optional[float | list[float]] = None,
-    ) -> dict | ArrayLike:
+    def _is_empty(self) -> bool:
         """
-        Extracts either all data or, if indices are specified, a part of the data.
+        Returns ``True`` if the Dataset contains no data, ``False`` otherwise.
+        """
+        return self._data_container._is_empty()
+
+    def slice(
+        self,
+        file_index: int | list[int] = [],
+        power: float | list[float] = [],
+    ) -> Self:
+        """
+        Extracts a slice of the Dataset as a new Dataset.
 
         Parameters
         ----------
         file_index : int | list[int], optional
             Index or list of indices (as displayed in the Dataset table) of files to
-            get data from. Defaults to ``None``.
+            get data from. Defaults to ``[]``.
         power_index : int | list[int], optional
-            If specified, will fetch data for those power values. Defaults to ``None``.
+            If specified, will fetch data for those power values. Defaults to ``[]``.
         """
         if file_index is None and power is None:
-            return self.data
-        return self._data_container.get_data(file_index=file_index, power=power)
+            return self
+        return self._data_container.slice(file_index=file_index, power=power)
 
     def convert_magphase_to_complex(self) -> None:
         """
@@ -419,10 +425,14 @@ class HDF5Data:
             for key in self.files
         }
         self.cryostat_info = {key: info[key]["temps"] for key in self.files}
-        self.start_time = {key: info[key]["temps"]["Started"] for key in self.files}
+        self.start_time = {
+            key: strtime(info[key]["temps"]["Started"]) for key in self.files
+        }
         self.end_time = {
             key: (
-                info[key]["temps"]["Ended"] if "Ended" in info[key]["temps"] else None
+                strtime(info[key]["temps"]["Ended"])
+                if "Ended" in info[key]["temps"]
+                else None
             )
             for key in self.files
         }
@@ -442,8 +452,8 @@ class HDF5Data:
         Customized printing function.
         """
         output = "Files :\n"
-        for i, file in enumerate(self.files):
-            output += f"  {i+1}. {file}\n"
+        for k, v in self._file_index_dict.items():
+            output += f"  {k}. {v}\n"
         output += "File infos :\n"
         table = self._make_table_array()
         headers = [
@@ -457,15 +467,18 @@ class HDF5Data:
         output += tabulate(table, headers)
         return output
 
+    def _is_empty(self) -> bool:
+        return self.data == {}
+
     def _make_table_array(self) -> NDArray:
         """
         Utilitary function used to generate the table for the customized
         printing function.
         """
-        file_no_arr = np.array([i + 1 for i in range(len(self.files))])
+        file_no_arr = np.array([int(i) for i in self._file_index_dict.keys()])
         start_arr = np.array(
             [
-                datetime.fromtimestamp(strtime(self.start_time[file])).strftime(
+                datetime.fromtimestamp(self.start_time[file]).strftime(
                     "%Y-%m-%d %H:%M:%S"
                 )
                 for file in self.files
@@ -587,129 +600,101 @@ class HDF5Data:
             )
         return powers
 
-    def get_data(
-        self, file_index: int | list[int] = None, power: int | list[int] = None
-    ) -> ArrayLike:
+    def slice(
+        self,
+        file_index: int | list[int] = [],
+        power: int | list[int] = [],
+    ) -> Self:
         """
-        Extracts either all data or, if indices are specified, a part of the data.
+        Extracts a slice of the Dataset as a new Dataset.
         """
-        output = {}
-        if file_index is not None and power is None:
+        if not isinstance(file_index, list):
+            file_index = [file_index]
+        if not isinstance(power, list):
+            power = [power]
+        slice = deepcopy(self)
+        if file_index != []:
             try:
-                if isinstance(file_index, list):
-                    for fi in file_index:
-                        self._file_index_dict[str(fi)]
-                else:
-                    self._file_index_dict[str(file_index)]
-            except KeyError as err:
-                print("Invalid file_index", err)
-                return None
-            if isinstance(file_index, list):
                 for fi in file_index:
-                    output[self._file_index_dict[str(fi)]] = self.data[
-                        self._file_index_dict[str(fi)]
-                    ]
-                return output
-            else:
-                return self.data[self._file_index_dict[str(file_index)]]
-        elif power is not None and file_index is None:
-            for file in self.files:
-                if isinstance(power, list):
-                    file_data_temp = []
-                    for p in power:
-                        try:
-                            file_data_temp.append(
-                                self.data[file][np.where(self.power[file] == p)[0][0]]
-                            )
-                        except IndexError:
-                            continue
-                    if len(file_data_temp) > 0:
-                        output[file] = file_data_temp
-                else:
-                    try:
-                        output[file] = self.data[file][
-                            np.where(self.power[file] == power)[0][0]
-                        ]
-                    except IndexError:
-                        continue
-            if output == {}:
-                raise ValueError(f"No power value(s) {power} in any file")
-            return output
+                    self._file_index_dict[str(fi)]
+            except KeyError as err:
+                raise IndexError(f"Invalid file_index: {err}")
+            inverse_files = [
+                self._file_index_dict[i]
+                for i in self._file_index_dict.keys()
+                if int(i) not in file_index
+            ]
+            inverted_file_dict = {
+                val: key for key, val in self._file_index_dict.items()
+            }
         else:
-            try:
-                if isinstance(file_index, list):
-                    for fi in file_index:
-                        self._file_index_dict[str(fi)]
-                else:
-                    self._file_index_dict[str(file_index)]
-            except KeyError as err:
-                print("Invalid file_index", err)
-                return None
-            if isinstance(file_index, list):
-                for fi in file_index:
-                    if isinstance(power, list):
-                        file_data_temp = []
-                        for p in power:
-                            try:
-                                file_data_temp.append(
-                                    self.data[self._file_index_dict[str(fi)]][
-                                        np.where(
-                                            self.power[self._file_index_dict[str(fi)]]
-                                            == p
-                                        )[0][0]
-                                    ]
-                                )
-                            except IndexError:
-                                continue
-                        if len(file_data_temp) > 0:
-                            output[self._file_index_dict[str(fi)]] = file_data_temp
-                    else:
-                        try:
-                            output[self._file_index_dict[str(fi)]] = self.data[
-                                self._file_index_dict[str(fi)]
-                            ][
-                                np.where(
-                                    self.power[self._file_index_dict[str(fi)]] == power
-                                )[0][0]
-                            ]
-                        except IndexError:
-                            continue
+            inverse_files = []
+        for file in self.files:
+            to_remove = (
+                list(self.power[file])
+                if np.squeeze(self.power[file]).shape == ()
+                else list(np.squeeze(self.power[file]))
+            )
+            any_found = False
+            if power != []:
+                for p in power:
+                    if p in self.power[file]:
+                        to_remove.remove(p)
+                        any_found = True
             else:
-                if isinstance(power, list):
-                    file_data_temp = []
-                    for p in power:
-                        try:
-                            file_data_temp.append(
-                                self.data[self._file_index_dict[str(file_index)]][
-                                    np.where(
-                                        self.power[
-                                            self._file_index_dict[str(file_index)]
-                                        ]
-                                        == p
-                                    )[0][0]
-                                ]
-                            )
-                        except IndexError:
-                            continue
-                    if len(file_data_temp) > 0:
-                        output[self._file_index_dict[str(file_index)]] = file_data_temp
-                else:
-                    try:
-                        output[self._file_index_dict[str(file_index)]] = self.data[
-                            self._file_index_dict[str(file_index)]
-                        ][
-                            np.where(
-                                self.power[self._file_index_dict[str(file_index)]]
-                                == power
-                            )[0][0]
-                        ]
-                    except IndexError:
-                        pass
-            if output == {}:
-                raise ValueError(
-                    f"No power value(s) {power} in any of the specified file"
-                )
-            return output
+                to_remove = []
+                any_found = True
+            if not any_found or file in inverse_files:
+                slice.files.remove(file)
+                slice._file_index_dict.pop(inverted_file_dict[file])
+                slice.data.pop(file)
+                slice.vna_average.pop(file)
+                slice.vna_bandwidth.pop(file)
+                slice.vna_power.pop(file)
+                slice.variable_attenuator.pop(file)
+                slice.cryostat_info.pop(file)
+                slice.start_time.pop(file)
+                slice.end_time.pop(file)
+                slice.mixing_temp.pop(file)
+                slice.power.pop(file)
+                slice.frequency_range.pop(file)
+            else:
+                idx_to_remove = []
+                for p in sorted(to_remove, reverse=True):
+                    idx = np.where(np.squeeze(self.power[file]) == p)[0][0]
+                    slice.data[file].pop(idx)
+                    idx_to_remove.append(idx)
+                try:
+                    slice.vna_average[file] = np.delete(
+                        slice.vna_average[file], idx_to_remove
+                    )
+                except IndexError:
+                    pass
+                try:
+                    slice.vna_bandwidth[file] = np.delete(
+                        slice.vna_bandwidth[file], idx_to_remove
+                    )
+                except IndexError:
+                    pass
+                try:
+                    slice.vna_power[file] = np.delete(
+                        slice.vna_power[file], idx_to_remove
+                    )
+                except IndexError:
+                    pass
+                try:
+                    slice.variable_attenuator[file] = np.delete(
+                        slice.variable_attenuator[file], idx_to_remove
+                    )
+                except IndexError:
+                    pass
+                try:
+                    slice.power[file] = np.delete(slice.power[file], idx_to_remove)
+                except IndexError:
+                    pass
+        if slice._is_empty():
+            raise ValueError(f"No file contains the specified power values {power}")
+        return slice
 
     def convert_complex_to_magphase(self, deg: bool = False) -> None:
         """
@@ -817,16 +802,16 @@ class TXTData:
         }
         self._file_index_dict = {str(i + 1): file for i, file in enumerate(files)}
 
+    def _is_empty(self) -> bool:
+        return self.data == {}
+
     def __str__(self) -> str:
         """
         Customized printing function.
         """
         output = "Files :\n"
-        for i, file in enumerate(self._sweep_info_files):
-            output += f"  {i+1}. {file}\n"
-        sifnbr = len(self._sweep_info_files)
-        for i, file in enumerate(self._standalone_files):
-            output += f"  {i+sifnbr+1}. {file}\n"
+        for k, v in self._file_index_dict.items():
+            output += f"  {k}. {v}\n"
         output += "File infos :\n"
         table = self._make_table_array()
         headers = [
@@ -845,7 +830,7 @@ class TXTData:
         printing function.
         """
         files = self._sweep_info_files + self._standalone_files
-        file_no_arr = np.array([i + 1 for i in range(len(files))])
+        file_no_arr = np.array([int(i) for i in self._file_index_dict.keys()])
         start_arr = np.array(
             [
                 (
@@ -970,135 +955,101 @@ class TXTData:
                         arr[1, :], arr[2, :], deg=True
                     )
             except KeyError:
-                continue
+                pass
             data[file] = [arr]
         return data, info
 
-    def get_data(
-        self, file_index: int | list[int] = None, power: int | list[int] = None
-    ) -> ArrayLike:
+    def slice(
+        self,
+        file_index: int | list[int] = [],
+        power: int | list[int] = [],
+    ) -> Self:
         """
-        Extracts either all data or, if indices are specified, a part of the data.
+        Extracts a slice of the Dataset as a new Dataset.
         """
-        output = {}
+        if not isinstance(file_index, list):
+            file_index = [file_index]
+        if not isinstance(power, list):
+            power = [power]
         files = self._sweep_info_files + self._standalone_files
-        if file_index is not None and power is None:
+        slice = deepcopy(self)
+        if file_index != []:
             try:
-                if isinstance(file_index, list):
-                    for fi in file_index:
-                        self._file_index_dict[str(fi)]
-                else:
-                    self._file_index_dict[str(file_index)]
-            except KeyError as err:
-                print("Invalid file_index", err)
-                return None
-            if isinstance(file_index, list):
                 for fi in file_index:
-                    output[self._file_index_dict[str(fi)]] = self.data[
-                        self._file_index_dict[str(fi)]
-                    ]
-                return output
-            else:
-                return self.data[self._file_index_dict[str(file_index)]]
-        elif power is not None and file_index is None:
-            for file in files:
-                if isinstance(power, list):
-                    file_data_temp = []
-                    for p in power:
-                        try:
-                            file_data_temp.append(
-                                self.data[file][np.where(self.power[file] == p)[0][0]]
-                            )
-                        except IndexError as err:
-                            print(err)
-                            continue
-                    if len(file_data_temp) > 0:
-                        output[file] = file_data_temp
-                else:
-                    try:
-                        output[file] = self.data[file][
-                            np.where(self.power[file] == power)[0][0]
-                        ]
-                    except IndexError:
-                        continue
-            if output == {}:
-                raise ValueError(f"No power value(s) {power} in any file")
-            return output
+                    self._file_index_dict[str(fi)]
+            except KeyError as err:
+                raise IndexError(f"Invalid file_index: {err}")
+            inverse_files = [
+                self._file_index_dict[i]
+                for i in self._file_index_dict.keys()
+                if int(i) not in file_index
+            ]
         else:
-            try:
-                if isinstance(file_index, list):
-                    for fi in file_index:
-                        self._file_index_dict[str(fi)]
-                else:
-                    self._file_index_dict[str(file_index)]
-            except KeyError as err:
-                print("Invalid file_index", err)
-                return None
-            if isinstance(file_index, list):
-                for fi in file_index:
-                    if isinstance(power, list):
-                        file_data_temp = []
-                        for p in power:
-                            try:
-                                file_data_temp.append(
-                                    self.data[self._file_index_dict[str(fi)]][
-                                        np.where(
-                                            self.power[self._file_index_dict[str(fi)]]
-                                            == p
-                                        )[0][0]
-                                    ]
-                                )
-                            except IndexError:
-                                continue
-                        if len(file_data_temp) > 0:
-                            output[self._file_index_dict[str(fi)]] = file_data_temp
-                    else:
-                        try:
-                            output[self._file_index_dict[str(fi)]] = self.data[
-                                self._file_index_dict[str(fi)]
-                            ][
-                                np.where(
-                                    self.power[self._file_index_dict[str(fi)]] == power
-                                )[0][0]
-                            ]
-                        except IndexError:
-                            continue
-            else:
-                if isinstance(power, list):
-                    file_data_temp = []
-                    for p in power:
-                        try:
-                            file_data_temp.append(
-                                self.data[self._file_index_dict[str(file_index)]][
-                                    np.where(
-                                        self.power[
-                                            self._file_index_dict[str(file_index)]
-                                        ]
-                                        == p
-                                    )[0][0]
-                                ]
-                            )
-                        except IndexError:
-                            continue
-                    if len(file_data_temp) > 0:
-                        output[self._file_index_dict[str(file_index)]] = file_data_temp
-                else:
-                    try:
-                        output[self._file_index_dict[str(file_index)]] = self.data[
-                            self._file_index_dict[str(file_index)]
-                        ][
-                            np.where(
-                                self.power[self._file_index_dict[str(file_index)]]
-                                == power
-                            )[0][0]
-                        ]
-                    except IndexError:
-                        pass
-            if output == {}:
-                raise ValueError(
-                    f"No power value(s) {power} in any of the specified file"
+            inverse_files = []
+        inverted_file_dict = {val: key for key, val in self._file_index_dict.items()}
+        for file in files:
+            any_found = False
+            if self.power[file] is not None:
+                to_remove = (
+                    list(self.power[file])
+                    if np.squeeze(self.power[file]).shape == ()
+                    else list(np.squeeze(self.power[file]))
                 )
-            return output
+                if power != []:
+                    for p in power:
+                        if p in self.power[file]:
+                            to_remove.remove(p)
+                            any_found = True
+                else:
+                    to_remove = []
+                    any_found = True
+            elif self.power[file] is None and power == []:
+                any_found = True
+            if not any_found or file in inverse_files:
+                slice.files = [f for f in slice.files if file[:-4] not in f]
+                try:
+                    slice._sweep_info_files.remove(file)
+                except:
+                    slice._standalone_files.remove(file)
+                slice._file_index_dict.pop(inverted_file_dict[file])
+                slice.data.pop(file)
+                slice.vna_average.pop(file)
+                slice.vna_bandwidth.pop(file)
+                slice.vna_power.pop(file)
+                slice.start_time.pop(file)
+                slice.power.pop(file)
+                slice.frequency_range.pop(file)
+            else:
+                idx_to_remove = []
+                for p in sorted(to_remove, reverse=True):
+                    idx = np.where(np.squeeze(self.power[file]) == p)[0][0]
+                    slice.data[file].pop(idx)
+                    idx_to_remove.append(idx)
+                try:
+                    slice.vna_average[file] = np.delete(
+                        slice.vna_average[file], idx_to_remove
+                    )
+                except IndexError:
+                    pass
+                try:
+                    slice.vna_bandwidth[file] = np.delete(
+                        slice.vna_bandwidth[file], idx_to_remove
+                    )
+                except IndexError:
+                    pass
+                try:
+                    slice.vna_power[file] = np.delete(
+                        slice.vna_power[file], idx_to_remove
+                    )
+                except IndexError:
+                    pass
+                try:
+                    slice.power[file] = np.delete(slice.power[file], idx_to_remove)
+                except IndexError:
+                    pass
+        if slice._is_empty():
+            raise ValueError(f"No file contains the specified power values {power}")
+        return slice
 
     def convert_complex_to_magphase(self, deg: bool = False) -> None:
         """
