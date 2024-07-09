@@ -11,7 +11,7 @@ from pathlib import Path
 from resonator import background, shunt, reflection, see
 
 from .file_handler import writer
-from .util import choice, convert_magang_to_complex, convert_complex_to_dB
+from .util import choice, convert_magphase_to_complex, convert_complex_to_magphase
 
 
 def resonator_fitter(
@@ -244,17 +244,21 @@ def fit_resonator_test(
             s21_real = datalist[i][1]
             s21_imag = datalist[i][2]
             s21_complex = s21_real + 1j * s21_imag
-            mag, phase = convert_complex_to_dB(s21_real, s21_imag, deg=True)
+            mag, phase = convert_complex_to_magphase(s21_real, s21_imag, deg=True)
         elif len(filelist) == 1:
             freq = datalist[0]
-            s21_complex = convert_magang_to_complex(datalist, deg=True, dBm=True)
+            s21_complex = convert_magphase_to_complex(
+                datalist[1], datalist[2], deg=True, dBm=True
+            )
             mag = datalist[1]
             phase = datalist[2]
         elif len(filelist) > 1:
             freq = datalist[i][0]
             mag = datalist[i][1]
             phase = datalist[i][2]
-            s21_complex = convert_magang_to_complex(datalist[i], deg=True, dBm=True)
+            s21_complex = convert_magphase_to_complex(
+                datalist[i][1], datalist[i][2], deg=True, dBm=True
+            )
         elif len(filelist) == 0:
             raise ValueError("File list given is empty")
         else:
