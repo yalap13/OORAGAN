@@ -1,43 +1,54 @@
 # ResonatorAnalysis
 
-This code is my adaptation of Gabriel Ouellet's code to analyse resonator measurement data also available on the JosePh Gitlab.
+ResonatorAnalysis is a library developped by me and other members of the Josephson Photonics and QIQSS research groups of the Université de Sherbrooke to fully process data from resonator measurements.
+
+## Note
+
+This library has been made to work with file formats **specific to the measurement setups used at the Université de Sherbrooke**. **Also**, this repository is a mirror of the main development repository. **No merge requests will be merged on this repository as of now.**
 
 ## Installation
 
-This code is strctured as a library and I recommand installing it using Poetry like so
+This code is strctured as a library so you can install it using
 ```
-poetry add git+https://gitlab.gegi.usherbrooke.ca/joseph/yannick/ResonatorAnalysis.git
+pip install git+https://github.com/yalap13/ResonatorAnalysis.git
 ```
-or by cloning the project
-```
-git clone https://gitlab.gegi.usherbrooke.ca/joseph/yannick/ResonatorAnalysis.git
-```
-and then installing the project with poetry
-```
-poetry install
-```
-For instructions on how to install Poetry, see [their website](https://python-poetry.org/docs/).
+
+**Note** : If you are using anaconda or any other package manager, you can generally just replace the ``pip install`` with the command for installing packages for your package manager.
 
 ## Usage
 
 Here is a simple use case :
 ```python
-from resonatoranalysis import Dataset, fit_resonator_test
-import matplotlib.pyplot as plt
+from resonatoranalysis import Dataset
 
 
 path = r"C:/path/to/your/data/folder"
 dataset = Dataset(path, attenuation_cryostat=-80)
-files = dataset.files
 
-for file in files:
-    fit = fit_resonateur_test(
-        dataset.data[file],
-        list(file),
-        dataset.power[file],
-        savepic=True,
-        write=True
-    )
-    plt.close()
+# You can get a slice of this Dataset using the following
+slice = dataset.slice(file_index=[1, 2], power=[-80, -100])
+print(slice)
 ```
-It is required to manually create a folder "Images" and a folder "Fit results" to use the options `savepic=True` and `write=True`. 
+```bash
+Found 4 files
+Files :
+  1. path/to/data/folder/file_1.hdf5
+  2. path/to/data/folder/file_2.hdf5
+  3. path/to/data/folder/file_3.hdf5
+  4. path/to/data/folder/file_4.hdf5
+File infos :
+  File no.  Start time             Start freq. (GHz)    Stop freq. (GHz)  Power (dB)                             Mixing temp. (K)
+----------  -------------------  -------------------  ------------------  -----------------------------------  ------------------
+         1  2023-08-29 22:14:04              5.35653             5.36653  -100.0, -90.0, -80.0, -70.0                   0.0154368
+         2  2023-08-31 01:48:44              4.89003             4.89053  -100.0, -90.0, -80.0, -70.0                   0.0136144
+         3  2023-10-02 09:12:53              2                  18        -110.0, -100.0, -90.0, -80.0, -70.0
+         4  2023-11-05 03:04:30              5.95844             5.96844  -110.0, -100.0, -90.0, -80.0                  0.0142297
+Files :
+  1. path/to/data/folder/file_1.hdf5
+  2. path/to/data/folder/file_2.hdf5
+File infos :
+  File no.  Start time             Start freq. (GHz)    Stop freq. (GHz)  Power (dB)     Mixing temp. (K)
+----------  -------------------  -------------------  ------------------  -------------  ------------------
+         1  2023-08-29 22:14:04              5.35653             5.36653  -100.0, -80.0           0.0154368
+         2  2023-08-31 01:48:44              4.89003             4.89053  -100.0, -80.0           0.0136144
+```
