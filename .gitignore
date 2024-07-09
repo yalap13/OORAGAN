@@ -8,7 +8,7 @@ Image*
 Fit result*
 .pytest_cache
 TODO.md
-complete_dataset_print.txt
+*.txt
 
 !resonatoranalysis/*.py
 !unit_testing/*.py
