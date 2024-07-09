@@ -624,11 +624,9 @@ class HDF5Data:
                 for i in self._file_index_dict.keys()
                 if int(i) not in file_index
             ]
-            inverted_file_dict = {
-                val: key for key, val in self._file_index_dict.items()
-            }
         else:
             inverse_files = []
+        inverted_file_dict = {val: key for key, val in self._file_index_dict.items()}
         for file in self.files:
             to_remove = (
                 list(self.power[file])
