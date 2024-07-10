@@ -22,3 +22,4 @@ from .util import (
 )
 from .dataset import Dataset
 from .resonator_attribution import Resonator, ResonatorAttribution
+from .resonator_fitter import ResonatorFitter

@@ -355,7 +355,11 @@ class Dataset:
         """
         if file_index is None and power is None:
             return self
-        return self._data_container.slice(file_index=file_index, power=power)
+        new_dataset = deepcopy(self)
+        new_dataset._data_container = self._data_container.slice(
+            file_index=file_index, power=power
+        )
+        return new_dataset
 
     def convert_magphase_to_complex(self) -> None:
         """
@@ -624,11 +628,9 @@ class HDF5Data:
                 for i in self._file_index_dict.keys()
                 if int(i) not in file_index
             ]
-            inverted_file_dict = {
-                val: key for key, val in self._file_index_dict.items()
-            }
         else:
             inverse_files = []
+        inverted_file_dict = {val: key for key, val in self._file_index_dict.items()}
         for file in self.files:
             to_remove = (
                 list(self.power[file])
