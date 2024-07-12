@@ -355,7 +355,11 @@ class Dataset:
         """
         if file_index is None and power is None:
             return self
-        return self._data_container.slice(file_index=file_index, power=power)
+        new_dataset = deepcopy(self)
+        new_dataset._data_container = self._data_container.slice(
+            file_index=file_index, power=power
+        )
+        return new_dataset
 
     def convert_magphase_to_complex(self) -> None:
         """
@@ -763,9 +767,9 @@ class TXTData:
         delimiter: str,
     ) -> None:
         self.format = format
-        self.files = files_list
+        self._all_files = files_list
         self._sweep_info_files = []
-        for file in self.files:
+        for file in self._all_files:
             if not "readval" in file:
                 with open(file, "r") as f:
                     for line in f:
@@ -779,16 +783,16 @@ class TXTData:
         self.data, info = self._get_data_info_from_txt(
             comments=comments, delimiter=delimiter
         )
+        self.files = self._sweep_info_files + self._standalone_files
         if self.format == "magphase":
             self.convert_complex_to_magphase()
         self.vna_average = info["vna_average"]
         self.vna_bandwidth = info["vna_bandwidth"]
         self.vna_power = info["vna_power"]
         self.start_time = info["start_time"]
-        files = self._sweep_info_files + self._standalone_files
         self.frequency_range = {
             key: {"start": info["start_freq"][key], "stop": info["stop_freq"][key]}
-            for key in files
+            for key in self.files
         }
         self.power = {
             key: (
@@ -796,9 +800,9 @@ class TXTData:
                 if info["vna_power"][key] is not None
                 else None
             )
-            for key in files
+            for key in self.files
         }
-        self._file_index_dict = {str(i + 1): file for i, file in enumerate(files)}
+        self._file_index_dict = {str(i + 1): file for i, file in enumerate(self.files)}
 
     def _is_empty(self) -> bool:
         return self.data == {}
@@ -827,7 +831,6 @@ class TXTData:
         Utilitary function used to generate the table for the customized
         printing function.
         """
-        files = self._sweep_info_files + self._standalone_files
         file_no_arr = np.array([int(i) for i in self._file_index_dict.keys()])
         start_arr = np.array(
             [
@@ -838,13 +841,15 @@ class TXTData:
                     if self.start_time[file] is not None
                     else None
                 )
-                for file in files
+                for file in self.files
             ]
         )
         freq_start_arr = np.array(
-            [self.frequency_range[file]["start"] for file in files]
+            [self.frequency_range[file]["start"] for file in self.files]
         )
-        freq_stop_arr = np.array([self.frequency_range[file]["stop"] for file in files])
+        freq_stop_arr = np.array(
+            [self.frequency_range[file]["stop"] for file in self.files]
+        )
         power_arr = np.array(
             [
                 (
@@ -852,7 +857,7 @@ class TXTData:
                     if self.power[file] is not None
                     else None
                 )
-                for file in files
+                for file in self.files
             ]
         )
         table = np.array(
@@ -880,11 +885,13 @@ class TXTData:
             "start_freq": {},
             "stop_freq": {},
         }
-        standalone_files = deepcopy(self.files)
+        standalone_files = deepcopy(self._all_files)
         for file in self._sweep_info_files:
             standalone_files.remove(file)
             sweep_files = [
-                f for f in self.files if file.rstrip(".txt") in f and "readval" in f
+                f
+                for f in self._all_files
+                if file.rstrip(".txt") in f and "readval" in f
             ]
             power_indices_present = []
             for sf in sweep_files:
@@ -969,7 +976,6 @@ class TXTData:
             file_index = [file_index]
         if not isinstance(power, list):
             power = [power]
-        files = self._sweep_info_files + self._standalone_files
         slice = deepcopy(self)
         if file_index != []:
             try:
@@ -985,7 +991,7 @@ class TXTData:
         else:
             inverse_files = []
         inverted_file_dict = {val: key for key, val in self._file_index_dict.items()}
-        for file in files:
+        for file in self.files:
             any_found = False
             if self.power[file] is not None:
                 to_remove = (
@@ -1042,7 +1048,11 @@ class TXTData:
                 except IndexError:
                     pass
                 try:
-                    slice.power[file] = np.delete(slice.power[file], idx_to_remove)
+                    slice.power[file] = (
+                        np.delete(slice.power[file], idx_to_remove)
+                        if slice.power[file] is not None
+                        else None
+                    )
                 except IndexError:
                     pass
         if slice._is_empty():
@@ -1075,8 +1085,7 @@ class TXTData:
         """
         if self.format == "complex":
             return
-        files = self._sweep_info_files + self._standalone_files
-        for file in files:
+        for file in self.files:
             for arr in self.data[file]:
                 complex = convert_magphase_to_complex(arr)
                 arr[1, :], arr[2, :] = np.real(complex), np.imag(complex)
