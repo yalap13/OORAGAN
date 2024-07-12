@@ -1,4 +1,5 @@
 import os
+import sys
 import lmfit
 import numpy as np
 
@@ -233,7 +234,15 @@ class ResonatorFitter:
         else:
             raise TypeError("Unknown Dataset type")
 
+        print("Fitting progress:")
+        for file in files:
+            print(file + "  pending...")
+        sys.stdout.write(f"\033[{len(files)}A")
+
         for i, file_power_points in enumerate(power_points):
+            failed = False
+            sys.stdout.write("\33[2K")
+            print(files[i] + "  \033[33mfitting...\033[00m", end="\r")
             data_temp = {
                 "Q_c": [],
                 "Q_c_err": [],
@@ -301,9 +310,9 @@ class ResonatorFitter:
                         data_temp["photon_number"].append(photon)
                         break
                 if data_temp["f_r"] == []:
-                    print(
-                        f"No satisfying fit for file {files[i]} and for power value {p}"
-                    )
+                    failed = True
+                    sys.stdout.write("\33[2K")
+                    print(files[i] + f"  \033[31mFailed for power value {p}\033[00m")
                     continue
                 else:
                     if savepic:
@@ -341,6 +350,11 @@ class ResonatorFitter:
                             filename=f"{a}GHz_{p}_dBm",
                             nodialog=nodialog,
                         )
+            sys.stdout.write("\33[2K")
+            if failed:
+                print(files[i] + f"  \033[33mCompleted with error\033[00m")
+            else:
+                print(files[i] + f"  \033[32mCompleted\033[00m")
             self._fit_results[files[i]] = data_temp
 
     def _resonator_fitter(
