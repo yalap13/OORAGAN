@@ -6,6 +6,7 @@ poetry.lock
 __pycache__
 Image*
 Fit result*
+fit_results
 .pytest_cache
 TODO.md
 *.txt
