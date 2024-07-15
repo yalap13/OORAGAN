@@ -52,3 +52,12 @@ File infos :
          1  2023-08-29 22:14:04              5.35653             5.36653  -100.0, -80.0           0.0154368
          2  2023-08-31 01:48:44              4.89003             4.89053  -100.0, -80.0           0.0136144
 ```
+
+ResonatorAnalysis provides a ResonatorFitter object to fit the data contained in a Dataset. Here is a usage example using the previous example as context :
+```python
+fitter = ra.ResonatorFitter(dataset)
+# Fit only "file_1" and "file_2"
+fitter.fit(file_index=[1, 2], savepic=True, write=True)
+```
+
+Running the above code will fit the data contained in the dataset for the files ``file_1`` and ``file_2``. As you can see, the ``fit`` method has the same arguments as the ``slice`` method (``file_index`` and ``power``). The path where to save the fit results and the plots can be configured with the ``savepath`` argument. By default it creates a "images" folder and a "fit_results" folder in the current working directory. Many other options exist for the ``fit`` method and all of them are detailed in the methods docstring.

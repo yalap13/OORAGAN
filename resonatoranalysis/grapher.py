@@ -1,6 +1,9 @@
+import numpy as np
+import graphinglib as gl
+
 from typing import overload
 
-from .dataset import Dataset
+from .dataset import Dataset, HDF5Data, TXTData
 from .resonator_fitter import ResonatorFitter
 
 
@@ -64,28 +67,103 @@ class ResonatorFitterGrapher:
         self._res_fitter = res_fitter
 
     def plot_Qi_vs_power(self, photon: bool = False):
-        raise NotImplementedError
+        """
+        Plots the internal quality factor as a function of input power or photon number.
+
+        Parameters
+        ----------
+        photon : bool
+            If ``True``, plots as a function of photon number. Defaults to ``False``.
+        """
+        Qi = self._res_fitter.Q_i
+        Qi_err = self._res_fitter.Q_i_err
+        if photon:
+            power = self._res_fitter.photon_number
+        else:
+            power = self._res_fitter.dataset._data_container.power
 
     def plot_Qc_vs_power(self, photon: bool = False):
-        raise NotImplementedError
+        """
+        Plots the coupling quality factor as a function of input power or photon number.
+
+        Parameters
+        ----------
+        photon : bool
+            If ``True``, plots as a function of photon number. Defaults to ``False``.
+        """
+        Qc = self._res_fitter.Q_c
+        Qc_err = self._res_fitter.Q_c_err
+        if photon:
+            power = self._res_fitter.photon_number
+        else:
+            power = self._res_fitter.dataset._data_container.power
 
     def plot_Q_vs_power(self, photon: bool = False):
-        raise NotImplementedError
+        """
+        Plots the total quality factor as a function of input power or photon number.
 
-    def plot_triptique(self):
-        raise NotImplementedError
+        Parameters
+        ----------
+        photon : bool
+            If ``True``, plots as a function of photon number. Defaults to ``False``.
+        """
+        Qt = self._res_fitter.Q_t
+        Qt_err = self._res_fitter.Q_t_err
+        if photon:
+            power = self._res_fitter.photon_number
+        else:
+            power = self._res_fitter.dataset._data_container.power
 
-    def plot_Fshift_vs_power(self, photon: bool = False):
-        raise NotImplementedError
+    def plot_Fshift_vs_power(self, f_expected: dict, photon: bool = False):
+        """
+        Plots the frequency shift as a function of input power or photon number.
+
+        Parameters
+        ----------
+        f_expected : dict
+            Expected resonance frequency for each fitted file in the ResonatorFitter.
+        photon : bool
+            If ``True``, plots as a function of photon number. Defaults to ``False``.
+        """
+        f_fit = self._res_fitter.f_r
+        f_fit_err = self._res_fitter.f_r_err
+        if photon:
+            power = self._res_fitter.photon_number
+        else:
+            power = self._res_fitter.dataset._data_container.power
 
     def plot_Fr_vs_power(self, photon: bool = False):
-        raise NotImplementedError
+        """
+        Plots the fitted resonance frequency as a function of input power
+        or photon number.
+
+        Parameters
+        ----------
+        photon : bool
+            If ``True``, plots as a function of photon number. Defaults to ``False``.
+        """
+        f_fit = self._res_fitter.f_r
+        f_fit_err = self._res_fitter.f_r_err
+        if photon:
+            power = self._res_fitter.photon_number
+        else:
+            power = self._res_fitter.dataset._data_container.power
 
     def plot_internal_loss_vs_power(self, photon: bool = False):
-        raise NotImplementedError
+        """
+        Plots the internal loss as a function of input power or photon number.
 
-    def plot_photon_number_vs_power(self):
-        raise NotImplementedError
+        Parameters
+        ----------
+        photon : bool
+            If ``True``, plots as a function of photon number. Defaults to ``False``.
+        """
+        int_loss = self._res_fitter.L_i
+        int_loss_err = self._res_fitter.L_i_err
+        if photon:
+            power = self._res_fitter.photon_number
+        else:
+            power = self._res_fitter.dataset._data_container.power
 
 
 @overload
