@@ -12,7 +12,10 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 from .dataset import Dataset, HDF5Data, TXTData
-from .util import choice, convert_complex_to_magphase
+from .util import choice, convert_complex_to_magphase, is_interactive
+
+if is_interactive():
+    from IPython.display import display, clear_output
 
 
 class ResonatorFitter:
@@ -144,6 +147,14 @@ class ResonatorFitter:
             for file, values in self._fit_results.items()
         }
 
+    @property
+    def input_power(self) -> dict:
+        """Input power"""
+        return {
+            file: np.array(values["input_power"])
+            for file, values in self._fit_results.items()
+        }
+
     def fit(
         self,
         file_index: int | list[int] = [],
@@ -237,15 +248,27 @@ class ResonatorFitter:
         else:
             raise TypeError("Unknown Dataset type")
 
+        status = {}
         print("Fitting progress:")
         for file in files:
-            print(file + "  pending...")
-        sys.stdout.write(f"\033[{len(files)}A")
+            status[file] = "  pending..."
+            print(file + status[file])
+        if is_interactive():
+            display("")
+        else:
+            sys.stdout.write(f"\033[{len(files)}A")
 
         for i, file_power_points in enumerate(power_points):
-            failed = False
-            sys.stdout.write("\33[2K")
-            print(files[i] + "  \033[33mfitting...\033[00m", end="\r")
+            failed = []
+            status[files[i]] = "  \033[34mfitting...\033[00m"
+            if is_interactive():
+                clear_output(wait=True)
+                for file in files:
+                    print(file + status[file])
+                display("")
+            else:
+                sys.stdout.write("\33[2K")
+                print(files[i] + status[files[i]], end="\r")
             data_temp = {
                 "Q_c": [],
                 "Q_c_err": [],
@@ -262,6 +285,7 @@ class ResonatorFitter:
                 "f_r": [],
                 "f_r_err": [],
                 "photon_number": [],
+                "input_power": [],
             }
             for j, p in enumerate(file_power_points):
                 frequency = data[i][j][0, :]
@@ -311,12 +335,10 @@ class ResonatorFitter:
                         data_temp["f_r"].append(result.f_r)
                         data_temp["f_r_err"].append(result.f_r_error)
                         data_temp["photon_number"].append(photon)
+                        data_temp["input_power"].append(p)
                         break
                 if data_temp["f_r"] == []:
-                    failed = True
-                    sys.stdout.write("\33[2K")
-                    print(files[i] + f"  \033[31mFailed for power value {p}\033[00m")
-                    continue
+                    failed.append(p)
                 else:
                     if savepic:
                         a = str(np.mean(frequency / 1e9))[:5].replace(".", "_")
@@ -353,11 +375,20 @@ class ResonatorFitter:
                             filename=f"{a}GHz_{p}_dBm",
                             nodialog=nodialog,
                         )
-            sys.stdout.write("\33[2K")
-            if failed:
-                print(files[i] + f"  \033[33mCompleted with error\033[00m")
+            if failed != []:
+                status[files[i]] = (
+                    f"  \033[33mCompleted with error\n\33[2K\033[31mFailed for power values {failed}\033[00m"
+                )
             else:
-                print(files[i] + f"  \033[32mCompleted\033[00m")
+                status[files[i]] = "  \033[32mCompleted\033[00m"
+            if is_interactive():
+                clear_output(wait=True)
+                for file in files:
+                    print(file + status[file])
+                display("")
+            else:
+                sys.stdout.write("\33[2K")
+                print(files[i] + status[files[i]])
             self._fit_results[files[i]] = data_temp
 
     def _resonator_fitter(
