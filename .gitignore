@@ -5,6 +5,7 @@ poetry.lock
 *.ipynb
 __pycache__
 Image*
+fit_images
 Fit result*
 fit_results
 .pytest_cache
