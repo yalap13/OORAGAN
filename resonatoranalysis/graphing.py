@@ -1,7 +1,9 @@
+import os
 import numpy as np
 import graphinglib as gl
 
 from typing import overload, Optional, Literal
+from datetime import datetime
 
 from .dataset import Dataset, HDF5Data, TXTData
 from .resonator_fitter import ResonatorFitter
@@ -18,14 +20,6 @@ class DatasetGrapher:
     """
 
     def __init__(self, dataset: Dataset) -> None:
-        """
-        Grapher for a Dataset object containing raw data.
-
-        Parameters
-        ----------
-        dataset : Dataset
-            Dataset containing the data to graph.
-        """
         self._data = dataset.data
         self._power = dataset.power
 
@@ -53,29 +47,42 @@ class ResonatorFitterGrapher:
     ----------
     res_fitter : ResonatorFitter
         ResonatorFitter containing the data to graph.
+    savepath : str, optional
+        Path where to create the ``plots`` folder to save the generated plots. Defaults
+        to the current working directory.
+    name : str, optional
+        Name given to the saved plots. If left to ``None``, ``name`` will be the date.
+    file_type : str, optional
+        Image file type to save the figures. Defaults to ``"svg"``.
     """
 
-    def __init__(self, res_fitter: ResonatorFitter, savepath: str) -> None:
-        """
-        Grapher for a ResonatorFitter object containing fit results.
-
-        Parameters
-        ----------
-        res_fitter : ResonatorFitter
-            ResonatorFitter containing the data to graph.
-        """
+    def __init__(
+        self,
+        res_fitter: ResonatorFitter,
+        savepath: Optional[str] = None,
+        name: Optional[str] = None,
+        file_type: str = "svg",
+    ) -> None:
         self._res_fitter = res_fitter
+        self._savepath = savepath if savepath is not None else os.getcwd()
+        self._name = name if name is not None else datetime.today().strftime("%Y-%m-%d")
+        self._file_type = file_type
+        if not os.path.exists(os.path.join(self._savepath, "plots")):
+            os.mkdir(os.path.join(self._savepath, "plots"))
 
     def plot_Qi_vs_power(
         self,
-        photon: bool = False,
+        photon: bool = True,
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
         show_grid: bool | Literal["default"] = "default",
+        legend_loc: str = "best",
+        legend_cols: int = 1,
         figure_style: str = "default",
-    ):
+        save: bool = True,
+    ) -> None:
         """
         Plots the internal quality factor as a function of input power or photon number.
 
@@ -93,10 +100,20 @@ class ResonatorFitterGrapher:
             Figure title.
         show_grid : bool, optional
             Display the grid. Default depends on the ``figure_style`` configuration.
+        legend_loc : str, optional
+            Positionning of the legend. Can be one of {"best", "upper right", "upper left",
+            "lower left", "lower right", "right", "center left", "center right", "lower center",
+            "upper center", "center"} or {"outside upper center", "outside center right",
+            "outside lower center"}. Defaults to "best".
+        legend_cols : int, optional
+            Number of columns in the legend. Defaults to 1.
         figure_style : str, optional
             GraphingLib figure style to apply to the plot. See
             [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
             for more info.
+        save : bool, optional
+            If ``True``, saves the plot at the location specified for the class.
+            Defaults to ``True``.
         """
         Qi = {}
         Qi_err = {}
@@ -147,7 +164,12 @@ class ResonatorFitterGrapher:
             scatter = gl.Scatter(power[label], Qi[label], label=label + " GHz")
             scatter.add_errorbars(y_error=Qi_err[label])
             figure.add_elements(scatter)
-        figure.show(legend_loc="outside center right")
+        if save:
+            name = f"Qi_vs_power_{self._name}." + self._file_type
+            path = os.path.join(self._savepath, "plots", name)
+            figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
+        else:
+            figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
 
     def plot_Qc_vs_power(
         self,
@@ -157,8 +179,11 @@ class ResonatorFitterGrapher:
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
         show_grid: bool | Literal["default"] = "default",
+        legend_loc: str = "best",
+        legend_cols: int = 1,
         figure_style: str = "default",
-    ):
+        save: bool = True,
+    ) -> None:
         """
         Plots the coupling quality factor as a function of input power or photon number.
 
@@ -176,10 +201,20 @@ class ResonatorFitterGrapher:
             Figure title.
         show_grid : bool, optional
             Display the grid. Default depends on the ``figure_style`` configuration.
+        legend_loc : str, optional
+            Positionning of the legend. Can be one of {"best", "upper right", "upper left",
+            "lower left", "lower right", "right", "center left", "center right", "lower center",
+            "upper center", "center"} or {"outside upper center", "outside center right",
+            "outside lower center"}. Defaults to "best".
+        legend_cols : int, optional
+            Number of columns in the legend. Defaults to 1.
         figure_style : str, optional
             GraphingLib figure style to apply to the plot. See
             [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
             for more info.
+        save : bool, optional
+            If ``True``, saves the plot at the location specified for the class.
+            Defaults to ``True``.
         """
         Qc = {}
         Qc_err = {}
@@ -230,7 +265,12 @@ class ResonatorFitterGrapher:
             scatter = gl.Scatter(power[label], Qc[label], label=label + " GHz")
             scatter.add_errorbars(y_error=Qc_err[label])
             figure.add_elements(scatter)
-        figure.show(legend_loc="outside center right")
+        if save:
+            name = f"Qc_vs_power_{self._name}." + self._file_type
+            path = os.path.join(self._savepath, "plots", name)
+            figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
+        else:
+            figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
 
     def plot_Q_vs_power(
         self,
@@ -240,8 +280,11 @@ class ResonatorFitterGrapher:
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
         show_grid: bool | Literal["default"] = "default",
+        legend_loc: str = "best",
+        legend_cols: int = 1,
         figure_style: str = "default",
-    ):
+        save: bool = False,
+    ) -> None:
         """
         Plots the total quality factor as a function of input power or photon number.
 
@@ -259,10 +302,20 @@ class ResonatorFitterGrapher:
             Figure title.
         show_grid : bool, optional
             Display the grid. Default depends on the ``figure_style`` configuration.
+        legend_loc : str, optional
+            Positionning of the legend. Can be one of {"best", "upper right", "upper left",
+            "lower left", "lower right", "right", "center left", "center right", "lower center",
+            "upper center", "center"} or {"outside upper center", "outside center right",
+            "outside lower center"}. Defaults to "best".
+        legend_cols : int, optional
+            Number of columns in the legend. Defaults to 1.
         figure_style : str, optional
             GraphingLib figure style to apply to the plot. See
             [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
             for more info.
+        save : bool, optional
+            If ``True``, saves the plot at the location specified for the class.
+            Defaults to ``False``.
         """
         Qt = {}
         Qt_err = {}
@@ -313,11 +366,109 @@ class ResonatorFitterGrapher:
             scatter = gl.Scatter(power[label], Qt[label], label=label + " GHz")
             scatter.add_errorbars(y_error=Qt_err[label])
             figure.add_elements(scatter)
-        figure.show(legend_loc="outside center right")
+        if save:
+            name = f"Q_vs_power_{self._name}." + self._file_type
+            path = os.path.join(self._savepath, "plots", name)
+            figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
+        else:
+            figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
 
-    def plot_Fshift_vs_power(self, f_expected: dict, photon: bool = False): ...
+    def plot_Fshift_vs_power(
+        self,
+        f_design: dict,
+        photon: bool = False,
+        x_lim: Optional[tuple] = None,
+        y_lim: Optional[tuple] = None,
+        size: tuple | Literal["default"] = "default",
+        title: Optional[str] = None,
+        show_grid: bool | Literal["default"] = "default",
+        legend_loc: str = "best",
+        legend_cols: int = 1,
+        figure_style: str = "default",
+        save: bool = False,
+    ):
+        """
+        Plots the frequency shift as a function of input power or photon number.
 
-    def plot_Fr_vs_power(self, photon: bool = False): ...
+        Parameters
+        ----------
+        f_design : dict
+            Designed frequency of the attributed resonators.
+        photon : bool
+            If ``True``, plots as a function of photon number. Defaults to ``False``.
+        x_lim : tuple, optional
+            Limits for the x-axis.
+        y_lim : tuple, optional
+            Limits for the y-axis.
+        size : tuple, optional
+            Figure size. Default depends on the ``figure_style`` configuration.
+        title : str, optional
+            Figure title.
+        show_grid : bool, optional
+            Display the grid. Default depends on the ``figure_style`` configuration.
+        legend_loc : str, optional
+            Positionning of the legend. Can be one of {"best", "upper right", "upper left",
+            "lower left", "lower right", "right", "center left", "center right", "lower center",
+            "upper center", "center"} or {"outside upper center", "outside center right",
+            "outside lower center"}. Defaults to "best".
+        legend_cols : int, optional
+            Number of columns in the legend. Defaults to 1.
+        figure_style : str, optional
+            GraphingLib figure style to apply to the plot. See
+            [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
+            for more info.
+        save : bool, optional
+            If ``True``, saves the plot at the location specified for the class.
+            Defaults to ``False``.
+        """
+        f_r = {}
+
+    def plot_Fr_vs_power(
+        self,
+        photon: bool = False,
+        x_lim: Optional[tuple] = None,
+        y_lim: Optional[tuple] = None,
+        size: tuple | Literal["default"] = "default",
+        title: Optional[str] = None,
+        show_grid: bool | Literal["default"] = "default",
+        legend_loc: str = "best",
+        legend_cols: int = 1,
+        figure_style: str = "default",
+        save: bool = False,
+    ):
+        """
+        Plots the resonance frequency as a function of input power or photon number.
+
+        Parameters
+        ----------
+        photon : bool
+            If ``True``, plots as a function of photon number. Defaults to ``False``.
+        x_lim : tuple, optional
+            Limits for the x-axis.
+        y_lim : tuple, optional
+            Limits for the y-axis.
+        size : tuple, optional
+            Figure size. Default depends on the ``figure_style`` configuration.
+        title : str, optional
+            Figure title.
+        show_grid : bool, optional
+            Display the grid. Default depends on the ``figure_style`` configuration.
+        legend_loc : str, optional
+            Positionning of the legend. Can be one of {"best", "upper right", "upper left",
+            "lower left", "lower right", "right", "center left", "center right", "lower center",
+            "upper center", "center"} or {"outside upper center", "outside center right",
+            "outside lower center"}. Defaults to "best".
+        legend_cols : int, optional
+            Number of columns in the legend. Defaults to 1.
+        figure_style : str, optional
+            GraphingLib figure style to apply to the plot. See
+            [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
+            for more info.
+        save : bool, optional
+            If ``True``, saves the plot at the location specified for the class.
+            Defaults to ``False``.
+        """
+        f_r = {}
 
     def plot_internal_loss_vs_power(
         self,
@@ -327,7 +478,10 @@ class ResonatorFitterGrapher:
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
         show_grid: bool | Literal["default"] = "default",
+        legend_loc: str = "best",
+        legend_cols: int = 1,
         figure_style: str = "default",
+        save: bool = False,
     ):
         """
         Plots the internal losses as a function of input power or photon number.
@@ -346,10 +500,20 @@ class ResonatorFitterGrapher:
             Figure title.
         show_grid : bool, optional
             Display the grid. Default depends on the ``figure_style`` configuration.
+        legend_loc : str, optional
+            Positionning of the legend. Can be one of {"best", "upper right", "upper left",
+            "lower left", "lower right", "right", "center left", "center right", "lower center",
+            "upper center", "center"} or {"outside upper center", "outside center right",
+            "outside lower center"}. Defaults to "best".
+        legend_cols : int, optional
+            Number of columns in the legend. Defaults to 1.
         figure_style : str, optional
             GraphingLib figure style to apply to the plot. See
             [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
             for more info.
+        save : bool, optional
+            If ``True``, saves the plot at the location specified for the class.
+            Defaults to ``False``.
         """
         Li = {}
         Li_err = {}
@@ -400,7 +564,12 @@ class ResonatorFitterGrapher:
             scatter = gl.Scatter(power[label], Li[label], label=label + " GHz")
             scatter.add_errorbars(y_error=Li_err[label])
             figure.add_elements(scatter)
-        figure.show(legend_loc="outside center right")
+        if save:
+            name = f"intloss_vs_power_{self._name}." + self._file_type
+            path = os.path.join(self._savepath, "plots", name)
+            figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
+        else:
+            figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
 
 
 @overload

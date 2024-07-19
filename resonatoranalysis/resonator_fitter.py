@@ -211,8 +211,8 @@ class ResonatorFitter:
             If ``True``, does not display the overwriting warning popup.
             The default is ``False``.
         """
-        if savepic and not os.path.exists(os.path.join(savepath, "images")):
-            os.mkdir(os.path.join(savepath, "images"))
+        if savepic and not os.path.exists(os.path.join(savepath, "fit_images")):
+            os.mkdir(os.path.join(savepath, "fit_images"))
         if write and not os.path.exists(os.path.join(savepath, "fit_results")):
             os.mkdir(os.path.join(savepath, "fit_results"))
 
@@ -309,7 +309,7 @@ class ResonatorFitter:
                             power=p,
                             bg=bg,
                         )
-                    except ValueError:
+                    except:
                         continue
 
                     # Filter out bad fits
