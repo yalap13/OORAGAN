@@ -11,7 +11,7 @@ from matplotlib.pyplot import close
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
-from .dataset import Dataset, HDF5Data, TXTData
+from .dataset import Dataset
 from .util import choice, convert_complex_to_magphase, is_interactive
 
 if is_interactive():
@@ -222,15 +222,11 @@ class ResonatorFitter:
         params.add(name="resonance_frequency", value=f_r, min=1e9, max=1e10)
 
         sliced_dataset = self.dataset.slice(file_index=file_index, power=power)
-        files = (
-            sliced_dataset.files
-            if isinstance(sliced_dataset.files, list)
-            else [sliced_dataset.files]
-        )
-        if isinstance(sliced_dataset._data_container, HDF5Data):
-            power_points = []
-            data = []
-            for file in files:
+        files = sliced_dataset._data_container.files
+        power_points = []
+        data = []
+        for file in files:
+            if sliced_dataset._data_container.power[file] is not None:
                 power_points.append(
                     list(
                         np.squeeze(sliced_dataset._data_container.power[file])
@@ -238,15 +234,11 @@ class ResonatorFitter:
                         else sliced_dataset._data_container.power[file]
                     )
                 )
-                data.append(sliced_dataset._data_container.data[file])
-        elif isinstance(sliced_dataset._data_container, TXTData):
-            power_points = []
-            data = []
-            for file in files:
-                power_points.append(list(sliced_dataset._data_container.power[file]))
-                data.append(sliced_dataset._data_container.data[file])
-        else:
-            raise TypeError("Unknown Dataset type")
+            else:
+                power_points.append(
+                    [None] * len(sliced_dataset._data_container.data[file])
+                )
+            data.append(sliced_dataset._data_container.data[file])
 
         status = {}
         print("Fitting progress:")

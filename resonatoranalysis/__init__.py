@@ -9,6 +9,7 @@ Provides:
   2. A ``ResonatorFitter`` object to fit resonator measurement data
   3. A ``grapher`` function to create a Grapher object to visualize data or fit results
   4. A ``ResonatorAttribution`` class to help attributing measured resonator to physical resonator on sample
+  5. A ``PPMSAnalysis`` class to analyse data from the PPMS and get critical temperature/magnetic field
 """
 
 from .file_handler import datapicker, gethdf5info, getter, writer
@@ -24,3 +25,4 @@ from .dataset import Dataset
 from .resonator_attribution import Resonator, ResonatorAttribution
 from .resonator_fitter import ResonatorFitter
 from .graphing import grapher
+from .pppms_analysis import PPMSAnalysis

@@ -337,6 +337,78 @@ class Dataset:
         """
         return self._data_container._is_empty()
 
+    def __add__(self, other_dataset: Self) -> Self:
+        self.convert_magphase_to_complex()
+        other_dataset.convert_magphase_to_complex()
+        data = {**self._data_container.data, **other_dataset._data_container.data}
+        files = self._data_container.files + other_dataset._data_container.files
+        vna_average = {
+            **self._data_container.vna_average,
+            **other_dataset._data_container.vna_average,
+        }
+        vna_bandwidth = {
+            **self._data_container.vna_bandwidth,
+            **other_dataset._data_container.vna_bandwidth,
+        }
+        vna_power = {
+            **self._data_container.vna_power,
+            **other_dataset._data_container.vna_power,
+        }
+        start_time = {
+            **self._data_container.start_time,
+            **other_dataset._data_container.start_time,
+        }
+        frequency_range = {
+            **self._data_container.frequency_range,
+            **other_dataset._data_container.frequency_range,
+        }
+        power = {**self._data_container.power, **other_dataset._data_container.power}
+        variable_attenuator = {}
+        cryostat_info = {}
+        end_time = {}
+        mixing_temp = {}
+        try:
+            variable_attenuator.update(self._data_container.variable_attenuator)
+            cryostat_info.update(self._data_container.cryostat_info)
+            end_time.update(self._data_container.end_time)
+            mixing_temp.update(self._data_container.mixing_temp)
+        except AttributeError:
+            for file in self._data_container.files:
+                variable_attenuator[file] = None
+                cryostat_info[file] = None
+                end_time[file] = None
+                mixing_temp[file] = None
+        try:
+            variable_attenuator.update(
+                other_dataset._data_container.variable_attenuator
+            )
+            cryostat_info.update(other_dataset._data_container.cryostat_info)
+            end_time.update(other_dataset._data_container.end_time)
+            mixing_temp.update(other_dataset._data_container.mixing_temp)
+        except AttributeError:
+            for file in other_dataset._data_container.files:
+                variable_attenuator[file] = None
+                cryostat_info[file] = None
+                end_time[file] = None
+                mixing_temp[file] = None
+        new_dataset = deepcopy(self)
+        new_dataset._data_container = AbstractData(
+            data,
+            files,
+            "complex",
+            vna_average,
+            vna_bandwidth,
+            vna_power,
+            variable_attenuator,
+            cryostat_info,
+            start_time,
+            end_time,
+            mixing_temp,
+            power,
+            frequency_range,
+        )
+        return new_dataset
+
     def slice(
         self,
         file_index: int | list[int] = [],
@@ -353,7 +425,7 @@ class Dataset:
         power_index : int | list[int], optional
             If specified, will fetch data for those power values. Defaults to ``[]``.
         """
-        if file_index is None and power is None:
+        if file_index == [] and power == []:
             return self
         new_dataset = deepcopy(self)
         new_dataset._data_container = self._data_container.slice(
@@ -361,11 +433,18 @@ class Dataset:
         )
         return new_dataset
 
-    def convert_magphase_to_complex(self) -> None:
+    def convert_magphase_to_complex(self, deg: bool = False, dBm: bool = False) -> None:
         """
-        Converts the Dataset's data from magnitude and phase to complex format.
+        Converts the Dataset's data from magnitude and phase to complex.
+
+        Parameters
+        ----------
+        deg : bool, optional
+            Set to ``True`` if the phase is in degrees. Defaults to ``False``.
+        dBm : bool, optional
+            Set to ``True`` if the magnitude is in dBm. Defaults to ``False``.
         """
-        self._data_container.convert_magphase_to_complex()
+        self._data_container.convert_magphase_to_complex(deg=deg, dBm=dBm)
 
     def convert_complex_to_magphase(self, deg: bool = False) -> None:
         """
@@ -472,6 +551,9 @@ class HDF5Data:
         return output
 
     def _is_empty(self) -> bool:
+        """
+        Checks if the Dataset is empty.
+        """
         return self.data == {}
 
     def _make_table_array(self) -> NDArray:
@@ -499,7 +581,7 @@ class HDF5Data:
             [
                 (
                     str(list(self.power[file])).lstrip("[").rstrip("]")
-                    if len(self.power[file].shape) == 1
+                    if self.power[file].ndim == 1
                     else str(list(self.power[file][0])).lstrip("[").rstrip("]")
                 )
                 for file in self.files
@@ -805,6 +887,9 @@ class TXTData:
         self._file_index_dict = {str(i + 1): file for i, file in enumerate(self.files)}
 
     def _is_empty(self) -> bool:
+        """
+        Checks if the Dataset is empty.
+        """
         return self.data == {}
 
     def __str__(self) -> str:
@@ -871,7 +956,9 @@ class TXTData:
         )
         return table.T
 
-    def _get_data_info_from_txt(self, comments: str, delimiter: str) -> dict:
+    def _get_data_info_from_txt(
+        self, comments: str, delimiter: str
+    ) -> tuple[dict, dict]:
         """
         Utilitary function extracting the data and VNA parameters.
         """
@@ -925,7 +1012,7 @@ class TXTData:
                     continue
                 sweep_data.append(arr)
             data[file] = sweep_data
-            info["start_time"][file] = sweep_params[:, 2].T
+            info["start_time"][file] = sweep_params[0, 2]
             info["duration"][file] = np.array(sweep_durations)
             info["vna_average"][file] = np.array(sweep_averages)
             info["vna_bandwidth"][file] = np.array(sweep_bandwidths)
@@ -1079,16 +1166,25 @@ class TXTData:
                 )
         self.format = "magphase"
 
-    def convert_magphase_to_complex(self) -> None:
+    def convert_magphase_to_complex(self, deg: bool = False, dBm: bool = False) -> None:
         """
         Converts the Dataset's data from magnitude and phase to complex.
+
+        Parameters
+        ----------
+        deg : bool, optional
+            Set to ``True`` if the phase is in degrees. Defaults to ``False``.
+        dBm : bool, optional
+            Set to ``True`` if the magnitude is in dBm. Defaults to ``False``.
         """
         if self.format == "complex":
             return
-        for file in self.files:
+        files = self._sweep_info_files + self._standalone_files
+        for file in files:
             for arr in self.data[file]:
-                complex = convert_magphase_to_complex(arr)
-                arr[1, :], arr[2, :] = np.real(complex), np.imag(complex)
+                arr[1, :], arr[2, :] = convert_magphase_to_complex(
+                    arr[1, :], arr[2, :], deg=deg, dBm=dBm
+                )
         self.format = "complex"
 
     def _parse_parameters(self, file_path: str) -> dict:
@@ -1128,3 +1224,191 @@ class TXTData:
                 parameters[key] = value
 
         return parameters
+
+
+class AbstractData:
+    """
+    Data container for a mix of different file formats.
+
+    Note
+    ----
+    This data container class does not extract data from file as the other data
+    container classes do. It is mearly intended to be used when merging two
+    previously created Datasets from different file formats.
+
+    Parameters
+    ----------
+    data : dict
+        Data for each file.
+    files : list
+        Files contained in the dataset.
+    format : str
+        Data format. Can be ``"complex"`` or ``"magphase"``.
+    vna_average : dict
+        VNA averaging for each file.
+    vna_bandwidth : dict
+        VNA bandwidth for each file.
+    vna_power : dict
+        VNA output power for each file.
+    variable_attenuator : dict
+        Variable attenuator value for each file.
+    cryostat_info : dict
+        Crystat information for each file.
+    start_time : dict
+        Measurement start time for each file.
+    end_time : dict
+        Measurement end time for each file.
+    mixing_temp : dict
+        Temperature of the mixing stage for each file.
+    power : dict
+        Total input power in the device for each file.
+    frequency_range : dict
+        Frequency range for each file.
+    """
+
+    def __init__(
+        self,
+        data: dict,
+        files: list,
+        format: str,
+        vna_average: dict,
+        vna_bandwidth: dict,
+        vna_power: dict,
+        variable_attenuator: dict,
+        cryostat_info: dict,
+        start_time: dict,
+        end_time: dict,
+        mixing_temp: dict,
+        power: dict,
+        frequency_range: dict,
+    ) -> None:
+        self.data = data
+        self.files = files
+        self.format = format
+        self.vna_average = vna_average
+        self.vna_bandwidth = vna_bandwidth
+        self.vna_power = vna_power
+        self.variable_attenuator = variable_attenuator
+        self.cryostat_info = cryostat_info
+        self.start_time = start_time
+        self.end_time = end_time
+        self.mixing_temp = mixing_temp
+        self.power = power
+        self.frequency_range = frequency_range
+        self._file_index_dict = {str(i + 1): file for i, file in enumerate(self.files)}
+
+    def __str__(self):
+        """
+        Customized printing method
+        """
+        output = "Files :\n"
+        for k, v in self._file_index_dict.items():
+            output += f"  {k}. {v}\n"
+        output += "File infos :\n"
+        table = self._make_table_array()
+        headers = [
+            "File no.",
+            "Start time",
+            "Start freq. (GHz)",
+            "Stop freq. (GHz)",
+            "Power (dBm)",
+        ]
+        output += tabulate(table, headers)
+        return output
+
+    def _make_table_array(self):
+        """
+        Utilitary function used to generate the table for the customized
+        printing function.
+        """
+        file_no_arr = np.array([int(i) for i in self._file_index_dict.keys()])
+        start_arr = np.array(
+            [
+                (
+                    datetime.fromtimestamp(self.start_time[file]).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                    if self.start_time[file] is not None
+                    else None
+                )
+                for file in self.files
+            ]
+        )
+        freq_start_arr = np.array(
+            [self.frequency_range[file]["start"] for file in self.files]
+        )
+        freq_stop_arr = np.array(
+            [self.frequency_range[file]["stop"] for file in self.files]
+        )
+        power_arr = []
+        for file in self.files:
+            if self.power[file] is not None:
+                if self.power[file].ndim == 1:
+                    power_arr.append(
+                        str(list(self.power[file])).lstrip("[").rstrip("]")
+                    )
+                else:
+                    power_arr.append(
+                        str(list(self.power[file][0])).lstrip("[").rstrip("]")
+                    )
+            else:
+                power_arr.append(None)
+        power_arr = np.array(power_arr)
+        table = np.array(
+            [
+                file_no_arr,
+                start_arr,
+                freq_start_arr / 1e9,
+                freq_stop_arr / 1e9,
+                power_arr,
+            ]
+        )
+        return table.T
+
+    def _is_empty(self) -> bool:
+        """
+        Checks if the Dataset is empty.
+        """
+        return self.data == {}
+
+    def slice(self):
+        raise NotImplementedError("Not yet implemented")
+
+    def convert_complex_to_magphase(self, deg: bool = False) -> None:
+        """
+        Converts the Dataset's data from complex to magnitude and phase.
+
+        Parameters
+        ----------
+        deg : bool
+            If ``True`` the phase is returned in degrees, else in radians.
+            Defaults to ``False``.
+        """
+        if self.format == "magphase":
+            return
+        for file in self.files:
+            for arr in self.data[file]:
+                arr[1, :], arr[2, :] = convert_complex_to_magphase(
+                    arr[1, :], arr[2, :], deg=deg
+                )
+        self.format = "magphase"
+
+    def convert_magphase_to_complex(self, deg: bool = False, dBm: bool = False) -> None:
+        """
+        Converts the Dataset's data from magnitude and phase to complex.
+
+        Parameters
+        ----------
+        deg : bool, optional
+            Set to ``True`` if the phase is in degrees. Defaults to ``False``.
+        dBm : bool, optional
+            Set to ``True`` if the magnitude is in dBm. Defaults to ``False``.
+        """
+        if self.format == "complex":
+            return
+        for file in self.files:
+            for arr in self.data[file]:
+                arr[1, :], arr[2, :] = convert_magphase_to_complex(
+                    arr[1, :], arr[2, :], deg=deg, dBm=dBm
+                )
+        self.format = "complex"
