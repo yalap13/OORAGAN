@@ -1238,7 +1238,32 @@ class AbstractData:
 
     Parameters
     ----------
-
+    data : dict
+        Data for each file.
+    files : list
+        Files contained in the dataset.
+    format : str
+        Data format. Can be ``"complex"`` or ``"magphase"``.
+    vna_average : dict
+        VNA averaging for each file.
+    vna_bandwidth : dict
+        VNA bandwidth for each file.
+    vna_power : dict
+        VNA output power for each file.
+    variable_attenuator : dict
+        Variable attenuator value for each file.
+    cryostat_info : dict
+        Crystat information for each file.
+    start_time : dict
+        Measurement start time for each file.
+    end_time : dict
+        Measurement end time for each file.
+    mixing_temp : dict
+        Temperature of the mixing stage for each file.
+    power : dict
+        Total input power in the device for each file.
+    frequency_range : dict
+        Frequency range for each file.
     """
 
     def __init__(
@@ -1319,9 +1344,13 @@ class AbstractData:
         for file in self.files:
             if self.power[file] is not None:
                 if self.power[file].ndim == 1:
-                    power_arr.append(str(list(self.power[file])).lstrip("[").rstrip("]"))
+                    power_arr.append(
+                        str(list(self.power[file])).lstrip("[").rstrip("]")
+                    )
                 else:
-                    power_arr.append(str(list(self.power[file][0])).lstrip("[").rstrip("]"))
+                    power_arr.append(
+                        str(list(self.power[file][0])).lstrip("[").rstrip("]")
+                    )
             else:
                 power_arr.append(None)
         power_arr = np.array(power_arr)
