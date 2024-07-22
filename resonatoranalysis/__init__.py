@@ -24,4 +24,5 @@ from .util import (
 from .dataset import Dataset
 from .resonator_attribution import Resonator, ResonatorAttribution
 from .resonator_fitter import ResonatorFitter
+from .graphing import grapher
 from .pppms_analysis import PPMSAnalysis

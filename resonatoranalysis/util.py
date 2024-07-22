@@ -3,6 +3,7 @@ import easygui as eg
 import numpy as np
 
 from numpy.typing import NDArray
+from IPython import get_ipython
 
 
 def choice(title: str = None, msg: str = None) -> bool:
@@ -183,3 +184,16 @@ def calculate_power(att_cryo: float, info: dict):
             - info[file]["vna_info"]["Variable Attenuator"]
         )
     return powers
+
+
+def is_interactive():
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell == "ZMQInteractiveShell":
+            return True  # Jupyter notebook or qtconsole
+        elif shell == "TerminalInteractiveShell":
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except NameError:
+        return False  # Probably standard Python interpreter
