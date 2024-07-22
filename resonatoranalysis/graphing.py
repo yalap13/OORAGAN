@@ -422,6 +422,7 @@ class ResonatorFitterGrapher:
             Defaults to ``False``.
         """
         f_r = {}
+        raise NotImplementedError("Not yet implemented")
 
     def plot_Fr_vs_power(
         self,
@@ -469,6 +470,7 @@ class ResonatorFitterGrapher:
             Defaults to ``False``.
         """
         f_r = {}
+        raise NotImplementedError("Not yet implemented")
 
     def plot_internal_loss_vs_power(
         self,
