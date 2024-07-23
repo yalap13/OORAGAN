@@ -85,7 +85,7 @@ class ResonatorFitterGrapher:
 
     def plot_Qi_vs_power(
         self,
-        photon: bool = True,
+        photon: bool = False,
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -94,7 +94,7 @@ class ResonatorFitterGrapher:
         legend_loc: str = "best",
         legend_cols: int = 1,
         figure_style: str = "default",
-        save: bool = True,
+        save: bool = False,
     ) -> None:
         """
         Plots the internal quality factor as a function of input power or photon number.
@@ -126,7 +126,7 @@ class ResonatorFitterGrapher:
             for more info.
         save : bool, optional
             If ``True``, saves the plot at the location specified for the class.
-            Defaults to ``True``.
+            Defaults to ``False``.
         """
         files = list(self._res_fitter.Q_i.keys())
         if photon:
@@ -217,7 +217,7 @@ class ResonatorFitterGrapher:
         legend_loc: str = "best",
         legend_cols: int = 1,
         figure_style: str = "default",
-        save: bool = True,
+        save: bool = False,
     ) -> None:
         """
         Plots the coupling quality factor as a function of input power or photon number.
@@ -249,7 +249,7 @@ class ResonatorFitterGrapher:
             for more info.
         save : bool, optional
             If ``True``, saves the plot at the location specified for the class.
-            Defaults to ``True``.
+            Defaults to ``False``.
         """
         files = list(self._res_fitter.Q_c.keys())
         if photon:
