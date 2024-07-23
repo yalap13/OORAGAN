@@ -4,6 +4,7 @@ import graphinglib as gl
 
 from typing import overload, Optional, Literal
 from datetime import datetime
+from copy import deepcopy
 
 from .dataset import Dataset, HDF5Data, TXTData
 from .resonator_fitter import ResonatorFitter
@@ -54,6 +55,8 @@ class ResonatorFitterGrapher:
         Name given to the saved plots. If left to ``None``, ``name`` will be the date.
     file_type : str, optional
         Image file type to save the figures. Defaults to ``"svg"``.
+    match_pattern : dict
+        Dictionnary of files associated to a resonance name.
     """
 
     def __init__(
@@ -62,11 +65,16 @@ class ResonatorFitterGrapher:
         savepath: Optional[str] = None,
         name: Optional[str] = None,
         file_type: str = "svg",
+        match_pattern: dict[str, tuple] = None,
     ) -> None:
         self._res_fitter = res_fitter
         self._savepath = savepath if savepath is not None else os.getcwd()
         self._name = name if name is not None else datetime.today().strftime("%Y-%m-%d")
         self._file_type = file_type
+        self._match_pattern = match_pattern
+        self._file_index_dict = (
+            self._res_fitter.dataset._data_container._file_index_dict
+        )
         if not os.path.exists(os.path.join(self._savepath, "plots")):
             os.mkdir(os.path.join(self._savepath, "plots"))
 
@@ -115,35 +123,7 @@ class ResonatorFitterGrapher:
             If ``True``, saves the plot at the location specified for the class.
             Defaults to ``True``.
         """
-        Qi = {}
-        Qi_err = {}
-        power = {}
-        f_r = self._res_fitter.f_r
         files = list(self._res_fitter.Q_i.keys())
-        labels = [
-            str(np.mean(f_r[file][0] / 1e9))[:5].replace(".", "_") for file in files
-        ]
-        for i, label in enumerate(labels):
-            if label in Qi:
-                Qi[label] = np.append(Qi[label], self._res_fitter.Q_i[files[i]])
-                Qi_err[label] = np.append(
-                    Qi_err[label], self._res_fitter.Q_i_err[files[i]]
-                )
-                if photon:
-                    power[label] = np.append(
-                        power[label], self._res_fitter.photon_number[files[i]]
-                    )
-                else:
-                    power[label] = np.append(
-                        power[label], self._res_fitter.input_power[files[i]]
-                    )
-            else:
-                Qi[label] = self._res_fitter.Q_i[files[i]]
-                Qi_err[label] = self._res_fitter.Q_i_err[files[i]]
-                if photon:
-                    power[label] = self._res_fitter.photon_number[files[i]]
-                else:
-                    power[label] = self._res_fitter.input_power[files[i]]
         if photon:
             x_label = "Photon number"
         else:
@@ -160,9 +140,45 @@ class ResonatorFitterGrapher:
             figure_style=figure_style,
             title=title,
         )
-        for label in Qi.keys():
-            scatter = gl.Scatter(power[label], Qi[label], label=label + " GHz")
-            scatter.add_errorbars(y_error=Qi_err[label])
+        if self._match_pattern is not None:
+            for label, indices in self._match_pattern.items():
+                power = []
+                Qi = []
+                Qi_err = []
+                for i in indices:
+                    if photon:
+                        power.extend(
+                            self._res_fitter.photon_number[
+                                self._file_index_dict[str(i)]
+                            ]
+                        )
+                    else:
+                        power.extend(
+                            self._res_fitter.input_power[self._file_index_dict[str(i)]]
+                        )
+                    Qi.extend(self._res_fitter.Q_i[self._file_index_dict[str(i)]])
+                    Qi_err.extend(
+                        self._res_fitter.Q_i_err[self._file_index_dict[str(i)]]
+                    )
+                    files.remove(self._file_index_dict[str(i)])
+                scatter = gl.Scatter(power, Qi, label=label)
+                scatter.add_errorbars(y_error=Qi_err)
+                figure.add_elements(scatter)
+        for file in files:
+            label = f"{self._res_fitter.f_r:.3f} GHz"
+            if photon:
+                scatter = gl.Scatter(
+                    self._res_fitter.photon_number[file],
+                    self._res_fitter.Q_i[file],
+                    label=label,
+                )
+            else:
+                scatter = gl.Scatter(
+                    self._res_fitter.input_power[file],
+                    self._res_fitter.Q_i[file],
+                    label=label,
+                )
+            scatter.add_errorbars(y_error=self._res_fitter.Q_i_err[file])
             figure.add_elements(scatter)
         if save:
             name = f"Qi_vs_power_{self._name}." + self._file_type
@@ -216,35 +232,7 @@ class ResonatorFitterGrapher:
             If ``True``, saves the plot at the location specified for the class.
             Defaults to ``True``.
         """
-        Qc = {}
-        Qc_err = {}
-        power = {}
-        f_r = self._res_fitter.f_r
         files = list(self._res_fitter.Q_c.keys())
-        labels = [
-            str(np.mean(f_r[file][0] / 1e9))[:5].replace(".", "_") for file in files
-        ]
-        for i, label in enumerate(labels):
-            if label in Qc:
-                Qc[label] = np.append(Qc[label], self._res_fitter.Q_c[files[i]])
-                Qc_err[label] = np.append(
-                    Qc_err[label], self._res_fitter.Q_c_err[files[i]]
-                )
-                if photon:
-                    power[label] = np.append(
-                        power[label], self._res_fitter.photon_number[files[i]]
-                    )
-                else:
-                    power[label] = np.append(
-                        power[label], self._res_fitter.input_power[files[i]]
-                    )
-            else:
-                Qc[label] = self._res_fitter.Q_c[files[i]]
-                Qc_err[label] = self._res_fitter.Q_c_err[files[i]]
-                if photon:
-                    power[label] = self._res_fitter.photon_number[files[i]]
-                else:
-                    power[label] = self._res_fitter.input_power[files[i]]
         if photon:
             x_label = "Photon number"
         else:
@@ -261,9 +249,45 @@ class ResonatorFitterGrapher:
             figure_style=figure_style,
             title=title,
         )
-        for label in Qc.keys():
-            scatter = gl.Scatter(power[label], Qc[label], label=label + " GHz")
-            scatter.add_errorbars(y_error=Qc_err[label])
+        if self._match_pattern is not None:
+            for label, indices in self._match_pattern.items():
+                power = []
+                Qc = []
+                Qc_err = []
+                for i in indices:
+                    if photon:
+                        power.extend(
+                            self._res_fitter.photon_number[
+                                self._file_index_dict[str(i)]
+                            ]
+                        )
+                    else:
+                        power.extend(
+                            self._res_fitter.input_power[self._file_index_dict[str(i)]]
+                        )
+                    Qc.extend(self._res_fitter.Q_c[self._file_index_dict[str(i)]])
+                    Qc_err.extend(
+                        self._res_fitter.Q_c_err[self._file_index_dict[str(i)]]
+                    )
+                    files.remove(self._file_index_dict[str(i)])
+                scatter = gl.Scatter(power, Qc, label=label)
+                scatter.add_errorbars(y_error=Qc_err)
+                figure.add_elements(scatter)
+        for file in files:
+            label = f"{self._res_fitter.f_r/1e9:.3f} GHz"
+            if photon:
+                scatter = gl.Scatter(
+                    self._res_fitter.photon_number[file],
+                    self._res_fitter.Q_c[file],
+                    label=label,
+                )
+            else:
+                scatter = gl.Scatter(
+                    self._res_fitter.input_power[file],
+                    self._res_fitter.Q_c[file],
+                    label=label,
+                )
+            scatter.add_errorbars(y_error=Qc_err[file])
             figure.add_elements(scatter)
         if save:
             name = f"Qc_vs_power_{self._name}." + self._file_type
@@ -317,35 +341,7 @@ class ResonatorFitterGrapher:
             If ``True``, saves the plot at the location specified for the class.
             Defaults to ``False``.
         """
-        Qt = {}
-        Qt_err = {}
-        power = {}
-        f_r = self._res_fitter.f_r
         files = list(self._res_fitter.Q_t.keys())
-        labels = [
-            str(np.mean(f_r[file][0] / 1e9))[:5].replace(".", "_") for file in files
-        ]
-        for i, label in enumerate(labels):
-            if label in Qt:
-                Qt[label] = np.append(Qt[label], self._res_fitter.Q_t[files[i]])
-                Qt_err[label] = np.append(
-                    Qt_err[label], self._res_fitter.Q_t_err[files[i]]
-                )
-                if photon:
-                    power[label] = np.append(
-                        power[label], self._res_fitter.photon_number[files[i]]
-                    )
-                else:
-                    power[label] = np.append(
-                        power[label], self._res_fitter.input_power[files[i]]
-                    )
-            else:
-                Qt[label] = self._res_fitter.Q_t[files[i]]
-                Qt_err[label] = self._res_fitter.Q_t_err[files[i]]
-                if photon:
-                    power[label] = self._res_fitter.photon_number[files[i]]
-                else:
-                    power[label] = self._res_fitter.input_power[files[i]]
         if photon:
             x_label = "Photon number"
         else:
@@ -362,12 +358,48 @@ class ResonatorFitterGrapher:
             figure_style=figure_style,
             title=title,
         )
-        for label in Qt.keys():
-            scatter = gl.Scatter(power[label], Qt[label], label=label + " GHz")
-            scatter.add_errorbars(y_error=Qt_err[label])
+        if self._match_pattern is not None:
+            for label, indices in self._match_pattern.items():
+                power = []
+                Qt = []
+                Qt_err = []
+                for i in indices:
+                    if photon:
+                        power.extend(
+                            self._res_fitter.photon_number[
+                                self._file_index_dict[str(i)]
+                            ]
+                        )
+                    else:
+                        power.extend(
+                            self._res_fitter.input_power[self._file_index_dict[str(i)]]
+                        )
+                    Qt.extend(self._res_fitter.Q_t[self._file_index_dict[str(i)]])
+                    Qt_err.extend(
+                        self._res_fitter.Q_t_err[self._file_index_dict[str(i)]]
+                    )
+                    files.remove(self._file_index_dict[str(i)])
+                scatter = gl.Scatter(power, Qt, label=label)
+                scatter.add_errorbars(y_error=Qt_err)
+                figure.add_elements(scatter)
+        for file in files:
+            label = f"{self._res_fitter.f_r/1e9:.3f} GHz"
+            if photon:
+                scatter = gl.Scatter(
+                    self._res_fitter.photon_number[file],
+                    self._res_fitter.Q_t[file],
+                    label=label,
+                )
+            else:
+                scatter = gl.Scatter(
+                    self._res_fitter.input_power[file],
+                    self._res_fitter.Q_t[file],
+                    label=label,
+                )
+            scatter.add_errorbars(y_error=Qt_err[file])
             figure.add_elements(scatter)
         if save:
-            name = f"Q_vs_power_{self._name}." + self._file_type
+            name = f"Qt_vs_power_{self._name}." + self._file_type
             path = os.path.join(self._savepath, "plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
@@ -517,42 +549,14 @@ class ResonatorFitterGrapher:
             If ``True``, saves the plot at the location specified for the class.
             Defaults to ``False``.
         """
-        Li = {}
-        Li_err = {}
-        power = {}
-        f_r = self._res_fitter.f_r
         files = list(self._res_fitter.L_i.keys())
-        labels = [
-            str(np.mean(f_r[file][0] / 1e9))[:5].replace(".", "_") for file in files
-        ]
-        for i, label in enumerate(labels):
-            if label in Li:
-                Li[label] = np.append(Li[label], self._res_fitter.L_i[files[i]])
-                Li_err[label] = np.append(
-                    Li_err[label], self._res_fitter.L_i_err[files[i]]
-                )
-                if photon:
-                    power[label] = np.append(
-                        power[label], self._res_fitter.photon_number[files[i]]
-                    )
-                else:
-                    power[label] = np.append(
-                        power[label], self._res_fitter.input_power[files[i]]
-                    )
-            else:
-                Li[label] = self._res_fitter.L_i[files[i]]
-                Li_err[label] = self._res_fitter.L_i_err[files[i]]
-                if photon:
-                    power[label] = self._res_fitter.photon_number[files[i]]
-                else:
-                    power[label] = self._res_fitter.input_power[files[i]]
         if photon:
             x_label = "Photon number"
         else:
             x_label = "Input power (dBm)"
         figure = gl.Figure(
             x_label,
-            "Internal losses",
+            r"$L_i$",
             log_scale_y=True,
             log_scale_x=photon,
             x_lim=x_lim,
@@ -562,12 +566,48 @@ class ResonatorFitterGrapher:
             figure_style=figure_style,
             title=title,
         )
-        for label in Li.keys():
-            scatter = gl.Scatter(power[label], Li[label], label=label + " GHz")
-            scatter.add_errorbars(y_error=Li_err[label])
+        if self._match_pattern is not None:
+            for label, indices in self._match_pattern.items():
+                power = []
+                Li = []
+                Li_err = []
+                for i in indices:
+                    if photon:
+                        power.extend(
+                            self._res_fitter.photon_number[
+                                self._file_index_dict[str(i)]
+                            ]
+                        )
+                    else:
+                        power.extend(
+                            self._res_fitter.input_power[self._file_index_dict[str(i)]]
+                        )
+                    Li.extend(self._res_fitter.L_i[self._file_index_dict[str(i)]])
+                    Li_err.extend(
+                        self._res_fitter.L_i_err[self._file_index_dict[str(i)]]
+                    )
+                    files.remove(self._file_index_dict[str(i)])
+                scatter = gl.Scatter(power, Li, label=label)
+                scatter.add_errorbars(y_error=Li_err)
+                figure.add_elements(scatter)
+        for file in files:
+            label = f"{self._res_fitter.f_r/1e9:.3f} GHz"
+            if photon:
+                scatter = gl.Scatter(
+                    self._res_fitter.photon_number[file],
+                    self._res_fitter.L_i[file],
+                    label=label,
+                )
+            else:
+                scatter = gl.Scatter(
+                    self._res_fitter.input_power[file],
+                    self._res_fitter.L_i[file],
+                    label=label,
+                )
+            scatter.add_errorbars(y_error=Li_err[file])
             figure.add_elements(scatter)
         if save:
-            name = f"intloss_vs_power_{self._name}." + self._file_type
+            name = f"Li_vs_power_{self._name}." + self._file_type
             path = os.path.join(self._savepath, "plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
@@ -575,16 +615,31 @@ class ResonatorFitterGrapher:
 
 
 @overload
-def grapher(data_object: Dataset, savepath: str) -> DatasetGrapher: ...
+def grapher(
+    data_object: Dataset,
+    savepath: Optional[str] = None,
+    name: Optional[str] = None,
+    file_type: str = "svg",
+    match_pattern: Optional[dict] = None,
+) -> DatasetGrapher: ...
 
 
 @overload
-def grapher(data_object: ResonatorFitter, savepath: str) -> ResonatorFitterGrapher: ...
+def grapher(
+    data_object: ResonatorFitter,
+    savepath: Optional[str] = None,
+    name: Optional[str] = None,
+    file_type: str = "svg",
+    match_pattern: Optional[dict] = None,
+) -> ResonatorFitterGrapher: ...
 
 
 def grapher(
     data_object: Dataset | ResonatorFitter,
-    savepath: str,
+    savepath: str = None,
+    name: Optional[str] = None,
+    file_type: str = "svg",
+    match_pattern: Optional[dict] = None,
 ) -> DatasetGrapher | ResonatorFitterGrapher:
     """
     Factory function to create a Grapher according to the type of the data_object parameter.
@@ -593,11 +648,26 @@ def grapher(
     ----------
     data_object : Dataset | ResonatorFitter
         Object from which to create the Grapher.
+    savepath : str, optional
+        Path where to create the ``plots`` folder to save the generated plots. Defaults
+        to the current working directory.
+    name : str, optional
+        Name given to the saved plots. If left to ``None``, ``name`` will be the date.
+    file_type : str, optional
+        Image file type to save the figures. Defaults to ``"svg"``.
+    match_pattern : dict
+        Dictionnary of files associated to a resonance name.
     """
     if isinstance(data_object, Dataset):
         return DatasetGrapher(data_object, savepath)
     elif isinstance(data_object, ResonatorFitter):
-        return ResonatorFitterGrapher(data_object, savepath)
+        return ResonatorFitterGrapher(
+            res_fitter=data_object,
+            savepath=savepath,
+            name=name,
+            file_type=file_type,
+            match_pattern=match_pattern,
+        )
     else:
         raise TypeError(
             "A Grapher can only be initiated from a Dataset or ResonatorFitter object"

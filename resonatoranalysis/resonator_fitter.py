@@ -337,7 +337,7 @@ class ResonatorFitter:
                         self._plot_fit(
                             result,
                             save=savepic,
-                            savepath=os.path.join(savepath, "images"),
+                            savepath=os.path.join(savepath, "fit_images"),
                             name=f"{a}GHz_{p}_dBm",
                             nodialog=nodialog,
                             trimmed_data={
