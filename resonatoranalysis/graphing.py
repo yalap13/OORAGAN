@@ -1,10 +1,11 @@
 import os
 import numpy as np
 import graphinglib as gl
+import pandas as pd
 
 from typing import overload, Optional, Literal
 from datetime import datetime
-from copy import deepcopy
+from numpy.typing import NDArray
 
 from .dataset import Dataset, HDF5Data, TXTData
 from .resonator_fitter import ResonatorFitter
@@ -53,10 +54,12 @@ class ResonatorFitterGrapher:
         to the current working directory.
     name : str, optional
         Name given to the saved plots. If left to ``None``, ``name`` will be the date.
-    file_type : str, optional
+    image_type : str, optional
         Image file type to save the figures. Defaults to ``"svg"``.
     match_pattern : dict
         Dictionnary of files associated to a resonance name.
+    save_graph_data : bool, optional
+        If ``True``, saves the graph's data in a csv file. Defaults to ``False``.
     """
 
     def __init__(
@@ -64,17 +67,19 @@ class ResonatorFitterGrapher:
         res_fitter: ResonatorFitter,
         savepath: Optional[str] = None,
         name: Optional[str] = None,
-        file_type: str = "svg",
+        image_type: str = "svg",
         match_pattern: dict[str, tuple] = None,
+        save_graph_data: bool = False,
     ) -> None:
         self._res_fitter = res_fitter
         self._savepath = savepath if savepath is not None else os.getcwd()
         self._name = name if name is not None else datetime.today().strftime("%Y-%m-%d")
-        self._file_type = file_type
+        self._image_type = image_type
         self._match_pattern = match_pattern
         self._file_index_dict = (
             self._res_fitter.dataset._data_container._file_index_dict
         )
+        self._save_graph_data = save_graph_data
         if not os.path.exists(os.path.join(self._savepath, "plots")):
             os.mkdir(os.path.join(self._savepath, "plots"))
 
@@ -166,26 +171,40 @@ class ResonatorFitterGrapher:
                 figure.add_elements(scatter)
         for file in files:
             label = f"{self._res_fitter.f_r:.3f} GHz"
-            if photon:
-                scatter = gl.Scatter(
-                    self._res_fitter.photon_number[file],
-                    self._res_fitter.Q_i[file],
-                    label=label,
-                )
-            else:
-                scatter = gl.Scatter(
-                    self._res_fitter.input_power[file],
-                    self._res_fitter.Q_i[file],
-                    label=label,
-                )
-            scatter.add_errorbars(y_error=self._res_fitter.Q_i_err[file])
+            power = (
+                self._res_fitter.photon_number[file]
+                if photon
+                else self._res_fitter.input_power[file]
+            )
+            Qi = self._res_fitter.Q_i[file]
+            Qi_err = self._res_fitter.Q_i_err[file]
+            scatter = gl.Scatter(power, Qi, label=label)
+            scatter.add_errorbars(y_error=Qi_err)
             figure.add_elements(scatter)
         if save:
-            name = f"Qi_vs_power_{self._name}." + self._file_type
+            name = f"Qi_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
             figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+        if self._save_graph_data:
+            name = f"Qi_vs_power_{self._name}.csv"
+            path = os.path.join(self._savepath, "plots", name)
+            temp = {}
+            for element in figure._elements:
+                temp[element._label] = {
+                    "power": element._x_data,
+                    "Qi": element._y_data,
+                    "Qi_err": element._y_error,
+                }
+            df = pd.DataFrame(
+                {
+                    (key, sub_key): pd.Series(val)
+                    for key, d in temp.items()
+                    for sub_key, val in d.items()
+                }
+            )
+            df.to_csv(path)
 
     def plot_Qc_vs_power(
         self,
@@ -275,26 +294,40 @@ class ResonatorFitterGrapher:
                 figure.add_elements(scatter)
         for file in files:
             label = f"{self._res_fitter.f_r/1e9:.3f} GHz"
-            if photon:
-                scatter = gl.Scatter(
-                    self._res_fitter.photon_number[file],
-                    self._res_fitter.Q_c[file],
-                    label=label,
-                )
-            else:
-                scatter = gl.Scatter(
-                    self._res_fitter.input_power[file],
-                    self._res_fitter.Q_c[file],
-                    label=label,
-                )
-            scatter.add_errorbars(y_error=Qc_err[file])
+            power = (
+                self._res_fitter.photon_number[file]
+                if photon
+                else self._res_fitter.input_power[file]
+            )
+            Qc = self._res_fitter.Q_c[file]
+            Qc_err = self._res_fitter.Q_c_err[file]
+            scatter = gl.Scatter(power, Qc, label=label)
+            scatter.add_errorbars(y_error=Qc_err)
             figure.add_elements(scatter)
         if save:
-            name = f"Qc_vs_power_{self._name}." + self._file_type
+            name = f"Qc_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
             figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+        if self._save_graph_data:
+            name = f"Qc_vs_power_{self._name}.csv"
+            path = os.path.join(self._savepath, "plots", name)
+            temp = {}
+            for element in figure._elements:
+                temp[element._label] = {
+                    "power": element._x_data,
+                    "Qc": element._y_data,
+                    "Qc_err": element._y_error,
+                }
+            df = pd.DataFrame(
+                {
+                    (key, sub_key): pd.Series(val)
+                    for key, d in temp.items()
+                    for sub_key, val in d.items()
+                }
+            )
+            df.to_csv(path)
 
     def plot_Q_vs_power(
         self,
@@ -384,26 +417,40 @@ class ResonatorFitterGrapher:
                 figure.add_elements(scatter)
         for file in files:
             label = f"{self._res_fitter.f_r/1e9:.3f} GHz"
-            if photon:
-                scatter = gl.Scatter(
-                    self._res_fitter.photon_number[file],
-                    self._res_fitter.Q_t[file],
-                    label=label,
-                )
-            else:
-                scatter = gl.Scatter(
-                    self._res_fitter.input_power[file],
-                    self._res_fitter.Q_t[file],
-                    label=label,
-                )
-            scatter.add_errorbars(y_error=Qt_err[file])
+            power = (
+                self._res_fitter.photon_number[file]
+                if photon
+                else self._res_fitter.input_power[file]
+            )
+            Qt = self._res_fitter.Q_t[file]
+            Qt_err = self._res_fitter.Q_t_err[file]
+            scatter = gl.Scatter(power, Qt, label=label)
+            scatter.add_errorbars(y_error=Qt_err)
             figure.add_elements(scatter)
         if save:
-            name = f"Qt_vs_power_{self._name}." + self._file_type
+            name = f"Qt_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
             figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+        if self._save_graph_data:
+            name = f"Qt_vs_power_{self._name}.csv"
+            path = os.path.join(self._savepath, "plots", name)
+            temp = {}
+            for element in figure._elements:
+                temp[element._label] = {
+                    "power": element._x_data,
+                    "Qt": element._y_data,
+                    "Qt_err": element._y_error,
+                }
+            df = pd.DataFrame(
+                {
+                    (key, sub_key): pd.Series(val)
+                    for key, d in temp.items()
+                    for sub_key, val in d.items()
+                }
+            )
+            df.to_csv(path)
 
     def plot_Fshift_vs_power(
         self,
@@ -592,26 +639,40 @@ class ResonatorFitterGrapher:
                 figure.add_elements(scatter)
         for file in files:
             label = f"{self._res_fitter.f_r/1e9:.3f} GHz"
-            if photon:
-                scatter = gl.Scatter(
-                    self._res_fitter.photon_number[file],
-                    self._res_fitter.L_i[file],
-                    label=label,
-                )
-            else:
-                scatter = gl.Scatter(
-                    self._res_fitter.input_power[file],
-                    self._res_fitter.L_i[file],
-                    label=label,
-                )
-            scatter.add_errorbars(y_error=Li_err[file])
+            power = (
+                self._res_fitter.photon_number[file]
+                if photon
+                else self._res_fitter.input_power[file]
+            )
+            Li = self._res_fitter.L_i[file]
+            Li_err = self._res_fitter.L_i_err[file]
+            scatter = gl.Scatter(power, Li, label=label)
+            scatter.add_errorbars(y_error=Li_err)
             figure.add_elements(scatter)
         if save:
-            name = f"Li_vs_power_{self._name}." + self._file_type
+            name = f"Li_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
             figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+        if self._save_graph_data:
+            name = f"Li_vs_power_{self._name}.csv"
+            path = os.path.join(self._savepath, "plots", name)
+            temp = {}
+            for element in figure._elements:
+                temp[element._label] = {
+                    "power": element._x_data,
+                    "Li": element._y_data,
+                    "Li_err": element._y_error,
+                }
+            df = pd.DataFrame(
+                {
+                    (key, sub_key): pd.Series(val)
+                    for key, d in temp.items()
+                    for sub_key, val in d.items()
+                }
+            )
+            df.to_csv(path)
 
 
 @overload
@@ -638,8 +699,9 @@ def grapher(
     data_object: Dataset | ResonatorFitter,
     savepath: str = None,
     name: Optional[str] = None,
-    file_type: str = "svg",
+    image_type: str = "svg",
     match_pattern: Optional[dict] = None,
+    save_graph_data: bool = False,
 ) -> DatasetGrapher | ResonatorFitterGrapher:
     """
     Factory function to create a Grapher according to the type of the data_object parameter.
@@ -653,10 +715,12 @@ def grapher(
         to the current working directory.
     name : str, optional
         Name given to the saved plots. If left to ``None``, ``name`` will be the date.
-    file_type : str, optional
+    image_type : str, optional
         Image file type to save the figures. Defaults to ``"svg"``.
     match_pattern : dict
         Dictionnary of files associated to a resonance name.
+    save_graph_data : bool, optional
+        If ``True``, saves the graph's data in a csv file. Defaults to ``False``.
     """
     if isinstance(data_object, Dataset):
         return DatasetGrapher(data_object, savepath)
@@ -665,10 +729,28 @@ def grapher(
             res_fitter=data_object,
             savepath=savepath,
             name=name,
-            file_type=file_type,
+            image_type=image_type,
             match_pattern=match_pattern,
+            save_graph_data=save_graph_data,
         )
     else:
         raise TypeError(
             "A Grapher can only be initiated from a Dataset or ResonatorFitter object"
         )
+
+
+def load_graph_data(path: str) -> dict[str, NDArray]:
+    """
+    Loads the data saved in csv files by the Grapher objects and returns it
+    as a dictionnary with label as key and NDArrays of the data.
+
+    Parameters
+    ----------
+    path : str
+        Complete file file path of the file containing the data.
+    """
+    df = pd.read_csv(path, header=[0, 1], index_col=0)
+    loaded_data = {}
+    for label in df.columns.get_level_values(0).unique():
+        loaded_data[label] = np.array(df[label]).T
+    return loaded_data

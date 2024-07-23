@@ -11,6 +11,7 @@ fit_results
 .pytest_cache
 TODO.md
 *.txt
+*.csv
 plots
 
 !resonatoranalysis/*.py
