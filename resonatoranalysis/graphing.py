@@ -5,7 +5,7 @@ import pandas as pd
 
 from typing import overload, Optional, Literal
 from datetime import datetime
-from copy import deepcopy
+from numpy.typing import NDArray
 
 from .dataset import Dataset, HDF5Data, TXTData
 from .resonator_fitter import ResonatorFitter
@@ -737,3 +737,20 @@ def grapher(
         raise TypeError(
             "A Grapher can only be initiated from a Dataset or ResonatorFitter object"
         )
+
+
+def load_graph_data(path: str) -> dict[str, NDArray]:
+    """
+    Loads the data saved in csv files by the Grapher objects and returns it
+    as a dictionnary with label as key and NDArrays of the data.
+
+    Parameters
+    ----------
+    path : str
+        Complete file file path of the file containing the data.
+    """
+    df = pd.read_csv(path, header=[0, 1], index_col=0)
+    loaded_data = {}
+    for label in df.columns.get_level_values(0).unique():
+        loaded_data[label] = np.array(df[label]).T
+    return loaded_data
