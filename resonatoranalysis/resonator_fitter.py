@@ -381,7 +381,8 @@ class ResonatorFitter:
             else:
                 sys.stdout.write("\33[2K")
                 print(files[i] + status[files[i]])
-            self._fit_results[files[i]] = data_temp
+            if data_temp["f_r"] != []:
+                self._fit_results[files[i]] = data_temp
 
     def _resonator_fitter(
         self,

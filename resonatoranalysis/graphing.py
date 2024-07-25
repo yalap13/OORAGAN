@@ -7,7 +7,7 @@ from typing import overload, Optional, Literal
 from datetime import datetime
 from numpy.typing import NDArray
 
-from .dataset import Dataset, HDF5Data, TXTData
+from .dataset import Dataset
 from .resonator_fitter import ResonatorFitter
 
 
@@ -166,9 +166,14 @@ class ResonatorFitterGrapher:
                         self._res_fitter.Q_i_err[self._file_index_dict[str(i)]]
                     )
                     files.remove(self._file_index_dict[str(i)])
-                scatter = gl.Scatter(power, Qi, label=label)
-                scatter.add_errorbars(y_error=Qi_err)
-                figure.add_elements(scatter)
+                Qi = [x for _, x in sorted(zip(power, Qi), key=lambda pair: pair[0])]
+                Qi_err = [
+                    x for _, x in sorted(zip(power, Qi_err), key=lambda pair: pair[0])
+                ]
+                power.sort()
+                curve = gl.Curve(power, Qi, label=label)
+                curve.add_errorbars(y_error=Qi_err)
+                figure.add_elements(curve)
         for file in files:
             label = f"{self._res_fitter.f_r:.3f} GHz"
             power = (
@@ -178,9 +183,10 @@ class ResonatorFitterGrapher:
             )
             Qi = self._res_fitter.Q_i[file]
             Qi_err = self._res_fitter.Q_i_err[file]
-            scatter = gl.Scatter(power, Qi, label=label)
-            scatter.add_errorbars(y_error=Qi_err)
-            figure.add_elements(scatter)
+            power.sort()
+            curve = gl.Curve(power, Qi, label=label)
+            curve.add_errorbars(y_error=Qi_err)
+            figure.add_elements(curve)
         if save:
             name = f"Qi_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "plots", name)
@@ -289,9 +295,13 @@ class ResonatorFitterGrapher:
                         self._res_fitter.Q_c_err[self._file_index_dict[str(i)]]
                     )
                     files.remove(self._file_index_dict[str(i)])
-                scatter = gl.Scatter(power, Qc, label=label)
-                scatter.add_errorbars(y_error=Qc_err)
-                figure.add_elements(scatter)
+                Qc = [x for _, x in sorted(zip(power, Qc), key=lambda pair: pair[0])]
+                Qc_err = [
+                    x for _, x in sorted(zip(power, Qc_err), key=lambda pair: pair[0])
+                ]
+                curve = gl.Curve(power, Qc, label=label)
+                curve.add_errorbars(y_error=Qc_err)
+                figure.add_elements(curve)
         for file in files:
             label = f"{self._res_fitter.f_r/1e9:.3f} GHz"
             power = (
@@ -301,9 +311,9 @@ class ResonatorFitterGrapher:
             )
             Qc = self._res_fitter.Q_c[file]
             Qc_err = self._res_fitter.Q_c_err[file]
-            scatter = gl.Scatter(power, Qc, label=label)
-            scatter.add_errorbars(y_error=Qc_err)
-            figure.add_elements(scatter)
+            curve = gl.Curve(power, Qc, label=label)
+            curve.add_errorbars(y_error=Qc_err)
+            figure.add_elements(curve)
         if save:
             name = f"Qc_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "plots", name)
@@ -412,9 +422,13 @@ class ResonatorFitterGrapher:
                         self._res_fitter.Q_t_err[self._file_index_dict[str(i)]]
                     )
                     files.remove(self._file_index_dict[str(i)])
-                scatter = gl.Scatter(power, Qt, label=label)
-                scatter.add_errorbars(y_error=Qt_err)
-                figure.add_elements(scatter)
+                Qt = [x for _, x in sorted(zip(power, Qt), key=lambda pair: pair[0])]
+                Qt_err = [
+                    x for _, x in sorted(zip(power, Qt_err), key=lambda pair: pair[0])
+                ]
+                curve = gl.Curve(power, Qt, label=label)
+                curve.add_errorbars(y_error=Qt_err)
+                figure.add_elements(curve)
         for file in files:
             label = f"{self._res_fitter.f_r/1e9:.3f} GHz"
             power = (
@@ -424,9 +438,9 @@ class ResonatorFitterGrapher:
             )
             Qt = self._res_fitter.Q_t[file]
             Qt_err = self._res_fitter.Q_t_err[file]
-            scatter = gl.Scatter(power, Qt, label=label)
-            scatter.add_errorbars(y_error=Qt_err)
-            figure.add_elements(scatter)
+            curve = gl.Curve(power, Qt, label=label)
+            curve.add_errorbars(y_error=Qt_err)
+            figure.add_elements(curve)
         if save:
             name = f"Qt_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "plots", name)
@@ -634,9 +648,13 @@ class ResonatorFitterGrapher:
                         self._res_fitter.L_i_err[self._file_index_dict[str(i)]]
                     )
                     files.remove(self._file_index_dict[str(i)])
-                scatter = gl.Scatter(power, Li, label=label)
-                scatter.add_errorbars(y_error=Li_err)
-                figure.add_elements(scatter)
+                Li = [x for _, x in sorted(zip(power, Li), key=lambda pair: pair[0])]
+                Li_err = [
+                    x for _, x in sorted(zip(power, Li_err), key=lambda pair: pair[0])
+                ]
+                curve = gl.Curve(power, Li, label=label)
+                curve.add_errorbars(y_error=Li_err)
+                figure.add_elements(curve)
         for file in files:
             label = f"{self._res_fitter.f_r/1e9:.3f} GHz"
             power = (
@@ -646,9 +664,9 @@ class ResonatorFitterGrapher:
             )
             Li = self._res_fitter.L_i[file]
             Li_err = self._res_fitter.L_i_err[file]
-            scatter = gl.Scatter(power, Li, label=label)
-            scatter.add_errorbars(y_error=Li_err)
-            figure.add_elements(scatter)
+            curve = gl.Curve(power, Li, label=label)
+            curve.add_errorbars(y_error=Li_err)
+            figure.add_elements(curve)
         if save:
             name = f"Li_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "plots", name)
