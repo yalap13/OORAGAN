@@ -1,6 +1,6 @@
 """
-ResonatorAnalysis
-=================
+OORAGAN
+=======
 
 An object oriented library to analyse and visualize resonator measurement data.
 
