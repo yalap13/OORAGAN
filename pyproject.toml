@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "resonatoranalysis"
+name = "ooragan"
 version = "0.1.0"
 description = ""
 authors = ["yalap13 <yannicklapointe77@gmail.com>"]

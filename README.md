@@ -15,7 +15,7 @@ Thanks to François Cyrenne-Bergeron for the name idea.
 
 This code is strctured as a library so you can install it using
 ```
-pip install git+https://github.com/yalap13/ResonatorAnalysis.git
+pip install git+https://github.com/yalap13/OORAGAN.git
 ```
 
 **Note** : If you are using anaconda or any other package manager, you can generally just replace the ``pip install`` with the command for installing packages for your package manager.
@@ -24,11 +24,11 @@ pip install git+https://github.com/yalap13/ResonatorAnalysis.git
 
 Here is a simple use case :
 ```python
-from resonatoranalysis import Dataset
+import ooragan as ra
 
 
 path = r"C:/path/to/your/data/folder"
-dataset = Dataset(path, attenuation_cryostat=-80)
+dataset = ra.Dataset(path, attenuation_cryostat=-80)
 
 # You can get a slice of this Dataset using the following
 slice = dataset.slice(file_index=[1, 2], power=[-80, -100])

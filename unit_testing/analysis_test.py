@@ -1,7 +1,7 @@
 import unittest
 
-from resonatoranalysis.analysis import *
-from resonatoranalysis.file_handler import datapicker, gethdf5info
+from ooragan.analysis import *
+from ooragan.file_handler import datapicker, gethdf5info
 
 
 class TestAnalysis(unittest.TestCase):

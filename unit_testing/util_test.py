@@ -2,8 +2,8 @@ import unittest
 
 from numpy import array
 
-from resonatoranalysis.util import *
-from resonatoranalysis.file_handler import datapicker, gethdf5info
+from ooragan.util import *
+from ooragan.file_handler import datapicker, gethdf5info
 
 
 class TestUtil(unittest.TestCase):
