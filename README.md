@@ -1,10 +1,13 @@
-# ResonatorAnalysis
 
-ResonatorAnalysis is a library developped by me and other members of the Josephson Photonics and QIQSS research groups of the Université de Sherbrooke to fully process data from resonator measurements.
+![ooragan](ooragan_logo.svg)
+
+# OORAGAN
+
+Object Oriented Resonator Advanced Graphing and ANalysis (OORAGAN) is a library developped by me and other members of the Josephson Photonics and QIQSS research groups of the Université de Sherbrooke to fully process data from resonator measurements.
 
 ## Note
 
-This library has been made to work with file formats **specific to the measurement setups used at the Université de Sherbrooke**. **Also**, this repository is a mirror of the main development repository. **No merge requests will be merged on this repository as of now.**
+This library has been made to work with file formats **specific to the measurement setups used at the Université de Sherbrooke**. **Also**, the GitHub repository is a mirror of the development repository and no changes will be accepted on GitHub.
 
 ## Installation
 
