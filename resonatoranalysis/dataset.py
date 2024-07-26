@@ -920,7 +920,7 @@ class TXTData:
         start_arr = np.array(
             [
                 (
-                    datetime.fromtimestamp(self.start_time[file][0]).strftime(
+                    datetime.fromtimestamp(self.start_time[file]).strftime(
                         "%Y-%m-%d %H:%M:%S"
                     )
                     if self.start_time[file] is not None
@@ -980,20 +980,22 @@ class TXTData:
                 for f in self._all_files
                 if file.rstrip(".txt") in f and "readval" in f
             ]
-            power_indices_present = []
-            for sf in sweep_files:
-                match = re.search(r"readval_(\d+)", sf)
-                if match:
-                    power_indices_present.append(match.group(1))
             sweep_params = np.loadtxt(file, comments=comments, delimiter=delimiter)
             sweep_data = []
-            sweep_durations = []
+            sweep_powers = []
             sweep_averages = []
             sweep_bandwidths = []
             for sf in sweep_files:
                 standalone_files.remove(sf)
                 sweep_file_info = self._parse_parameters(sf)
-                sweep_durations.append(sweep_file_info["sweep_time"])
+                try:
+                    sweep_powers.append(
+                        sweep_file_info["port_power_level_dBm"][0]
+                        if "port_power_level_dBm" in sweep_file_info
+                        else sweep_file_info["power_dbm_port1"]
+                    )
+                except KeyError:
+                    pass
                 sweep_averages.append(
                     sweep_file_info["average_count"]
                     if "average_count" in sweep_file_info
@@ -1012,12 +1014,13 @@ class TXTData:
                     continue
                 sweep_data.append(arr)
             data[file] = sweep_data
-            info["start_time"][file] = sweep_params[0, 2]
-            info["duration"][file] = np.array(sweep_durations)
+            info["start_time"][file] = (
+                sweep_params[0, 2] if sweep_params.shape != (0,) else None
+            )
             info["vna_average"][file] = np.array(sweep_averages)
             info["vna_bandwidth"][file] = np.array(sweep_bandwidths)
-            info["vna_power"][file] = np.array(
-                [sweep_params[int(i), 0] for i in power_indices_present]
+            info["vna_power"][file] = (
+                np.array(sweep_powers) if sweep_powers != [] else None
             )
             info["start_freq"][file] = sweep_start_freq
             info["stop_freq"][file] = sweep_stop_freq
@@ -1032,12 +1035,14 @@ class TXTData:
                 else np.array([file_info["sweep_average_count"]])
             )
             info["vna_bandwidth"][file] = np.array([file_info["bandwidth"]])
-            # TODO: Verify if 'port_attenuation' really is the same as 'power_dbm_port1'
-            info["vna_power"][file] = (
-                np.array([file_info["power_dbm_port1"]])
-                if "power_dbm_port1" in file_info
-                else None
-            )
+            try:
+                info["vna_power"][file] = (
+                    np.array([file_info["power_dbm_port1"]])
+                    if "power_dbm_port1" in file_info
+                    else np.array([file_info["port_power_level_dBm"]])
+                )
+            except KeyError:
+                info["vna_power"][file] = None
             info["start_freq"][file] = file_info["freq_start"]
             info["stop_freq"][file] = file_info["freq_stop"]
             arr = np.loadtxt(file, comments=comments, delimiter=delimiter).T
