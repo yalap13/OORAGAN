@@ -11,6 +11,7 @@ from tabulate import tabulate
 from numpy.typing import NDArray, ArrayLike
 from datetime import datetime
 from copy import deepcopy
+from warnings import warn
 
 from .util import (
     strtime,
@@ -606,30 +607,33 @@ class HDF5Data:
         """
         global_dict = {}
         for file in self.files:
-            with h5py.File(file, "r") as f:
-                keylst = [key for key in f.keys()]
-                atrlst = [atr for atr in f.attrs.keys()]
-                keylst.remove("VNA")
-                info_dict = {element: None for element in keylst}
-                atr_dict = {element: None for element in atrlst}
-                for key in keylst:
-                    try:
-                        info_dict[key] = f[key][:]
-                    except TypeError:
-                        info_dict[key] = f[key][key][0]
-                    except Exception as err:
-                        print("Unexpected error : ", err)
-                for atr in atrlst:
-                    try:
-                        atr_dict[atr] = f.attrs[atr]
-                    except TypeError:
+            try:
+                with h5py.File(file, "r") as f:
+                    keylst = [key for key in f.keys()]
+                    atrlst = [atr for atr in f.attrs.keys()]
+                    keylst.remove("VNA")
+                    info_dict = {element: None for element in keylst}
+                    atr_dict = {element: None for element in atrlst}
+                    for key in keylst:
                         try:
-                            atr_dict[atr] = f.attrs[atr][:]
+                            info_dict[key] = f[key][:]
                         except TypeError:
-                            atr_dict[atr] = f.attrs[atr][atr][0]
-                    except Exception as err:
-                        print("Unexpected error : ", err)
-            global_dict[file] = {"vna_info": info_dict, "temps": atr_dict}
+                            info_dict[key] = f[key][key][0]
+                        except Exception as err:
+                            print("Unexpected error : ", err)
+                    for atr in atrlst:
+                        try:
+                            atr_dict[atr] = f.attrs[atr]
+                        except TypeError:
+                            try:
+                                atr_dict[atr] = f.attrs[atr][:]
+                            except TypeError:
+                                atr_dict[atr] = f.attrs[atr][atr][0]
+                        except Exception as err:
+                            print("Unexpected error : ", err)
+                global_dict[file] = {"vna_info": info_dict, "temps": atr_dict}
+            except OSError:
+                continue
         return global_dict
 
     def _get_freq_range(self) -> dict[str, dict]:
@@ -650,31 +654,39 @@ class HDF5Data:
         data_dict = {}
         for file in self.files:
             data = []
-            with h5py.File(file, "r") as hdf5_data:
-                freq = hdf5_data["VNA"]["VNA Frequency"][:]
-                try:
-                    real = np.squeeze(hdf5_data["VNA"]["s21_real"][:])
-                    imag = np.squeeze(hdf5_data["VNA"]["s21_imag"][:])
-                    if real.ndim > 1:
-                        for i in range(len(real)):
-                            arr = np.stack((freq.T, real[i].T, imag[i].T))
+            try:
+                with h5py.File(file, "r") as hdf5_data:
+                    freq = hdf5_data["VNA"]["VNA Frequency"][:]
+                    try:
+                        real = np.squeeze(hdf5_data["VNA"]["s21_real"][:])
+                        imag = np.squeeze(hdf5_data["VNA"]["s21_imag"][:])
+                        if real.ndim > 1:
+                            for i in range(len(real)):
+                                arr = np.stack((freq.T, real[i].T, imag[i].T))
+                                data.append(arr)
+                        else:
+                            arr = np.stack((freq.T, real.T, imag.T))
                             data.append(arr)
-                    else:
-                        arr = np.stack((freq.T, real.T, imag.T))
-                        data.append(arr)
-                except KeyError:
-                    mag = np.squeeze(hdf5_data["VNA"]["s21_mag"][:])
-                    phase = np.squeeze(hdf5_data["VNA"]["s21_phase"][:])
-                    if mag.ndim > 1:
-                        for i in range(len(mag)):
-                            real, imag = convert_magphase_to_complex(mag[i], phase[i])
-                            arr = np.stack((freq.T, real[i].T, imag[i].T))
+                    except KeyError:
+                        mag = np.squeeze(hdf5_data["VNA"]["s21_mag"][:])
+                        phase = np.squeeze(hdf5_data["VNA"]["s21_phase"][:])
+                        if mag.ndim > 1:
+                            for i in range(len(mag)):
+                                real, imag = convert_magphase_to_complex(
+                                    mag[i], phase[i]
+                                )
+                                arr = np.stack((freq.T, real[i].T, imag[i].T))
+                                data.append(arr)
+                        else:
+                            real, imag = convert_magphase_to_complex(mag, phase)
+                            arr = np.stack((freq.T, real.T, imag.T))
                             data.append(arr)
-                    else:
-                        real, imag = convert_magphase_to_complex(mag, phase)
-                        arr = np.stack((freq.T, real.T, imag.T))
-                        data.append(arr)
-                hdf5_data.close()
+                    hdf5_data.close()
+            except OSError:
+                warn(
+                    f"File {file} could not be opened as it was not closed properly."
+                    + "To resolve, see the 'h5clear' command from the HDF5 library."
+                )
             data_dict[file] = data
         return data_dict
 
