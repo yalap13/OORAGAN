@@ -339,7 +339,7 @@ class ResonatorFitterGrapher:
             )
             df.to_csv(path)
 
-    def plot_Q_vs_power(
+    def plot_Qt_vs_power(
         self,
         photon: bool = False,
         x_lim: Optional[tuple] = None,
@@ -468,7 +468,7 @@ class ResonatorFitterGrapher:
 
     def plot_Fshift_vs_power(
         self,
-        f_design: dict,
+        f_design: dict[str, float],
         photon: bool = False,
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
@@ -485,8 +485,10 @@ class ResonatorFitterGrapher:
 
         Parameters
         ----------
-        f_design : dict
-            Designed frequency of the attributed resonators.
+        f_design : dict of float
+            Designed frequency of the attributed resonators formatted as
+            ``{"<file_index>": <frequency in Hz>}`` with the ``file_index`` being the
+            same index as used in the Dataset and ResonatorFitter classes.
         photon : bool
             If ``True``, plots as a function of photon number. Defaults to ``False``.
         x_lim : tuple, optional
@@ -514,7 +516,96 @@ class ResonatorFitterGrapher:
             If ``True``, saves the plot at the location specified for the class.
             Defaults to ``False``.
         """
-        f_r = {}
+        files = list(self._res_fitter.f_r.keys())
+        F_diff = {
+            self._file_index_dict[i]: self._res_fitter.f_r[self._file_index_dict[i]]
+            - f_design[i]
+            for i in f_design.keys()
+        }
+        F_diff_err = {
+            self._file_index_dict[i]: self._res_fitter.f_r_err[self._file_index_dict[i]]
+            for i in f_design.keys()
+        }
+        if photon:
+            x_label = "Photon number"
+        else:
+            x_label = "Input power (dBm)"
+        figure = gl.Figure(
+            x_label,
+            r"$f_r-f_0$ (GHz)",
+            log_scale_x=photon,
+            x_lim=x_lim,
+            y_lim=y_lim,
+            size=size,
+            show_grid=show_grid,
+            figure_style=figure_style,
+            title=title,
+        )
+        if self._match_pattern is not None:
+            for label, indices in self._match_pattern.items():
+                power = []
+                fshift = []
+                fshift_err = []
+                for i in indices:
+                    if photon:
+                        power.extend(
+                            self._res_fitter.photon_number[
+                                self._file_index_dict[str(i)]
+                            ]
+                        )
+                    else:
+                        power.extend(
+                            self._res_fitter.input_power[self._file_index_dict[str(i)]]
+                        )
+                    fshift.extend(F_diff[self._file_index_dict[str(i)]] / 1e9)
+                    fshift_err.extend(F_diff_err[self._file_index_dict[str(i)]] / 1e9)
+                    files.remove(self._file_index_dict[str(i)])
+                fshift = [
+                    x for _, x in sorted(zip(power, fshift), key=lambda pair: pair[0])
+                ]
+                fshift_err = [
+                    x
+                    for _, x in sorted(zip(power, fshift_err), key=lambda pair: pair[0])
+                ]
+                curve = gl.Curve(power, fshift, label=label)
+                curve.add_errorbars(y_error=fshift_err)
+                figure.add_elements(curve)
+        for file in files:
+            label = f"{self._res_fitter.f_r[file][0]/1e9:.3f} GHz"
+            power = (
+                self._res_fitter.photon_number[file]
+                if photon
+                else self._res_fitter.input_power[file]
+            )
+            fshift = F_diff[file] / 1e9
+            fshift_err = F_diff_err[file] / 1e9
+            curve = gl.Curve(power, fshift, label=label)
+            curve.add_errorbars(y_error=fshift_err)
+            figure.add_elements(curve)
+        if save:
+            name = f"Fshift_vs_power_{self._name}." + self._image_type
+            path = os.path.join(self._savepath, "plots", name)
+            figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
+        else:
+            figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+        if self._save_graph_data:
+            name = f"Fshift_vs_power_{self._name}.csv"
+            path = os.path.join(self._savepath, "plots", name)
+            temp = {}
+            for element in figure._elements:
+                temp[element._label] = {
+                    "power": element._x_data,
+                    "Fshift": element._y_data,
+                    "Fshift_err": element._y_error,
+                }
+            df = pd.DataFrame(
+                {
+                    (key, sub_key): pd.Series(val)
+                    for key, d in temp.items()
+                    for sub_key, val in d.items()
+                }
+            )
+            df.to_csv(path)
 
     def plot_Fr_vs_power(
         self,
