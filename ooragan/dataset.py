@@ -1387,8 +1387,92 @@ class AbstractData:
         """
         return self.data == {}
 
-    def slice(self):
-        raise NotImplementedError("Not yet implemented")
+    def slice(self, file_index: int | list[int], power: float | list[float]) -> Self:
+        """
+        Extracts a slice of the Dataset as a new Dataset.
+        """
+        if not isinstance(file_index, list):
+            file_index = [file_index]
+        if not isinstance(power, list):
+            power = [power]
+        slice = deepcopy(self)
+        if file_index != []:
+            try:
+                for fi in file_index:
+                    self._file_index_dict[str(fi)]
+            except KeyError as err:
+                raise IndexError(f"Invalid file_index: {err}")
+            inverse_files = [
+                self._file_index_dict[i]
+                for i in self._file_index_dict.keys()
+                if int(i) not in file_index
+            ]
+        else:
+            inverse_files = []
+        inverted_file_dict = {val: key for key, val in self._file_index_dict.items()}
+        for file in self.files:
+            any_found = False
+            if self.power[file] is not None:
+                to_remove = (
+                    list(self.power[file])
+                    if np.squeeze(self.power[file]).shape == ()
+                    else list(np.squeeze(self.power[file]))
+                )
+                if power != []:
+                    for p in power:
+                        if p in self.power[file]:
+                            to_remove.remove(p)
+                            any_found = True
+                else:
+                    to_remove = []
+                    any_found = True
+            elif self.power[file] is None and power == []:
+                any_found = True
+            if not any_found or file in inverse_files:
+                slice.files = [f for f in slice.files if file[:-4] not in f]
+                slice._file_index_dict.pop(inverted_file_dict[file])
+                slice.data.pop(file)
+                slice.vna_average.pop(file)
+                slice.vna_bandwidth.pop(file)
+                slice.vna_power.pop(file)
+                slice.start_time.pop(file)
+                slice.power.pop(file)
+                slice.frequency_range.pop(file)
+            else:
+                idx_to_remove = []
+                for p in sorted(to_remove, reverse=True):
+                    idx = np.where(np.squeeze(self.power[file]) == p)[0][0]
+                    slice.data[file].pop(idx)
+                    idx_to_remove.append(idx)
+                try:
+                    slice.vna_average[file] = np.delete(
+                        slice.vna_average[file], idx_to_remove
+                    )
+                except IndexError:
+                    pass
+                try:
+                    slice.vna_bandwidth[file] = np.delete(
+                        slice.vna_bandwidth[file], idx_to_remove
+                    )
+                except IndexError:
+                    pass
+                try:
+                    slice.vna_power[file] = np.delete(
+                        slice.vna_power[file], idx_to_remove
+                    )
+                except IndexError:
+                    pass
+                try:
+                    slice.power[file] = (
+                        np.delete(slice.power[file], idx_to_remove)
+                        if slice.power[file] is not None
+                        else None
+                    )
+                except IndexError:
+                    pass
+        if slice._is_empty():
+            raise ValueError(f"No file contains the specified power values {power}")
+        return slice
 
     def convert_complex_to_magphase(self, deg: bool = False) -> None:
         """
