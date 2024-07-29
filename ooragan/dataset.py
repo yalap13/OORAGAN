@@ -134,7 +134,8 @@ class Dataset:
                 for file in glob(os.path.join(paths, "*.hdf5")):
                     hdf5_files.append(file)
                 for file in glob(os.path.join(paths, "*.txt")):
-                    txt_files.append(file)
+                    if "_results.txt" not in file:
+                        txt_files.append(file)
             if hdf5_files and txt_files:
                 if file_extension is not None:
                     if file_extension == "hdf5":
@@ -977,7 +978,6 @@ class TXTData:
         data = {}
         info = {
             "start_time": {},
-            "duration": {},
             "vna_average": {},
             "vna_bandwidth": {},
             "vna_power": {},
@@ -1002,9 +1002,9 @@ class TXTData:
                 sweep_file_info = self._parse_parameters(sf)
                 try:
                     sweep_powers.append(
-                        sweep_file_info["port_power_level_dBm"][0]
+                        float(sweep_file_info["port_power_level_dBm"][0])
                         if "port_power_level_dBm" in sweep_file_info
-                        else sweep_file_info["power_dbm_port1"]
+                        else float(sweep_file_info["power_dbm_port1"])
                     )
                 except KeyError:
                     pass
@@ -1040,7 +1040,6 @@ class TXTData:
         for file in standalone_files:
             file_info = self._parse_parameters(file)
             info["start_time"][file] = None
-            info["duration"][file] = np.array([file_info["sweep_time"]])
             info["vna_average"][file] = (
                 np.array([file_info["average_count"]])
                 if "average_count" in file_info
