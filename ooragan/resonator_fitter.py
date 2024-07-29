@@ -288,6 +288,7 @@ class ResonatorFitter:
                 mag, phase = convert_complex_to_magphase(
                     data[i][j][1, :], data[i][j][2, :]
                 )
+                succeeded = False
                 for t in np.arange(start, len(frequency) // 2, jump):
                     # Trim data, unwrap and S21 complex creation
                     if t == 0:
@@ -305,13 +306,13 @@ class ResonatorFitter:
                             bg=bg,
                         )
                     except:
-                        failed.append(p)
                         continue
 
                     # Filter out bad fits
                     if self._test_fit(
                         result.result, verbose=False, threshold=threshold
                     ):
+                        succeeded = True
                         data_temp["Q_c"].append(result.coupling_quality_factor)
                         data_temp["Q_c_err"].append(
                             result.coupling_quality_factor_error
@@ -333,7 +334,8 @@ class ResonatorFitter:
                         data_temp["photon_number"].append(photon)
                         data_temp["input_power"].append(p)
                         break
-                # add condition to see if fit worked eventually or not and if not append power to failed list
+                if not succeeded:
+                    failed.append(p)
                 else:
                     if savepic:
                         a = str(np.mean(frequency / 1e9))[:5].replace(".", "_")

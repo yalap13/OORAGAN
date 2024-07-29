@@ -175,7 +175,7 @@ class ResonatorFitterGrapher:
                 curve.add_errorbars(y_error=Qi_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r:.3f} GHz"
+            label = f"{self._res_fitter.f_r[file][0]/1e9:.3f} GHz"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
@@ -303,7 +303,7 @@ class ResonatorFitterGrapher:
                 curve.add_errorbars(y_error=Qc_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r/1e9:.3f} GHz"
+            label = f"{self._res_fitter.f_r[file][0]/1e9:.3f} GHz"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
@@ -430,7 +430,7 @@ class ResonatorFitterGrapher:
                 curve.add_errorbars(y_error=Qt_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r/1e9:.3f} GHz"
+            label = f"{self._res_fitter.f_r[file][0]/1e9:.3f} GHz"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
@@ -479,7 +479,7 @@ class ResonatorFitterGrapher:
         legend_cols: int = 1,
         figure_style: str = "default",
         save: bool = False,
-    ):
+    ) -> None:
         """
         Plots the frequency shift as a function of input power or photon number.
 
@@ -515,7 +515,6 @@ class ResonatorFitterGrapher:
             Defaults to ``False``.
         """
         f_r = {}
-        raise NotImplementedError("Not yet implemented")
 
     def plot_Fr_vs_power(
         self,
@@ -529,7 +528,7 @@ class ResonatorFitterGrapher:
         legend_cols: int = 1,
         figure_style: str = "default",
         save: bool = False,
-    ):
+    ) -> None:
         """
         Plots the resonance frequency as a function of input power or photon number.
 
@@ -562,8 +561,86 @@ class ResonatorFitterGrapher:
             If ``True``, saves the plot at the location specified for the class.
             Defaults to ``False``.
         """
-        f_r = {}
-        raise NotImplementedError("Not yet implemented")
+        files = list(self._res_fitter.f_r.keys())
+        if photon:
+            x_label = "Photon number"
+        else:
+            x_label = "Input power (dBm)"
+        figure = gl.Figure(
+            x_label,
+            r"$f_r$ (GHz)",
+            log_scale_x=photon,
+            x_lim=x_lim,
+            y_lim=y_lim,
+            size=size,
+            show_grid=show_grid,
+            figure_style=figure_style,
+            title=title,
+        )
+        if self._match_pattern is not None:
+            for label, indices in self._match_pattern.items():
+                power = []
+                fr = []
+                fr_err = []
+                for i in indices:
+                    if photon:
+                        power.extend(
+                            self._res_fitter.photon_number[
+                                self._file_index_dict[str(i)]
+                            ]
+                        )
+                    else:
+                        power.extend(
+                            self._res_fitter.input_power[self._file_index_dict[str(i)]]
+                        )
+                    fr.extend(self._res_fitter.f_r[self._file_index_dict[str(i)]] / 1e9)
+                    fr_err.extend(
+                        self._res_fitter.f_r_err[self._file_index_dict[str(i)]] / 1e9
+                    )
+                    files.remove(self._file_index_dict[str(i)])
+                fr = [x for _, x in sorted(zip(power, fr), key=lambda pair: pair[0])]
+                fr_err = [
+                    x for _, x in sorted(zip(power, fr_err), key=lambda pair: pair[0])
+                ]
+                curve = gl.Curve(power, fr, label=label)
+                curve.add_errorbars(y_error=fr_err)
+                figure.add_elements(curve)
+        for file in files:
+            label = f"{self._res_fitter.f_r[file][0]/1e9:.3f} GHz"
+            power = (
+                self._res_fitter.photon_number[file]
+                if photon
+                else self._res_fitter.input_power[file]
+            )
+            fr = self._res_fitter.f_r[file] / 1e9
+            fr_err = self._res_fitter.f_r_err[file] / 1e9
+            curve = gl.Curve(power, fr, label=label)
+            curve.add_errorbars(y_error=fr_err)
+            figure.add_elements(curve)
+        if save:
+            name = f"Fr_vs_power_{self._name}." + self._image_type
+            path = os.path.join(self._savepath, "plots", name)
+            figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
+        else:
+            figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+        if self._save_graph_data:
+            name = f"Fr_vs_power_{self._name}.csv"
+            path = os.path.join(self._savepath, "plots", name)
+            temp = {}
+            for element in figure._elements:
+                temp[element._label] = {
+                    "power": element._x_data,
+                    "Fr": element._y_data,
+                    "Fr_err": element._y_error,
+                }
+            df = pd.DataFrame(
+                {
+                    (key, sub_key): pd.Series(val)
+                    for key, d in temp.items()
+                    for sub_key, val in d.items()
+                }
+            )
+            df.to_csv(path)
 
     def plot_internal_loss_vs_power(
         self,
@@ -577,7 +654,7 @@ class ResonatorFitterGrapher:
         legend_cols: int = 1,
         figure_style: str = "default",
         save: bool = False,
-    ):
+    ) -> None:
         """
         Plots the internal losses as a function of input power or photon number.
 
@@ -656,7 +733,7 @@ class ResonatorFitterGrapher:
                 curve.add_errorbars(y_error=Li_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r/1e9:.3f} GHz"
+            label = f"{self._res_fitter.f_r[file][0]/1e9:.3f} GHz"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
