@@ -674,7 +674,9 @@ class HDF5Data:
                         if mag.ndim > 1:
                             for i in range(len(mag)):
                                 real, imag = convert_magphase_to_complex(
-                                    mag[i], phase[i]
+                                    mag[i],
+                                    phase[i],
+                                    dBm=True,
                                 )
                                 arr = np.stack((freq.T, real[i].T, imag[i].T))
                                 data.append(arr)
@@ -1020,7 +1022,10 @@ class TXTData:
                 try:
                     if sweep_file_info["options"]["unit"] == "db_deg":
                         arr[1, :], arr[2, :] = convert_magphase_to_complex(
-                            arr[1, :], arr[2, :], deg=True
+                            arr[1, :],
+                            arr[2, :],
+                            deg=True,
+                            dBm=True,
                         )
                 except KeyError:
                     continue
@@ -1060,7 +1065,10 @@ class TXTData:
             try:
                 if file_info["options"]["unit"] == "db_deg":
                     arr[1, :], arr[2, :] = convert_magphase_to_complex(
-                        arr[1, :], arr[2, :], deg=True
+                        arr[1, :],
+                        arr[2, :],
+                        deg=True,
+                        dBm=True,
                     )
             except KeyError:
                 pass
