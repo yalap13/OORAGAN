@@ -19,11 +19,26 @@ class DatasetGrapher:
     ----------
     dataset : Dataset
         Dataset containing the data to graph.
+    savepath : str, optional
+        Path where to create the ``data_plots`` folder to save the generated plots.
+        Defaults to the current working directory.
+    image_type : str, optional
+        Image file type to save the figures. Defaults to ``"svg"``.
     """
 
-    def __init__(self, dataset: Dataset) -> None:
-        self._data = dataset.data
-        self._power = dataset.power
+    def __init__(
+        self,
+        dataset: Dataset,
+        savepath: Optional[str] = None,
+        image_type: str = "svg",
+    ) -> None:
+        self._savepath = savepath
+        if self._savepath is None:
+            self._savepath = os.path.join(os.getcwd(), "data_plots")
+        if not os.path.exists(self._savepath):
+            os.mkdir(self._savepath)
+        self._dataset = dataset
+        self._image_type = image_type
 
     def plot_complex(self):
         raise NotImplementedError
@@ -31,11 +46,141 @@ class DatasetGrapher:
     def plot_mag_vs_phase(self):
         raise NotImplementedError
 
-    def plot_S21_vs_freq(self):
-        raise NotImplementedError
+    def plot_mag_vs_freq(
+        self,
+        file_index: int | list[int] = [],
+        power: float | list[float] = [],
+        size: tuple | Literal["default"] = "default",
+        title: Optional[str] = None,
+        show_grid: bool | Literal["default"] = "default",
+        save: bool = True,
+    ) -> None:
+        """
+        Plots the magnitude in dBm as a function of frequency in GHz.
 
-    def plot_phase_vs_freq(self):
-        raise NotImplementedError
+        Parameters
+        ----------
+        file_index : int or list of int, optional
+            Index or list of indices (as displayed in the Dataset table) of files to
+            get data from. Defaults to ``[]``.
+        power_index : float or list of float, optional
+            If specified, will fetch data for those power values. Defaults to ``[]``.
+        size : tuple, optional
+            Figure size. Default depends on the ``figure_style`` configuration.
+        title : str, optional
+            Figure title applied to all figures and appended with the frequency range.
+            Defaults to ``None``.
+        show_grid : bool, optional
+            Display the grid. Default depends on the ``figure_style`` configuration.
+        save : bool, optional
+            If ``True``, saves the plot at the location specified for the class.
+            Defaults to ``True``.
+        """
+        dataset = self._dataset.slice(file_index=file_index, power=power)
+        dataset.convert_complex_to_magphase()
+        _power = dataset._data_container.power
+        data = dataset._data_container.data
+        for file in dataset._data_container.files:
+            squeezed_power = (
+                np.squeeze(_power[file]) if _power[file].shape != (1,) else _power[file]
+            )
+            for i, d in enumerate(data[file]):
+                if title is not None:
+                    new_title = title + "_"
+                    new_title += str(np.mean(d[0, :]) / 1e9)[:4].replace(".", "_")
+                    new_title += f"GHz_{squeezed_power[i]}dBm"
+                else:
+                    new_title = title
+                figure = gl.Figure(
+                    "Frequency (GHz)",
+                    "Magnitude (dBm)",
+                    title=new_title,
+                    show_grid=show_grid,
+                    size=size,
+                )
+                scatter = gl.Scatter(d[0, :] / 1e9, d[1, :], marker_style=".")
+                figure.add_elements(scatter)
+                if save:
+                    time = datetime.fromtimestamp(
+                        dataset._data_container.start_time[file]
+                    ).strftime("%Y-%m-%d_%H-%M-%S")
+                    fname = (
+                        "mag_vs_freq_"
+                        + str(np.mean(d[0, :]) / 1e9)[:5].replace(".", "_")
+                        + f"GHz_{squeezed_power[i]}dBm_{time}."
+                        + self._image_type
+                    )
+                    figure.save(os.path.join(self._savepath, fname))
+                else:
+                    figure.show()
+
+    def plot_phase_vs_freq(
+        self,
+        file_index: int | list[int] = [],
+        power: float | list[float] = [],
+        size: tuple | Literal["default"] = "default",
+        title: Optional[str] = None,
+        show_grid: bool | Literal["default"] = "default",
+        save: bool = True,
+    ) -> None:
+        """
+        Plots the phase in radians as a function of frequency in GHz.
+
+        Parameters
+        ----------
+        file_index : int or list of int, optional
+            Index or list of indices (as displayed in the Dataset table) of files to
+            get data from. Defaults to ``[]``.
+        power_index : float or list of float, optional
+            If specified, will fetch data for those power values. Defaults to ``[]``.
+        size : tuple, optional
+            Figure size. Default depends on the ``figure_style`` configuration.
+        title : str, optional
+            Figure title applied to all figures and appended with the frequency range.
+            Defaults to ``None``.
+        show_grid : bool, optional
+            Display the grid. Default depends on the ``figure_style`` configuration.
+        save : bool, optional
+            If ``True``, saves the plot at the location specified for the class.
+            Defaults to ``True``.
+        """
+        dataset = self._dataset.slice(file_index=file_index, power=power)
+        dataset.convert_complex_to_magphase()
+        _power = dataset._data_container.power
+        data = dataset._data_container.data
+        for file in dataset._data_container.files:
+            squeezed_power = (
+                np.squeeze(_power[file]) if _power[file].shape != (1,) else _power[file]
+            )
+            for i, d in enumerate(data[file]):
+                if title is not None:
+                    new_title = title + "_"
+                    new_title += str(np.mean(d[0, :]) / 1e9)[:4].replace(".", "_")
+                    new_title += f"GHz_{squeezed_power[i]}dBm"
+                else:
+                    new_title = title
+                figure = gl.Figure(
+                    "Frequency (GHz)",
+                    "Phase (rad)",
+                    title=new_title,
+                    show_grid=show_grid,
+                    size=size,
+                )
+                scatter = gl.Scatter(d[0, :] / 1e9, d[2, :], marker_style=".")
+                figure.add_elements(scatter)
+                if save:
+                    time = datetime.fromtimestamp(
+                        dataset._data_container.start_time[file]
+                    ).strftime("%Y-%m-%d_%H-%M-%S")
+                    fname = (
+                        "phase_vs_freq_"
+                        + str(np.mean(d[0, :]) / 1e9)[:5].replace(".", "_")
+                        + f"GHz_{squeezed_power[i]}dBm_{time}."
+                        + self._image_type
+                    )
+                    figure.save(os.path.join(self._savepath, fname))
+                else:
+                    figure.show()
 
     def plot_complex_circle(self):
         raise NotImplementedError
@@ -50,8 +195,8 @@ class ResonatorFitterGrapher:
     res_fitter : ResonatorFitter
         ResonatorFitter containing the data to graph.
     savepath : str, optional
-        Path where to create the ``plots`` folder to save the generated plots. Defaults
-        to the current working directory.
+        Path where to create the ``fit_results_plots`` folder to save the generated
+        plots. Defaults to the current working directory.
     name : str, optional
         Name given to the saved plots. If left to ``None``, ``name`` will be the date.
     image_type : str, optional
@@ -65,14 +210,14 @@ class ResonatorFitterGrapher:
     def __init__(
         self,
         res_fitter: ResonatorFitter,
-        savepath: Optional[str] = None,
+        savepath: str = os.getcwd(),
         name: Optional[str] = None,
         image_type: str = "svg",
         match_pattern: dict[str, tuple] = None,
         save_graph_data: bool = False,
     ) -> None:
         self._res_fitter = res_fitter
-        self._savepath = savepath if savepath is not None else os.getcwd()
+        self._savepath = savepath
         self._name = name if name is not None else datetime.today().strftime("%Y-%m-%d")
         self._image_type = image_type
         self._match_pattern = match_pattern
@@ -80,8 +225,8 @@ class ResonatorFitterGrapher:
             self._res_fitter.dataset._data_container._file_index_dict
         )
         self._save_graph_data = save_graph_data
-        if not os.path.exists(os.path.join(self._savepath, "plots")):
-            os.mkdir(os.path.join(self._savepath, "plots"))
+        if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
+            os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
 
     def plot_Qi_vs_power(
         self,
@@ -868,6 +1013,7 @@ def grapher(
     name: Optional[str] = None,
     file_type: str = "svg",
     match_pattern: Optional[dict] = None,
+    save_graph_data: bool = False,
 ) -> DatasetGrapher: ...
 
 
@@ -878,6 +1024,7 @@ def grapher(
     name: Optional[str] = None,
     file_type: str = "svg",
     match_pattern: Optional[dict] = None,
+    save_graph_data: bool = False,
 ) -> ResonatorFitterGrapher: ...
 
 
@@ -903,13 +1050,17 @@ def grapher(
         Name given to the saved plots. If left to ``None``, ``name`` will be the date.
     image_type : str, optional
         Image file type to save the figures. Defaults to ``"svg"``.
-    match_pattern : dict
+    match_pattern : dict, optional
         Dictionnary of files associated to a resonance name.
     save_graph_data : bool, optional
         If ``True``, saves the graph's data in a csv file. Defaults to ``False``.
     """
     if isinstance(data_object, Dataset):
-        return DatasetGrapher(data_object, savepath)
+        return DatasetGrapher(
+            dataset=data_object,
+            savepath=savepath,
+            image_type=image_type,
+        )
     elif isinstance(data_object, ResonatorFitter):
         return ResonatorFitterGrapher(
             res_fitter=data_object,
