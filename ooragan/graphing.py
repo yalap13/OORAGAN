@@ -210,7 +210,7 @@ class ResonatorFitterGrapher:
     def __init__(
         self,
         res_fitter: ResonatorFitter,
-        savepath: str = os.getcwd(),
+        savepath: str = None,
         name: Optional[str] = None,
         image_type: str = "svg",
         match_pattern: dict[str, tuple] = None,
@@ -225,6 +225,8 @@ class ResonatorFitterGrapher:
             self._res_fitter.dataset._data_container._file_index_dict
         )
         self._save_graph_data = save_graph_data
+        if self._savepath is None:
+            self._savepath = os.getcwd()
         if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
             os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
 
@@ -334,13 +336,13 @@ class ResonatorFitterGrapher:
             figure.add_elements(curve)
         if save:
             name = f"Qi_vs_power_{self._name}." + self._image_type
-            path = os.path.join(self._savepath, "plots", name)
+            path = os.path.join(self._savepath, "fit_results_plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
             figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
         if self._save_graph_data:
             name = f"Qi_vs_power_{self._name}.csv"
-            path = os.path.join(self._savepath, "plots", name)
+            path = os.path.join(self._savepath, "fit_results_plots", name)
             temp = {}
             for element in figure._elements:
                 temp[element._label] = {
@@ -461,13 +463,13 @@ class ResonatorFitterGrapher:
             figure.add_elements(curve)
         if save:
             name = f"Qc_vs_power_{self._name}." + self._image_type
-            path = os.path.join(self._savepath, "plots", name)
+            path = os.path.join(self._savepath, "fit_results_plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
             figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
         if self._save_graph_data:
             name = f"Qc_vs_power_{self._name}.csv"
-            path = os.path.join(self._savepath, "plots", name)
+            path = os.path.join(self._savepath, "fit_results_plots", name)
             temp = {}
             for element in figure._elements:
                 temp[element._label] = {
@@ -588,13 +590,13 @@ class ResonatorFitterGrapher:
             figure.add_elements(curve)
         if save:
             name = f"Qt_vs_power_{self._name}." + self._image_type
-            path = os.path.join(self._savepath, "plots", name)
+            path = os.path.join(self._savepath, "fit_results_plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
             figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
         if self._save_graph_data:
             name = f"Qt_vs_power_{self._name}.csv"
-            path = os.path.join(self._savepath, "plots", name)
+            path = os.path.join(self._savepath, "fit_results_plots", name)
             temp = {}
             for element in figure._elements:
                 temp[element._label] = {
@@ -729,13 +731,13 @@ class ResonatorFitterGrapher:
             figure.add_elements(curve)
         if save:
             name = f"Fshift_vs_power_{self._name}." + self._image_type
-            path = os.path.join(self._savepath, "plots", name)
+            path = os.path.join(self._savepath, "fit_restults_plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
             figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
         if self._save_graph_data:
             name = f"Fshift_vs_power_{self._name}.csv"
-            path = os.path.join(self._savepath, "plots", name)
+            path = os.path.join(self._savepath, "fit_results_plots", name)
             temp = {}
             for element in figure._elements:
                 temp[element._label] = {
@@ -855,13 +857,13 @@ class ResonatorFitterGrapher:
             figure.add_elements(curve)
         if save:
             name = f"Fr_vs_power_{self._name}." + self._image_type
-            path = os.path.join(self._savepath, "plots", name)
+            path = os.path.join(self._savepath, "fit_results_plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
             figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
         if self._save_graph_data:
             name = f"Fr_vs_power_{self._name}.csv"
-            path = os.path.join(self._savepath, "plots", name)
+            path = os.path.join(self._savepath, "fit_results_plots", name)
             temp = {}
             for element in figure._elements:
                 temp[element._label] = {
@@ -982,13 +984,13 @@ class ResonatorFitterGrapher:
             figure.add_elements(curve)
         if save:
             name = f"Li_vs_power_{self._name}." + self._image_type
-            path = os.path.join(self._savepath, "plots", name)
+            path = os.path.join(self._savepath, "fit_results_plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
             figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
         if self._save_graph_data:
             name = f"Li_vs_power_{self._name}.csv"
-            path = os.path.join(self._savepath, "plots", name)
+            path = os.path.join(self._savepath, "fit_results_plots", name)
             temp = {}
             for element in figure._elements:
                 temp[element._label] = {
