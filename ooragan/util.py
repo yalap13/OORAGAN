@@ -4,13 +4,13 @@ import numpy as np
 
 from numpy.typing import NDArray
 from IPython import get_ipython
+from typing import Optional
 
 
-def choice(title: str = None, msg: str = None) -> bool:
+def choice(title: Optional[str] = None, msg: Optional[str] = None) -> bool:
     """
     Function that opens a choice box for the user to choose between yes or no.
     Returns True if yes, False if no.
-
     """
     if title is None:
         title = "Overwrite warning"
@@ -103,47 +103,11 @@ def convert_magphase_to_complex(
     return s21_complex.real, s21_complex.imag
 
 
-def convert_magang_to_dB(data, deg=False, dBm=False):
-    """
-    Converts a numpy array that has a magnitude array and an angle array to
-    an array of power values in dBm.
-
-    Parameters
-    ----------
-    data : numpy.array
-        Raw data array to convert.
-    deg : bool, optional
-        If data angle array is in degrees. The default is False.
-    dBm : bool, optional
-        If data magnitude array is in dBm. The default is False.
-
-    Returns
-    -------
-    np.array(complex_values)
-
-    """
-    mag = data[1]
-
-    if deg:
-        ang = np.deg2rad(data[2])
-
-    else:
-        ang = data[2]
-
-    if dBm:
-        s21 = np.abs(10 ** (mag / 20) * np.exp(1j * ang))
-
-    else:
-        s21 = 20 * np.log10(np.abs(mag * np.exp(1j * ang)))
-
-    return s21
-
-
 def convert_complex_to_magphase(
     real: NDArray, imag: NDArray, deg: bool = False
 ) -> NDArray:
     """
-    Converts real and imaginary data into magnitude (dB) and phase.
+    Converts real and imaginary data into magnitude (dBm) and phase.
 
     Parameters
     ----------
@@ -161,32 +125,7 @@ def convert_complex_to_magphase(
     return mag, phase
 
 
-def calculate_power(att_cryo: float, info: dict):
-    """
-    Computes the power for each data file from their info and the attenuation on the cryostat.
-
-    Parameters
-    ----------
-    att_cryo : float
-        Attenuation on the cryostat.
-    info : dict
-        Dictionnary of info extracted from the hdf5 files.
-
-    Returns
-    -------
-    Dictionnary with filenames as keys and array of powers as values.
-    """
-    powers = {}
-    for file in info.keys():
-        powers[file] = (
-            info[file]["vna_info"]["VNA Power"]
-            + att_cryo
-            - info[file]["vna_info"]["Variable Attenuator"]
-        )
-    return powers
-
-
-def is_interactive():
+def is_interactive() -> bool:
     try:
         shell = get_ipython().__class__.__name__
         if shell == "ZMQInteractiveShell":

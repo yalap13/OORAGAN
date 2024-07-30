@@ -10,9 +10,10 @@ Fit result*
 fit_results
 .pytest_cache
 TODO.md
-*.txt
 *.csv
-plots
+*.txt
+fit_results_plots
+data_plots
 
 !ooragan/*.py
 !unit_testing/*.py
