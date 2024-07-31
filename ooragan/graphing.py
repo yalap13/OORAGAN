@@ -40,12 +40,6 @@ class DatasetGrapher:
         self._dataset = dataset
         self._image_type = image_type
 
-    def plot_complex(self):
-        raise NotImplementedError
-
-    def plot_mag_vs_phase(self):
-        raise NotImplementedError
-
     def plot_mag_vs_freq(
         self,
         file_index: int | list[int] = [],
@@ -181,9 +175,6 @@ class DatasetGrapher:
                     figure.save(os.path.join(self._savepath, fname))
                 else:
                     figure.show()
-
-    def plot_complex_circle(self):
-        raise NotImplementedError
 
 
 class ResonatorFitterGrapher:
