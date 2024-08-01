@@ -24,7 +24,16 @@ Thanks to François Cyrenne-Bergeron for the name idea.
     * [``ResonatorFitter.fit``](#resonatorfitterfit)
   * [Grapher](#grapher)
     * [DatasetGrapher](#datasetgrapher)
+      * [``DatasetGrapher.plot_mag_vs_freq``](#datasetgrapherplot_mag_vs_freq)
+      * [``DatasetGrapher.plot_phase_vs_freq``](#datasetgrapherplot_phase_vs_freq)
     * [ResonatorFitterGrapher](#resonatorfittergrapher)
+      * [``ResonatorFitterGrapher.plot_Qi_vs_power``](#resonatorfittergrapherplot_qi_vs_power)
+      * [``ResonatorFitterGrapher.plot_Qc_vs_power``](#resonatorfittergrapherplot_qc_vs_power)
+      * [``ResonatorFitterGrapher.plot_Qt_vs_power``](#resonatorfittergrapherplot_qt_vs_power)
+      * [``ResonatorFitterGrapher.plot_Fshift_vs_power``](#resonatorfittergrapherplot_fshift_vs_power)
+      * [``ResonatorFitterGrapher.plot_Fr_vs_power``](#resonatorfittergrapherplot_fr_vs_power)
+      * [``ResonatorFitterGrapher.plot_internal_loss_vs_power``](#resonatorfittergrapherplot_internal_loss_vs_power)
+    * [``load_graph_data``](#load_graph_data)
 
 ## Installation
 
@@ -94,6 +103,80 @@ grapher.plot_Qi_vs_power(photon=True, save=True)
 ### Dataset
 
 The ``Dataset`` object is used to extract the data from the raw *hdf5* or *txt* files. In the background, this object creates either a ``HDF5Data`` or a ``TXTData`` object to deal with the two diffenrent data formats. Those objects are not to be used directly by the user as the ``Dataset`` creates a simpler interface.
+
+Here is a list of the ``Dataset`` object's attribute:
+
+<table>
+  <thead>
+    <tr>
+      <th>Attribute</th>
+      <th>Return type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>data</code></td>
+      <td>dict or list</td>
+      <td>Data contained in the <code>Dataset</code></td>
+    </tr>
+    <tr>
+      <td><code>format</code></td>
+      <td>str</td>
+      <td>Current format of the data, either <code>"complex"</code> or <code>"magphase"</code></td>
+    </tr>
+    <tr>
+      <td><code>cryostat_info</code></td>
+      <td>dict</td>
+      <td>Cryostat information. <b>Only available for hdf5 files as of now.</b></td>
+    </tr>
+    <tr>
+      <td><code>files</code></td>
+      <td>list or str</td>
+      <td>Files contained in the <code>Dataset</code></td>
+    </tr>
+    <tr>
+      <td><code>vna_average</code></td>
+      <td>dict or ArrayLike</td>
+      <td>VNA averaging count</td>
+    </tr>
+    <tr>
+      <td><code>vna_bandwidth</code></td>
+      <td>dict or ArrayLike</td>
+      <td>VNA bandwidth</td>
+    </tr>
+    <tr>
+      <td><code>vna_power</code></td>
+      <td>dict or ArrayLike</td>
+      <td>VNA output power in dBm</td>
+    </tr>
+    <tr>
+      <td><code>variable_attenuator</code></td>
+      <td>dict or ArrayLike</td>
+      <td>Attenuation value of the variable attenuator. <b>Only available for hdf5 files as of now.</b></td>
+    </tr>
+    <tr>
+      <td><code>start_time</code></td>
+      <td>dict or ArrayLike</td>
+      <td>Start time of the measurement</td>
+    </tr>
+    <tr>
+      <td><code>mixing_temp</code></td>
+      <td>dict or ArrayLike</td>
+      <td>Temperature of the mixing stage of the fridge. <b>Only available for hdf5 files as of now.</b></td>
+    </tr>
+    <tr>
+      <td><code>power</code></td>
+      <td>dict or ArrayLike</td>
+      <td>Total power includig VNA output power, attenuation on the fridge and variable attenuator.</td>
+    </tr>
+    <tr>
+      <td><code>frequency_range</code></td>
+      <td>dict</td>
+      <td>Start and stop frequency of the measurement</td>
+    </tr>
+  </tbody>
+</table>
 
 #### ``Dataset.slice``
 
@@ -166,6 +249,7 @@ where the magnitude $|S_{21}|$ is in dB and the phase $\phi$ is in radians.
 #### ``Dataset.convert_complex_to_magphase``
 
 Converts the data contained in the ``Dataset`` from complex to magnitude and phase format. Uses the following to obtain the magnitude and phase from the complex signal:
+
 $$|S_{21}|=20\cdot\log_{10}\sqrt{\mathrm{Re}(S_{21})^2+\mathrm{Im}(S_{21})^2}$$
 $$\phi=\arctan\left(\frac{\mathrm{Im}(S_{21})}{\mathrm{Re}(S_{21})}\right)$$
 
@@ -193,6 +277,8 @@ $$\phi=\arctan\left(\frac{\mathrm{Im}(S_{21})}{\mathrm{Re}(S_{21})}\right)$$
 ### ResonatorFitter
 
 The ``ResonatorFitter`` object is a wrapper for a part of the [*resonator* library](https://github.com/danielflanigan/resonator) which uses the [*lmfit*](https://lmfit.github.io/lmfit-py/) fitting algorithms.
+
+Here are the parameters of the ``ResonatorFitter`` object:
 
 Here is a list of the ``ResonatorFitter`` object's attribute:
 
@@ -470,8 +556,700 @@ The Grapher objects handle the plotting of either the raw data (``DatasetGrapher
 
 #### DatasetGrapher
 
+##### ``DatasetGrapher.plot_mag_vs_freq``
 
+Plots the magnitude of the signal as a function of the frequency.
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>type</th>
+      <th>Description</th>
+      <th>Required</th>
+      <th>Default value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>file_index</code></td>
+      <td>int or list of int</td>
+      <td>Index or list of indices of files as displayed in the <code>Dataset</code>'s printed table.</td>
+      <td>No</td>
+      <td><code>[]</code></td>
+    </tr>
+    <tr>
+      <td><code>power</code></td>
+      <td>float or list of float</td>
+      <td>Power value or list of power values as displayed in the <code>Dataset</code>'s printed table.</td>
+      <td>No</td>
+      <td><code>[]</code></td>
+    </tr>
+    <tr>
+      <td><code>size</code></td>
+      <td>tuple</td>
+      <td>Figure size</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>title</code></td>
+      <td>str</td>
+      <td>Figure title</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>show_grid</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, displays the grid</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>save</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, saves the plot</td>
+      <td>No</td>
+      <td><code>True</code></td>
+    </tr>
+  </tbody>
+</table>
+
+\* ``"default"`` refers to the [GraphingLib default figure style](https://www.graphinglib.org/latest/handbook/figure_style_file.html#graphinglib-styles-showcase) configuration.
+
+##### ``DatasetGrapher.plot_phase_vs_freq``
+
+Plots the phase of the signal as a function of the frequency.
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>type</th>
+      <th>Description</th>
+      <th>Required</th>
+      <th>Default value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>file_index</code></td>
+      <td>int or list of int</td>
+      <td>Index or list of indices of files as displayed in the <code>Dataset</code>'s printed table.</td>
+      <td>No</td>
+      <td><code>[]</code></td>
+    </tr>
+    <tr>
+      <td><code>power</code></td>
+      <td>float or list of float</td>
+      <td>Power value or list of power values as displayed in the <code>Dataset</code>'s printed table.</td>
+      <td>No</td>
+      <td><code>[]</code></td>
+    </tr>
+    <tr>
+      <td><code>size</code></td>
+      <td>tuple</td>
+      <td>Figure size</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>title</code></td>
+      <td>str</td>
+      <td>Figure title</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>show_grid</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, displays the grid</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>save</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, saves the plot</td>
+      <td>No</td>
+      <td><code>True</code></td>
+    </tr>
+  </tbody>
+</table>
+
+\* ``"default"`` refers to the [GraphingLib default figure style](https://www.graphinglib.org/latest/handbook/figure_style_file.html#graphinglib-styles-showcase) configuration.
 
 #### ResonatorFitterGrapher
 
+##### ``ResonatorFitterGrapher.plot_Qi_vs_power``
 
+Plots the internal quality factor as a function of power.
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>type</th>
+      <th>Description</th>
+      <th>Required</th>
+      <th>Default value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>photon</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, plots as a function of photon number.</td>
+      <td>No</td>
+      <td><code>False</code></td>
+    </tr>
+    <tr>
+      <td><code>x_lim</code></td>
+      <td>tuple</td>
+      <td>Limits for the x-axis</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>y_lim</code></td>
+      <td>tuple</td>
+      <td>Limits for the y-axis</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>size</code></td>
+      <td>tuple</td>
+      <td>Figure size</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>title</code></td>
+      <td>str</td>
+      <td>Figure title</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>show_grid</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, displays the grid</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>legend_loc</code></td>
+      <td>str</td>
+      <td>Positionning of the legend. Can be one of {"best", "upper right", "upper left", "lower left", "lower right", "right", "center left", "center right", "lower center", "upper center", "center"} or {"outside upper center", "outside center right", "outside lower center"}.</td>
+      <td>No</td>
+      <td><code>"best"</code><td>
+    </tr>
+    <tr>
+      <td><code>legend_cols</code></td>
+      <td>int</td>
+      <td>Number of columns in the legend</td>
+      <td>No</td>
+      <td><code>1</code><td>
+    </tr>
+    <tr>
+      <td><code>figure_style</code></td>
+      <td>str</td>
+      <td>GraphingLib figure style</td>
+      <td>No</td>
+      <td><code>"default"</code> *<td>
+    </tr>
+    <tr>
+      <td><code>save</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, saves the plot</td>
+      <td>No</td>
+      <td><code>True</code></td>
+    </tr>
+  </tbody>
+</table>
+
+\* ``"default"`` refers to the [GraphingLib default figure style](https://www.graphinglib.org/latest/handbook/figure_style_file.html#graphinglib-styles-showcase) configuration.
+
+##### ``ResonatorFitterGrapher.plot_Qc_vs_power``
+
+Plots the coupling quality factor as a function of power.
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>type</th>
+      <th>Description</th>
+      <th>Required</th>
+      <th>Default value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>photon</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, plots as a function of photon number.</td>
+      <td>No</td>
+      <td><code>False</code></td>
+    </tr>
+    <tr>
+      <td><code>x_lim</code></td>
+      <td>tuple</td>
+      <td>Limits for the x-axis</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>y_lim</code></td>
+      <td>tuple</td>
+      <td>Limits for the y-axis</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>size</code></td>
+      <td>tuple</td>
+      <td>Figure size</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>title</code></td>
+      <td>str</td>
+      <td>Figure title</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>show_grid</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, displays the grid</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>legend_loc</code></td>
+      <td>str</td>
+      <td>Positionning of the legend. Can be one of {"best", "upper right", "upper left", "lower left", "lower right", "right", "center left", "center right", "lower center", "upper center", "center"} or {"outside upper center", "outside center right", "outside lower center"}.</td>
+      <td>No</td>
+      <td><code>"best"</code><td>
+    </tr>
+    <tr>
+      <td><code>legend_cols</code></td>
+      <td>int</td>
+      <td>Number of columns in the legend</td>
+      <td>No</td>
+      <td><code>1</code><td>
+    </tr>
+    <tr>
+      <td><code>figure_style</code></td>
+      <td>str</td>
+      <td>GraphingLib figure style</td>
+      <td>No</td>
+      <td><code>"default"</code> *<td>
+    </tr>
+    <tr>
+      <td><code>save</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, saves the plot</td>
+      <td>No</td>
+      <td><code>True</code></td>
+    </tr>
+  </tbody>
+</table>
+
+\* ``"default"`` refers to the [GraphingLib default figure style](https://www.graphinglib.org/latest/handbook/figure_style_file.html#graphinglib-styles-showcase) configuration.
+
+##### ``ResonatorFitterGrapher.plot_Qt_vs_power``
+
+Plots the total quality factor as a function of power.
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>type</th>
+      <th>Description</th>
+      <th>Required</th>
+      <th>Default value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>photon</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, plots as a function of photon number.</td>
+      <td>No</td>
+      <td><code>False</code></td>
+    </tr>
+    <tr>
+      <td><code>x_lim</code></td>
+      <td>tuple</td>
+      <td>Limits for the x-axis</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>y_lim</code></td>
+      <td>tuple</td>
+      <td>Limits for the y-axis</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>size</code></td>
+      <td>tuple</td>
+      <td>Figure size</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>title</code></td>
+      <td>str</td>
+      <td>Figure title</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>show_grid</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, displays the grid</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>legend_loc</code></td>
+      <td>str</td>
+      <td>Positionning of the legend. Can be one of {"best", "upper right", "upper left", "lower left", "lower right", "right", "center left", "center right", "lower center", "upper center", "center"} or {"outside upper center", "outside center right", "outside lower center"}.</td>
+      <td>No</td>
+      <td><code>"best"</code><td>
+    </tr>
+    <tr>
+      <td><code>legend_cols</code></td>
+      <td>int</td>
+      <td>Number of columns in the legend</td>
+      <td>No</td>
+      <td><code>1</code><td>
+    </tr>
+    <tr>
+      <td><code>figure_style</code></td>
+      <td>str</td>
+      <td>GraphingLib figure style</td>
+      <td>No</td>
+      <td><code>"default"</code> *<td>
+    </tr>
+    <tr>
+      <td><code>save</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, saves the plot</td>
+      <td>No</td>
+      <td><code>True</code></td>
+    </tr>
+  </tbody>
+</table>
+
+\* ``"default"`` refers to the [GraphingLib default figure style](https://www.graphinglib.org/latest/handbook/figure_style_file.html#graphinglib-styles-showcase) configuration.
+
+##### ``ResonatorFitterGrapher.plot_Fshift_vs_power``
+
+Plots the frequency shift compared to the designed frequencies as a function of power.
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>type</th>
+      <th>Description</th>
+      <th>Required</th>
+      <th>Default value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>f_design</code></td>
+      <td>dict</td>
+      <td>Designed frequency of the attributed resonators formatted as <code>{"&lt;file_index&gt;": &lt;frequency in Hz&gt;}</code> with the <code>file_index</code> being the same index as used in the Dataset and ResonatorFitter classes.</td>
+      <td>No</td>
+      <td><code>False</code></td>
+    </tr>
+    <tr>
+      <td><code>photon</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, plots as a function of photon number.</td>
+      <td>No</td>
+      <td><code>False</code></td>
+    </tr>
+    <tr>
+      <td><code>x_lim</code></td>
+      <td>tuple</td>
+      <td>Limits for the x-axis</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>y_lim</code></td>
+      <td>tuple</td>
+      <td>Limits for the y-axis</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>size</code></td>
+      <td>tuple</td>
+      <td>Figure size</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>title</code></td>
+      <td>str</td>
+      <td>Figure title</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>show_grid</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, displays the grid</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>legend_loc</code></td>
+      <td>str</td>
+      <td>Positionning of the legend. Can be one of {"best", "upper right", "upper left", "lower left", "lower right", "right", "center left", "center right", "lower center", "upper center", "center"} or {"outside upper center", "outside center right", "outside lower center"}.</td>
+      <td>No</td>
+      <td><code>"best"</code><td>
+    </tr>
+    <tr>
+      <td><code>legend_cols</code></td>
+      <td>int</td>
+      <td>Number of columns in the legend</td>
+      <td>No</td>
+      <td><code>1</code><td>
+    </tr>
+    <tr>
+      <td><code>figure_style</code></td>
+      <td>str</td>
+      <td>GraphingLib figure style</td>
+      <td>No</td>
+      <td><code>"default"</code> *<td>
+    </tr>
+    <tr>
+      <td><code>save</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, saves the plot</td>
+      <td>No</td>
+      <td><code>True</code></td>
+    </tr>
+  </tbody>
+</table>
+
+\* ``"default"`` refers to the [GraphingLib default figure style](https://www.graphinglib.org/latest/handbook/figure_style_file.html#graphinglib-styles-showcase) configuration.
+
+##### ``ResonatorFitterGrapher.plot_Fr_vs_power``
+
+Plots the resonance frequency as a function of power.
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>type</th>
+      <th>Description</th>
+      <th>Required</th>
+      <th>Default value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>photon</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, plots as a function of photon number.</td>
+      <td>No</td>
+      <td><code>False</code></td>
+    </tr>
+    <tr>
+      <td><code>x_lim</code></td>
+      <td>tuple</td>
+      <td>Limits for the x-axis</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>y_lim</code></td>
+      <td>tuple</td>
+      <td>Limits for the y-axis</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>size</code></td>
+      <td>tuple</td>
+      <td>Figure size</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>title</code></td>
+      <td>str</td>
+      <td>Figure title</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>show_grid</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, displays the grid</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>legend_loc</code></td>
+      <td>str</td>
+      <td>Positionning of the legend. Can be one of {"best", "upper right", "upper left", "lower left", "lower right", "right", "center left", "center right", "lower center", "upper center", "center"} or {"outside upper center", "outside center right", "outside lower center"}.</td>
+      <td>No</td>
+      <td><code>"best"</code><td>
+    </tr>
+    <tr>
+      <td><code>legend_cols</code></td>
+      <td>int</td>
+      <td>Number of columns in the legend</td>
+      <td>No</td>
+      <td><code>1</code><td>
+    </tr>
+    <tr>
+      <td><code>figure_style</code></td>
+      <td>str</td>
+      <td>GraphingLib figure style</td>
+      <td>No</td>
+      <td><code>"default"</code> *<td>
+    </tr>
+    <tr>
+      <td><code>save</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, saves the plot</td>
+      <td>No</td>
+      <td><code>True</code></td>
+    </tr>
+  </tbody>
+</table>
+
+\* ``"default"`` refers to the [GraphingLib default figure style](https://www.graphinglib.org/latest/handbook/figure_style_file.html#graphinglib-styles-showcase) configuration.
+
+##### ``ResonatorFitterGrapher.plot_internal_loss_vs_power``
+
+Plots the internal loss as a function of power.
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>type</th>
+      <th>Description</th>
+      <th>Required</th>
+      <th>Default value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>photon</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, plots as a function of photon number.</td>
+      <td>No</td>
+      <td><code>False</code></td>
+    </tr>
+    <tr>
+      <td><code>x_lim</code></td>
+      <td>tuple</td>
+      <td>Limits for the x-axis</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>y_lim</code></td>
+      <td>tuple</td>
+      <td>Limits for the y-axis</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>size</code></td>
+      <td>tuple</td>
+      <td>Figure size</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>title</code></td>
+      <td>str</td>
+      <td>Figure title</td>
+      <td>No</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>show_grid</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, displays the grid</td>
+      <td>No</td>
+      <td><code>"default"</code> *</td>
+    </tr>
+    <tr>
+      <td><code>legend_loc</code></td>
+      <td>str</td>
+      <td>Positionning of the legend. Can be one of {"best", "upper right", "upper left", "lower left", "lower right", "right", "center left", "center right", "lower center", "upper center", "center"} or {"outside upper center", "outside center right", "outside lower center"}.</td>
+      <td>No</td>
+      <td><code>"best"</code><td>
+    </tr>
+    <tr>
+      <td><code>legend_cols</code></td>
+      <td>int</td>
+      <td>Number of columns in the legend</td>
+      <td>No</td>
+      <td><code>1</code><td>
+    </tr>
+    <tr>
+      <td><code>figure_style</code></td>
+      <td>str</td>
+      <td>GraphingLib figure style</td>
+      <td>No</td>
+      <td><code>"default"</code> *<td>
+    </tr>
+    <tr>
+      <td><code>save</code></td>
+      <td>bool</td>
+      <td>If <code>True</code>, saves the plot</td>
+      <td>No</td>
+      <td><code>True</code></td>
+    </tr>
+  </tbody>
+</table>
+
+\* ``"default"`` refers to the [GraphingLib default figure style](https://www.graphinglib.org/latest/handbook/figure_style_file.html#graphinglib-styles-showcase) configuration.
+
+#### ``load_graph_data``
+
+Loads the data saved in csv files by the Grapher objects and returns it as a dictionnary with label as key and NDArrays of the data.
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>type</th>
+      <th>Description</th>
+      <th>Required</th>
+      <th>Default value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>path</code></td>
+      <td>str</td>
+      <td>Complete path of the <em>csv</em> file</td>
+      <td>Yes</td>
+      <td>N/A</td>
+    </tr>
+  </tbody>
+</table>
