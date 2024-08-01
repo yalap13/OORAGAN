@@ -744,21 +744,21 @@ Plots the internal quality factor as a function of power.
       <td>str</td>
       <td>Positionning of the legend. Can be one of {"best", "upper right", "upper left", "lower left", "lower right", "right", "center left", "center right", "lower center", "upper center", "center"} or {"outside upper center", "outside center right", "outside lower center"}.</td>
       <td>No</td>
-      <td><code>"best"</code><td>
+      <td><code>"best"</code></td>
     </tr>
     <tr>
       <td><code>legend_cols</code></td>
       <td>int</td>
       <td>Number of columns in the legend</td>
       <td>No</td>
-      <td><code>1</code><td>
+      <td><code>1</code></td>
     </tr>
     <tr>
       <td><code>figure_style</code></td>
       <td>str</td>
       <td>GraphingLib figure style</td>
       <td>No</td>
-      <td><code>"default"</code> *<td>
+      <td><code>"default"</code> *</td>
     </tr>
     <tr>
       <td><code>save</code></td>
@@ -834,21 +834,21 @@ Plots the coupling quality factor as a function of power.
       <td>str</td>
       <td>Positionning of the legend. Can be one of {"best", "upper right", "upper left", "lower left", "lower right", "right", "center left", "center right", "lower center", "upper center", "center"} or {"outside upper center", "outside center right", "outside lower center"}.</td>
       <td>No</td>
-      <td><code>"best"</code><td>
+      <td><code>"best"</code></td>
     </tr>
     <tr>
       <td><code>legend_cols</code></td>
       <td>int</td>
       <td>Number of columns in the legend</td>
       <td>No</td>
-      <td><code>1</code><td>
+      <td><code>1</code></td>
     </tr>
     <tr>
       <td><code>figure_style</code></td>
       <td>str</td>
       <td>GraphingLib figure style</td>
       <td>No</td>
-      <td><code>"default"</code> *<td>
+      <td><code>"default"</code> *</td>
     </tr>
     <tr>
       <td><code>save</code></td>
@@ -924,21 +924,21 @@ Plots the total quality factor as a function of power.
       <td>str</td>
       <td>Positionning of the legend. Can be one of {"best", "upper right", "upper left", "lower left", "lower right", "right", "center left", "center right", "lower center", "upper center", "center"} or {"outside upper center", "outside center right", "outside lower center"}.</td>
       <td>No</td>
-      <td><code>"best"</code><td>
+      <td><code>"best"</code></td>
     </tr>
     <tr>
       <td><code>legend_cols</code></td>
       <td>int</td>
       <td>Number of columns in the legend</td>
       <td>No</td>
-      <td><code>1</code><td>
+      <td><code>1</code></td>
     </tr>
     <tr>
       <td><code>figure_style</code></td>
       <td>str</td>
       <td>GraphingLib figure style</td>
       <td>No</td>
-      <td><code>"default"</code> *<td>
+      <td><code>"default"</code> *</td>
     </tr>
     <tr>
       <td><code>save</code></td>
@@ -1111,21 +1111,21 @@ Plots the resonance frequency as a function of power.
       <td>str</td>
       <td>Positionning of the legend. Can be one of {"best", "upper right", "upper left", "lower left", "lower right", "right", "center left", "center right", "lower center", "upper center", "center"} or {"outside upper center", "outside center right", "outside lower center"}.</td>
       <td>No</td>
-      <td><code>"best"</code><td>
+      <td><code>"best"</code></td>
     </tr>
     <tr>
       <td><code>legend_cols</code></td>
       <td>int</td>
       <td>Number of columns in the legend</td>
       <td>No</td>
-      <td><code>1</code><td>
+      <td><code>1</code></td>
     </tr>
     <tr>
       <td><code>figure_style</code></td>
       <td>str</td>
       <td>GraphingLib figure style</td>
       <td>No</td>
-      <td><code>"default"</code> *<td>
+      <td><code>"default"</code> *</td>
     </tr>
     <tr>
       <td><code>save</code></td>
@@ -1201,21 +1201,21 @@ Plots the internal loss as a function of power.
       <td>str</td>
       <td>Positionning of the legend. Can be one of {"best", "upper right", "upper left", "lower left", "lower right", "right", "center left", "center right", "lower center", "upper center", "center"} or {"outside upper center", "outside center right", "outside lower center"}.</td>
       <td>No</td>
-      <td><code>"best"</code><td>
+      <td><code>"best"</code></td>
     </tr>
     <tr>
       <td><code>legend_cols</code></td>
       <td>int</td>
       <td>Number of columns in the legend</td>
       <td>No</td>
-      <td><code>1</code><td>
+      <td><code>1</code></td>
     </tr>
     <tr>
       <td><code>figure_style</code></td>
       <td>str</td>
       <td>GraphingLib figure style</td>
       <td>No</td>
-      <td><code>"default"</code> *<td>
+      <td><code>"default"</code> *</td>
     </tr>
     <tr>
       <td><code>save</code></td>
