@@ -340,6 +340,8 @@ class Dataset:
         return self._data_container._is_empty()
 
     def __add__(self, other_dataset: Self) -> Self:
+        if not isinstance(other_dataset, Self):
+            raise TypeError("A Dataset can only be added to another Dataset")
         self.convert_magphase_to_complex()
         other_dataset.convert_magphase_to_complex()
         data = {**self._data_container.data, **other_dataset._data_container.data}

@@ -11,6 +11,7 @@ fit_results
 .pytest_cache
 TODO.md
 *.csv
+*.dat
 *.txt
 fit_results_plots
 data_plots
