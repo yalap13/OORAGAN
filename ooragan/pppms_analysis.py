@@ -531,7 +531,7 @@ class PPMSAnalysis:
         method: str = "50",
         print_out: bool = True,
         save_to_file: bool = False,
-    ) -> None:
+    ) -> dict:
         """
         Finds the critical temperature using specified method.
 
@@ -595,3 +595,35 @@ class PPMSAnalysis:
         if save_to_file:
             pass
         return self.Tc
+
+    def calculate_Lk(
+        self,
+        squares: Optional[float] = None,
+        units: Optional[str] = None,
+    ) -> dict:
+        """
+        Calculates the kinetic inductance from the sheet resistance and critical
+        temperature using BCS theory.
+
+        Parameters
+        ----------
+        squares : float, optional
+            Number of squares contained in the measured structure. If left ``None``, a
+            four-point measurement on a blanket sample is assumed. Defaults to ``None``.
+        units : str, optional
+            Units in which to output the kinetic inductance. Either ``"pH"``, ``"nH"``
+            or ``None`` for no conversion (H). Defaults to ``None``.
+        """
+        if squares is None:
+            pass
+        else:
+            pass
+        if units is None:
+            pass
+        elif units == "pH":
+            pass
+        elif units == "nH":
+            pass
+
+    def plot_resist_vs_temp(self):
+        pass
