@@ -600,6 +600,9 @@ class PPMSAnalysis:
         self,
         squares: Optional[float] = None,
         units: Optional[str] = None,
+        trim_index: tuple = None,
+        print_out: bool = True,
+        save_to_file: bool = False,
     ) -> dict:
         """
         Calculates the kinetic inductance from the sheet resistance and critical
@@ -612,18 +615,56 @@ class PPMSAnalysis:
             four-point measurement on a blanket sample is assumed. Defaults to ``None``.
         units : str, optional
             Units in which to output the kinetic inductance. Either ``"pH"``, ``"nH"``
-            or ``None`` for no conversion (H). Defaults to ``None``.
+            or ``None`` for no conversion (given in H). Defaults to ``None``.
+        trim_index : tuple, optional
+            Indices at which to trim the data. Defaults to ``None``.
+        print_out : bool, optional
+            If ``True``, prints the results in a table. Defaults to ``True``.
+        save_to_file : bool, optional
+            If ``True``, saves the result in a txt file. Defaults to ``False``.
         """
-        if squares is None:
+        self.Lk = {}
+        for sweep, bridges in self.Tc.items():
+            Lk_temp = {}
+            for bridge, tc in bridges.items():
+                if squares is None:
+                    r = (
+                        self.resistance[sweep][bridge][0]
+                        if trim_index is None
+                        else self.resistance[sweep][bridge][trim_index[0]]
+                    )
+                    Lk_temp[bridge] = (hbar * pi / np.log(2) * r) / (
+                        pi * 1.764 * k * tc
+                    )
+                else:
+                    r = (
+                        self.resistance[sweep][bridge][0]
+                        if trim_index is None
+                        else self.resistance[sweep][bridge][trim_index[0]]
+                    )
+                    Lk_temp[bridge] = (hbar * r / squares) / (1.764 * pi * k * tc)
+                if units is not None:
+                    if units == "pH":
+                        Lk_temp[bridge] *= 1e12
+                    elif units == "nH":
+                        Lk_temp[bridge] *= 1e9
+                    else:
+                        raise ValueError('Units can be "pH", "nH" or None')
+            self.Lk[sweep] = Lk_temp
+        if print_out:
+            b1 = ["Bridge 1"]
+            b2 = ["Bridge 2"]
+            b3 = ["Bridge 3"]
+            head = [f"Kinetic inductance ({units})"] if units is not None else ["Kinetic inductance (H)"]
+            for sweep, vals in self.Lk.items():
+                b1.append(vals["bridge1"])
+                b2.append(vals["bridge2"])
+                b3.append(vals["bridge3"])
+                head.append(f"{int(np.mean(self.magnetic_field[sweep])/1e4)} T")
+            print(tabulate([b1, b2, b3], headers=head))
+        if save_to_file:
             pass
-        else:
-            pass
-        if units is None:
-            pass
-        elif units == "pH":
-            pass
-        elif units == "nH":
-            pass
+        return self.Lk
 
     def plot_resist_vs_temp(self):
         pass
