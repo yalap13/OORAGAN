@@ -12,6 +12,7 @@ fit_results
 TODO.md
 *.csv
 *.txt
+*.dat
 fit_results_plots
 data_plots
 
