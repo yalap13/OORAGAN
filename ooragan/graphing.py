@@ -6,6 +6,7 @@ import pandas as pd
 from typing import overload, Optional, Literal
 from datetime import datetime
 from numpy.typing import NDArray
+from graphinglib import Figure
 
 from .dataset import Dataset
 from .resonator_fitter import ResonatorFitter
@@ -48,7 +49,7 @@ class DatasetGrapher:
         title: Optional[str] = None,
         show_grid: bool | Literal["default"] = "default",
         save: bool = True,
-    ) -> None:
+    ) -> Figure:
         """
         Plots the magnitude in dBm as a function of frequency in GHz.
 
@@ -107,6 +108,7 @@ class DatasetGrapher:
                     figure.save(os.path.join(self._savepath, fname))
                 else:
                     figure.show()
+        return figure
 
     def plot_phase_vs_freq(
         self,
@@ -116,7 +118,7 @@ class DatasetGrapher:
         title: Optional[str] = None,
         show_grid: bool | Literal["default"] = "default",
         save: bool = True,
-    ) -> None:
+    ) -> Figure:
         """
         Plots the phase in radians as a function of frequency in GHz.
 
@@ -175,6 +177,7 @@ class DatasetGrapher:
                     figure.save(os.path.join(self._savepath, fname))
                 else:
                     figure.show()
+        return figure
 
 
 class ResonatorFitterGrapher:
@@ -233,7 +236,7 @@ class ResonatorFitterGrapher:
         legend_cols: int = 1,
         figure_style: str = "default",
         save: bool = False,
-    ) -> None:
+    ) -> Figure:
         """
         Plots the internal quality factor as a function of input power or photon number.
 
@@ -349,6 +352,7 @@ class ResonatorFitterGrapher:
                 }
             )
             df.to_csv(path)
+        return figure
 
     def plot_Qc_vs_power(
         self,
@@ -362,7 +366,7 @@ class ResonatorFitterGrapher:
         legend_cols: int = 1,
         figure_style: str = "default",
         save: bool = False,
-    ) -> None:
+    ) -> Figure:
         """
         Plots the coupling quality factor as a function of input power or photon number.
 
@@ -476,6 +480,7 @@ class ResonatorFitterGrapher:
                 }
             )
             df.to_csv(path)
+        return figure
 
     def plot_Qt_vs_power(
         self,
@@ -489,7 +494,7 @@ class ResonatorFitterGrapher:
         legend_cols: int = 1,
         figure_style: str = "default",
         save: bool = False,
-    ) -> None:
+    ) -> Figure:
         """
         Plots the total quality factor as a function of input power or photon number.
 
@@ -603,6 +608,7 @@ class ResonatorFitterGrapher:
                 }
             )
             df.to_csv(path)
+        return figure
 
     def plot_Fshift_vs_power(
         self,
@@ -617,7 +623,7 @@ class ResonatorFitterGrapher:
         legend_cols: int = 1,
         figure_style: str = "default",
         save: bool = False,
-    ) -> None:
+    ) -> Figure:
         """
         Plots the frequency shift as a function of input power or photon number.
 
@@ -744,6 +750,7 @@ class ResonatorFitterGrapher:
                 }
             )
             df.to_csv(path)
+        return figure
 
     def plot_Fr_vs_power(
         self,
@@ -757,7 +764,7 @@ class ResonatorFitterGrapher:
         legend_cols: int = 1,
         figure_style: str = "default",
         save: bool = False,
-    ) -> None:
+    ) -> Figure:
         """
         Plots the resonance frequency as a function of input power or photon number.
 
@@ -870,6 +877,7 @@ class ResonatorFitterGrapher:
                 }
             )
             df.to_csv(path)
+        return figure
 
     def plot_internal_loss_vs_power(
         self,
@@ -883,7 +891,7 @@ class ResonatorFitterGrapher:
         legend_cols: int = 1,
         figure_style: str = "default",
         save: bool = False,
-    ) -> None:
+    ) -> Figure:
         """
         Plots the internal losses as a function of input power or photon number.
 
@@ -997,6 +1005,7 @@ class ResonatorFitterGrapher:
                 }
             )
             df.to_csv(path)
+        return figure
 
 
 @overload

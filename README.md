@@ -280,6 +280,34 @@ The ``ResonatorFitter`` object is a wrapper for a part of the [*resonator* libra
 
 Here are the parameters of the ``ResonatorFitter`` object:
 
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Required</th>
+      <th>Default value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>dataset</code></td>
+      <td><code>Dataset</code></td>
+      <td>Dataset of the data to fit</td>
+      <td>Yes</td>
+      <td>N/A</td>
+    </tr>
+    <tr>
+      <td><code>savepath</code></td>
+      <td>str</td>
+      <td>Path at which the "fit_results" and "fit_images" will be created to save the plots and fit results.</td>
+      <td>No</td>
+      <td><code>os.getcwd()</code></td>
+    </tr>
+  </tbody>
+</table>
+
 Here is a list of the ``ResonatorFitter`` object's attribute:
 
 <table>
@@ -455,13 +483,6 @@ in the reflection mode (as defined in the resonator library). The fit itself is 
       <td>If <code>True</code>, the fit results will be saved in a <em>txt</em> file.</td>
       <td>No</td>
       <td><code>False</code></td>
-    </tr>
-    <tr>
-      <td><code>savepath</code></td>
-      <td>str</td>
-      <td>Path at which the "fit_results" and "fit_images" will be created to save the plots and fit results.</td>
-      <td>No</td>
-      <td><code>os.getcwd()</code></td>
     </tr>
     <tr>
       <td><code>threshold</code></td>
