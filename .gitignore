@@ -4,18 +4,14 @@ poetry.lock
 *.py
 *.ipynb
 __pycache__
-Image*
-fit_images
-Fit result*
-fit_results
 .pytest_cache
 TODO.md
 *.csv
 *.dat
 *.txt
-fit_results_plots
-data_plots
+*.svg
 
+!ooragan_logo.svg
 !ooragan/*.py
 !unit_testing/*.py
 !unit_testing/Fit results

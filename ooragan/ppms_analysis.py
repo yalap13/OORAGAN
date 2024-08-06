@@ -13,6 +13,7 @@ import io
 import numpy as np
 import matplotlib.pyplot as plt
 import graphinglib as gl
+import os
 
 from numpy import genfromtxt, isnan, where, array
 from tabulate import tabulate
@@ -20,9 +21,9 @@ from lmfit.models import LinearModel
 from loess.loess_1d import loess_1d
 from scipy.constants import pi, hbar, k, e, h
 from numpy.typing import ArrayLike
-from typing import Optional
-
-from .util import choice
+from typing import Optional, Literal
+from graphinglib import Figure
+from seaborn import color_palette
 
 
 def timestamp_offset(year=None):
@@ -427,6 +428,11 @@ class PPMSAnalysis:
     temp_tolerance : float, optional
         Tolerance on temperature precision when trying to find the temperature range.
         Defaults to 0 K.
+    savepath : str, optional
+        Path where to save the PPMSAnalysis results. Defaults to the current working
+        directory.
+    fname : str, optional
+        File name given to all files saved. Defaults to ``None``.
     """
 
     def __init__(
@@ -435,6 +441,8 @@ class PPMSAnalysis:
         start_temp: float = 18,
         end_temp: float = 3,
         temp_tolerance: float = 0,
+        savepath: str = os.getcwd(),
+        fname: Optional[str] = None,
     ) -> None:
         self._data = QD_Data(filename_or_data=path)
         self._temp_dict = {}
@@ -446,6 +454,12 @@ class PPMSAnalysis:
             start=start_temp,
             end=end_temp,
             tolerance=temp_tolerance,
+        )
+        self._savepath = savepath
+        self._fname = (
+            fname
+            if fname is not None
+            else datetime.datetime.today().strftime("%Y-%m-%d")
         )
         self.temperature = {}
         self.resistance = {}
@@ -593,14 +607,31 @@ class PPMSAnalysis:
                 head.append(f"{int(np.mean(self.magnetic_field[sweep])/1e4)} T")
             print(tabulate([b1, b2, b3], headers=head))
         if save_to_file:
-            pass
+            if not os.path.exists(os.path.join(self._savepath, "ppms_analysis")):
+                os.mkdir(os.path.join(self._savepath, "ppms_analysis"))
+            b1 = [val["bridge1"] for _, val in self.Tc.items()]
+            b2 = [val["bridge2"] for _, val in self.Tc.items()]
+            b3 = [val["bridge3"] for _, val in self.Tc.items()]
+            arr = np.array([b1, b2, b3])
+            header = [
+                f"{int(np.mean(self.magnetic_field[sweep]) / 1e4)}T"
+                for sweep in self.magnetic_field.keys()
+            ]
+            np.savetxt(
+                os.path.join(
+                    self._savepath, "ppms_analysis", f"ppms_Tc_{self._fname}.txt"
+                ),
+                arr,
+                header="\t".join(header),
+                delimiter="\t",
+            )
         return self.Tc
 
     def calculate_Lk(
         self,
         squares: Optional[float] = None,
-        units: Optional[str] = None,
-        trim_index: tuple = None,
+        units: Optional[Literal["pH", "nH"]] = None,
+        trim_index: Optional[tuple] = None,
         print_out: bool = True,
         save_to_file: bool = False,
     ) -> dict:
@@ -655,7 +686,11 @@ class PPMSAnalysis:
             b1 = ["Bridge 1"]
             b2 = ["Bridge 2"]
             b3 = ["Bridge 3"]
-            head = [f"Kinetic inductance ({units})"] if units is not None else ["Kinetic inductance (H)"]
+            head = (
+                [f"Kinetic inductance ({units})"]
+                if units is not None
+                else ["Kinetic inductance (H)"]
+            )
             for sweep, vals in self.Lk.items():
                 b1.append(vals["bridge1"])
                 b2.append(vals["bridge2"])
@@ -663,8 +698,98 @@ class PPMSAnalysis:
                 head.append(f"{int(np.mean(self.magnetic_field[sweep])/1e4)} T")
             print(tabulate([b1, b2, b3], headers=head))
         if save_to_file:
-            pass
+            if not os.path.exists(os.path.join(self._savepath, "ppms_analysis")):
+                os.mkdir(os.path.join(self._savepath, "ppms_analysis"))
+            b1 = [val["bridge1"] for _, val in self.Lk.items()]
+            b2 = [val["bridge2"] for _, val in self.Lk.items()]
+            b3 = [val["bridge3"] for _, val in self.Lk.items()]
+            arr = np.array([b1, b2, b3])
+            header = [
+                f"{int(np.mean(self.magnetic_field[sweep]) / 1e4)}T"
+                for sweep in self.magnetic_field.keys()
+            ]
+            np.savetxt(
+                os.path.join(
+                    self._savepath, "ppms_analysis", f"ppms_Lk_{self._fname}.txt"
+                ),
+                arr,
+                header="\t".join(header),
+                delimiter="\t",
+            )
         return self.Lk
 
-    def plot_resist_vs_temp(self):
-        pass
+    def plot_resist_vs_temp(
+        self,
+        R_unit: Literal["ohm", "kohm", "Mohm"] = "ohm",
+        x_label: Optional[str] = None,
+        y_label: Optional[str] = None,
+        title: Optional[str] = None,
+        size: tuple | Literal["default"] = "default",
+        legend_loc: tuple | str = "best",
+        legend_cols: int = 1,
+        figure_style: str = "default",
+        save: bool = False,
+        image_type: str = "svg",
+    ) -> Figure:
+        """
+        Plots the resistance as a function of temperature as measured by the PPMS.
+
+        Parameters
+        ----------
+        R_unit : {'ohm', 'kohm', 'Mohm'}
+        """
+        if not os.path.exists(os.path.join(self._savepath, "ppms_analysis")):
+            os.mkdir(os.path.join(self._savepath, "ppms_analysis"))
+        x_label = "Temperature (K)" if x_label is None else x_label
+        y_label = (
+            f"Resistance ({R_unit})".replace("ohm", r"$\Omega$")
+            if y_label is None
+            else y_label
+        )
+        figures = []
+        for bridge in ["bridge1", "bridge2", "bridge3"]:
+            resist = [val[bridge] for _, val in self.resistance.items()]
+            stddev = [val[bridge] for _, val in self.std_dev.items()]
+            figure = gl.Figure(
+                x_label=x_label,
+                y_label=y_label,
+                title=title,
+                size=size,
+                figure_style=figure_style,
+            )
+            for i, r in enumerate(resist):
+                t = self.temperature[f"Sweep {i+1}"]
+                label = "{} T".format(
+                    int(np.mean(self.magnetic_field["Sweep {}".format(i + 1)]) / 1e4)
+                )
+                if R_unit == "ohm":
+                    curve = gl.Curve(t, r, label=label)
+                    curve.add_errorbars(y_error=stddev[i])
+                elif R_unit == "kohm":
+                    curve = gl.Curve(t, r / 1e3, label=label)
+                    curve.add_errorbars(y_error=stddev[i] / 1e3)
+                elif R_unit == "Mohm":
+                    curve = gl.Curve(t, r / 1e6, label=label)
+                    curve.add_errorbars(y_error=stddev[i] / 1e6)
+                else:
+                    raise ValueError(f"Resistance unit {R_unit} unaccepted")
+                figure.add_elements(curve)
+            figure.set_visual_params(
+                color_cycle=list(
+                    color_palette("flare_r", n_colors=len(figure._elements))
+                )
+            )
+            figures.append(figure)
+            if save:
+                figure.save(
+                    os.path.join(
+                        self._savepath,
+                        "ppms_analysis",
+                        f"R_vs_T_{self._fname}_{bridge}.{image_type}",
+                    ),
+                    legend_loc=legend_loc,
+                    legend_cols=legend_cols,
+                )
+            else:
+                figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+        return figures
