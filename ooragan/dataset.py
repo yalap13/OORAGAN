@@ -437,20 +437,20 @@ class Dataset:
         )
         return new_dataset
 
-    def convert_magphase_to_complex(self, deg: bool = False, dBm: bool = False) -> None:
+    def convert_magphase_to_complex(self, deg: bool = True, dBm: bool = True) -> None:
         """
         Converts the Dataset's data from magnitude and phase to complex.
 
         Parameters
         ----------
         deg : bool, optional
-            Set to ``True`` if the phase is in degrees. Defaults to ``False``.
+            Set to ``True`` if the phase is in degrees. Defaults to ``True``.
         dBm : bool, optional
-            Set to ``True`` if the magnitude is in dBm. Defaults to ``False``.
+            Set to ``True`` if the magnitude is in dBm. Defaults to ``True``.
         """
         self._data_container.convert_magphase_to_complex(deg=deg, dBm=dBm)
 
-    def convert_complex_to_magphase(self, deg: bool = False) -> None:
+    def convert_complex_to_magphase(self, deg: bool = True) -> None:
         """
         Converts the Dataset's data from complex to magnitude and phase.
 
@@ -458,7 +458,7 @@ class Dataset:
         ----------
         deg : bool
             If ``True`` the phase is returned in degrees, else in radians.
-            Defaults to ``False``.
+            Defaults to ``True``.
         """
         self._data_container.convert_complex_to_magphase(deg=deg)
 

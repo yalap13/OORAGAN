@@ -77,7 +77,7 @@ def strtime(s: str) -> float:
 
 
 def convert_magphase_to_complex(
-    mag: NDArray, phase: NDArray, deg: bool = False, dBm: bool = False
+    mag: NDArray, phase: NDArray, deg: bool = True, dBm: bool = True
 ) -> NDArray:
     """
     Converts magnitude and phase data into real and imaginary.
@@ -89,9 +89,9 @@ def convert_magphase_to_complex(
     phase : NDArray
         Phase array
     deg : bool, optional
-        Set to ``True`` if the phase is in degrees. Defaults to ``False``.
+        Set to ``True`` if the phase is in degrees. Defaults to ``True``.
     dBm : bool, optional
-        Set to ``True`` if the magnitude is in dBm. Defaults to ``False``.
+        Set to ``True`` if the magnitude is in dBm. Defaults to ``True``.
     """
     if deg:
         phase = np.deg2rad(phase)
@@ -104,7 +104,7 @@ def convert_magphase_to_complex(
 
 
 def convert_complex_to_magphase(
-    real: NDArray, imag: NDArray, deg: bool = False
+    real: NDArray, imag: NDArray, deg: bool = True
 ) -> NDArray:
     """
     Converts real and imaginary data into magnitude (dBm) and phase.
@@ -116,7 +116,7 @@ def convert_complex_to_magphase(
     imag : NDArray
         Imaginary data array.
     deg : bool, optional
-        If ``True`` the phase is returned in degrees. Defaults to ``False``.
+        If ``True`` the phase is returned in degrees. Defaults to ``True``.
     """
 
     phase = np.angle(real + 1j * imag, deg=deg)
