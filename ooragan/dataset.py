@@ -680,7 +680,7 @@ class HDF5Data:
                                     phase[i],
                                     dBm=True,
                                 )
-                                arr = np.stack((freq.T, real[i].T, imag[i].T))
+                                arr = np.stack((freq.T, real.T, imag.T))
                                 data.append(arr)
                         else:
                             real, imag = convert_magphase_to_complex(mag, phase)
