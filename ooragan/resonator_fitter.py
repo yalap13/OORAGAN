@@ -336,35 +336,22 @@ class ResonatorFitter:
                 if not succeeded:
                     failed.append(p)
                 else:
-                    if savepic:
-                        a = str(np.mean(frequency / 1e9))[:5].replace(".", "_")
-                        self._plot_fit(
-                            result,
-                            save=savepic,
-                            savepath=os.path.join(self._savepath, "fit_images"),
-                            name=f"{a}GHz_{p}_dBm",
-                            nodialog=nodialog,
-                            trimmed_data={
-                                "real": np.real(s21_complex),
-                                "imag": np.imag(s21_complex),
-                                "phase": phase,
-                                "mag": mag,
-                                "freq": frequency,
-                            },
-                        )
-                    else:
-                        if showpic:
-                            triptych = self._plot_fit(
-                                result,
-                                trimmed_data={
-                                    "real": np.real(s21_complex),
-                                    "imag": np.imag(s21_complex),
-                                    "phase": phase,
-                                    "mag": mag,
-                                    "freq": frequency,
-                                },
-                            )
-                            triptych.show(general_legend=True, legend_loc="lower right")
+                    a = str(np.mean(frequency / 1e9))[:5].replace(".", "_")
+                    self._plot_fit(
+                        result,
+                        save=savepic,
+                        savepath=os.path.join(self._savepath, "fit_images"),
+                        show=showpic,
+                        name=f"{a}GHz_{p}_dBm",
+                        nodialog=nodialog,
+                        trimmed_data={
+                            "real": np.real(s21_complex),
+                            "imag": np.imag(s21_complex),
+                            "phase": phase,
+                            "mag": mag,
+                            "freq": frequency,
+                        },
+                    )
                     if write:
                         a = str(np.mean(frequency / 1e9))[:5].replace(".", "_")
                         self._write_fit(
@@ -534,6 +521,7 @@ class ResonatorFitter:
         trimmed_data: Optional[dict] = None,
         save: bool = False,
         savepath: str = "",
+        show: bool = False,
         name: str = "",
         nodialog: bool = False,
     ) -> MultiFigure:
@@ -561,5 +549,7 @@ class ResonatorFitter:
                     )
             else:
                 triptych.save(filename, general_legend=True, legend_loc="lower right")
+        elif show:
+            triptych.show()
 
         return triptych
