@@ -3,16 +3,15 @@ import sys
 import lmfit
 import numpy as np
 
-from resonator import background, shunt, reflection, base, see
+from resonator import background, shunt, reflection, base
 from numpy.typing import ArrayLike, NDArray
 from typing import Optional
 from lmfit import Parameter
-from matplotlib.pyplot import close
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
+from graphinglib import MultiFigure
 
 from .dataset import Dataset
 from .util import choice, convert_complex_to_magphase, is_interactive
+from .graphing import plot_triptych
 
 if is_interactive():
     from IPython.display import display, clear_output
@@ -174,7 +173,7 @@ class ResonatorFitter:
         start: int = 0,
         jump: int = 10,
         nodialog: bool = False,
-    ):
+    ) -> None:
         """
         Fitting specified resonator data.
 
@@ -355,7 +354,7 @@ class ResonatorFitter:
                         )
                     else:
                         if showpic:
-                            self._plot_fit(
+                            triptych = self._plot_fit(
                                 result,
                                 trimmed_data={
                                     "real": np.real(s21_complex),
@@ -365,6 +364,7 @@ class ResonatorFitter:
                                     "freq": frequency,
                                 },
                             )
+                            triptych.show(general_legend=True, legend_loc="lower right")
                     if write:
                         a = str(np.mean(frequency / 1e9))[:5].replace(".", "_")
                         self._write_fit(
@@ -472,7 +472,7 @@ class ResonatorFitter:
 
         Parameters
         ----------
-        result : MinimizerResult class object
+        result : ResonatorFitter class object
             Output from lmfit, is the result of a minimization made by lmfit fit functions.
         threshold : float, optional
             A value greater than 0 which determine the error tolerance on fit values.
@@ -533,54 +533,21 @@ class ResonatorFitter:
         result: base.ResonatorFitter,
         trimmed_data: Optional[dict] = None,
         save: bool = False,
-        plot_trim: bool = True,
         savepath: str = "",
         name: str = "",
         nodialog: bool = False,
-    ) -> tuple[Figure, Axes]:
+    ) -> MultiFigure:
         """
         Utilitary function to plot the fit result as a triptych (resonator.see.triptych).
         """
-        if trimmed_data:
-
-            fig, (ax_magnitude, ax_phase, ax_complex) = see.triptych(
-                resonator=result,
-                frequency_scale=1e-9,
-                three_ticks=False,
-                figure_settings={"figsize": (10, 6), "dpi": 120},
-                data_settings={"markersize": 1, "label": ""},
-                fit_settings={"label": ""},
-                resonance_settings={"label": ""},
-            )
-            if plot_trim:
-                trimmed_data["freq"] = np.asarray(
-                    trimmed_data["freq"], dtype=np.float64
-                )
-                ax_complex.plot(trimmed_data["real"], trimmed_data["imag"])
-                ax_phase.plot(trimmed_data["freq"] * 1e-9, trimmed_data["phase"])
-                ax_magnitude.plot(trimmed_data["freq"] * 1e-9, trimmed_data["mag"])
-
-            see.triptych(
-                resonator=result,
-                frequency_scale=1e-9,
-                three_axes=(ax_magnitude, ax_phase, ax_complex),
-                three_ticks=False,
-                data_settings={"markersize": 1},
-                fit_settings={"linewidth": 1, "color": "black"},
-                resonance_settings={"markersize": 7, "color": "black"},
-            )
-
-        else:
-            fig, (ax_magnitude, ax_phase, ax_complex) = see.triptych(
-                resonator=result,
-                frequency_scale=1e-9,
-                figure_settings={"figsize": (10, 6), "dpi": 120},
-                data_settings={"markersize": 2},
-                fit_settings={"linewidth": 0.5, "color": "black"},
-                resonance_settings={"markersize": 5, "color": "black"},
-            )
-
-        ax_complex.legend()
+        triptych = plot_triptych(
+            trimmed_data["freq"],
+            trimmed_data["mag"],
+            trimmed_data["phase"],
+            trimmed_data["real"],
+            trimmed_data["imag"],
+            fit_result=result,
+        )
 
         if save:
             filename = os.path.join(savepath, name + ".svg")
@@ -589,9 +556,10 @@ class ResonatorFitter:
                 overwrite = choice()
 
                 if overwrite:
-                    fig.savefig(filename, dpi=300, transparent=True)
+                    triptych.save(
+                        filename, general_legend=True, legend_loc="lower right"
+                    )
             else:
-                fig.savefig(filename, dpi=300, transparent=True)
-            close()
+                triptych.save(filename, general_legend=True, legend_loc="lower right")
 
-        return fig, (ax_magnitude, ax_phase, ax_complex)
+        return triptych
