@@ -47,7 +47,6 @@ class DatasetGrapher:
         power: float | list[float] = [],
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
-        show_grid: bool | Literal["default"] = "default",
         save: bool = True,
     ) -> Figure:
         """
@@ -65,8 +64,6 @@ class DatasetGrapher:
         title : str, optional
             Figure title applied to all figures and appended with the frequency range.
             Defaults to ``None``.
-        show_grid : bool, optional
-            Display the grid. Default depends on the ``figure_style`` configuration.
         save : bool, optional
             If ``True``, saves the plot at the location specified for the class.
             Defaults to ``True``.
@@ -90,7 +87,6 @@ class DatasetGrapher:
                     "Frequency (GHz)",
                     "Magnitude (dBm)",
                     title=new_title,
-                    show_grid=show_grid,
                     size=size,
                 )
                 scatter = gl.Scatter(d[0, :] / 1e9, d[1, :], marker_style=".")
@@ -116,7 +112,6 @@ class DatasetGrapher:
         power: float | list[float] = [],
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
-        show_grid: bool | Literal["default"] = "default",
         save: bool = True,
     ) -> Figure:
         """
@@ -134,8 +129,6 @@ class DatasetGrapher:
         title : str, optional
             Figure title applied to all figures and appended with the frequency range.
             Defaults to ``None``.
-        show_grid : bool, optional
-            Display the grid. Default depends on the ``figure_style`` configuration.
         save : bool, optional
             If ``True``, saves the plot at the location specified for the class.
             Defaults to ``True``.
@@ -159,7 +152,6 @@ class DatasetGrapher:
                     "Frequency (GHz)",
                     "Phase (rad)",
                     title=new_title,
-                    show_grid=show_grid,
                     size=size,
                 )
                 scatter = gl.Scatter(d[0, :] / 1e9, d[2, :], marker_style=".")
