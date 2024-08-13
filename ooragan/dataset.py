@@ -340,7 +340,7 @@ class Dataset:
         return self._data_container._is_empty()
 
     def __add__(self, other_dataset: Self) -> Self:
-        if not isinstance(other_dataset, Self):
+        if not isinstance(other_dataset, Dataset):
             raise TypeError("A Dataset can only be added to another Dataset")
         self.convert_magphase_to_complex()
         other_dataset.convert_magphase_to_complex()
@@ -680,7 +680,7 @@ class HDF5Data:
                                     phase[i],
                                     dBm=True,
                                 )
-                                arr = np.stack((freq.T, real[i].T, imag[i].T))
+                                arr = np.stack((freq.T, real.T, imag.T))
                                 data.append(arr)
                         else:
                             real, imag = convert_magphase_to_complex(mag, phase)
