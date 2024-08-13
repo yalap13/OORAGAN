@@ -3,7 +3,7 @@ import numpy as np
 import graphinglib as gl
 import pandas as pd
 
-from typing import overload, Optional, Literal, Protocol, Self
+from typing import overload, Optional, Literal, Protocol, Self, runtime_checkable
 from datetime import datetime
 from numpy.typing import NDArray, ArrayLike
 from graphinglib import Figure, MultiFigure
@@ -14,6 +14,7 @@ from copy import deepcopy
 FREQ_UNIT_CONVERSION = {"GHz": 1e9, "MHz": 1e6, "kHz": 1e3}
 
 
+@runtime_checkable
 class Dataset(Protocol):
     """
     Dataset dummy class for type hinting.
@@ -30,6 +31,7 @@ class Dataset(Protocol):
     def convert_complex_to_magphase(self, deg: bool = True) -> None: ...
 
 
+@runtime_checkable
 class ResonatorFitter(Protocol):
     """
     ResonatorFitter dummy class for type hinting.
@@ -88,7 +90,6 @@ class DatasetGrapher:
         power: float | list[float] = [],
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
-        show_grid: bool | Literal["default"] = "default",
         save: bool = True,
     ) -> None:
         """
@@ -106,8 +107,6 @@ class DatasetGrapher:
         title : str, optional
             Figure title applied to all figures and appended with the frequency range.
             Defaults to ``None``.
-        show_grid : bool, optional
-            Display the grid. Default depends on the ``figure_style`` configuration.
         save : bool, optional
             If ``True``, saves the plot at the location specified for the class.
             Defaults to ``True``.
@@ -131,7 +130,6 @@ class DatasetGrapher:
                     "Frequency (GHz)",
                     "Magnitude (dBm)",
                     title=new_title,
-                    show_grid=show_grid,
                     size=size,
                 )
                 scatter = gl.Scatter(d[0, :] / 1e9, d[1, :], marker_style=".")
@@ -156,7 +154,6 @@ class DatasetGrapher:
         power: float | list[float] = [],
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
-        show_grid: bool | Literal["default"] = "default",
         save: bool = True,
     ) -> None:
         """
@@ -174,8 +171,6 @@ class DatasetGrapher:
         title : str, optional
             Figure title applied to all figures and appended with the frequency range.
             Defaults to ``None``.
-        show_grid : bool, optional
-            Display the grid. Default depends on the ``figure_style`` configuration.
         save : bool, optional
             If ``True``, saves the plot at the location specified for the class.
             Defaults to ``True``.
@@ -199,7 +194,6 @@ class DatasetGrapher:
                     "Frequency (GHz)",
                     "Phase (rad)",
                     title=new_title,
-                    show_grid=show_grid,
                     size=size,
                 )
                 scatter = gl.Scatter(d[0, :] / 1e9, d[2, :], marker_style=".")
@@ -328,7 +322,6 @@ class ResonatorFitterGrapher:
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
-        show_grid: bool | Literal["default"] = "default",
         legend_loc: str = "best",
         legend_cols: int = 1,
         figure_style: str = "default",
@@ -349,8 +342,6 @@ class ResonatorFitterGrapher:
             Figure size. Default depends on the ``figure_style`` configuration.
         title : str, optional
             Figure title.
-        show_grid : bool, optional
-            Display the grid. Default depends on the ``figure_style`` configuration.
         legend_loc : str, optional
             Positionning of the legend. Can be one of {"best", "upper right", "upper left",
             "lower left", "lower right", "right", "center left", "center right", "lower center",
@@ -379,7 +370,6 @@ class ResonatorFitterGrapher:
             x_lim=x_lim,
             y_lim=y_lim,
             size=size,
-            show_grid=show_grid,
             figure_style=figure_style,
             title=title,
         )
@@ -458,7 +448,6 @@ class ResonatorFitterGrapher:
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
-        show_grid: bool | Literal["default"] = "default",
         legend_loc: str = "best",
         legend_cols: int = 1,
         figure_style: str = "default",
@@ -479,8 +468,6 @@ class ResonatorFitterGrapher:
             Figure size. Default depends on the ``figure_style`` configuration.
         title : str, optional
             Figure title.
-        show_grid : bool, optional
-            Display the grid. Default depends on the ``figure_style`` configuration.
         legend_loc : str, optional
             Positionning of the legend. Can be one of {"best", "upper right", "upper left",
             "lower left", "lower right", "right", "center left", "center right", "lower center",
@@ -509,7 +496,6 @@ class ResonatorFitterGrapher:
             x_lim=x_lim,
             y_lim=y_lim,
             size=size,
-            show_grid=show_grid,
             figure_style=figure_style,
             title=title,
         )
@@ -586,7 +572,6 @@ class ResonatorFitterGrapher:
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
-        show_grid: bool | Literal["default"] = "default",
         legend_loc: str = "best",
         legend_cols: int = 1,
         figure_style: str = "default",
@@ -607,8 +592,6 @@ class ResonatorFitterGrapher:
             Figure size. Default depends on the ``figure_style`` configuration.
         title : str, optional
             Figure title.
-        show_grid : bool, optional
-            Display the grid. Default depends on the ``figure_style`` configuration.
         legend_loc : str, optional
             Positionning of the legend. Can be one of {"best", "upper right", "upper left",
             "lower left", "lower right", "right", "center left", "center right", "lower center",
@@ -637,7 +620,6 @@ class ResonatorFitterGrapher:
             x_lim=x_lim,
             y_lim=y_lim,
             size=size,
-            show_grid=show_grid,
             figure_style=figure_style,
             title=title,
         )
@@ -715,7 +697,6 @@ class ResonatorFitterGrapher:
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
-        show_grid: bool | Literal["default"] = "default",
         legend_loc: str = "best",
         legend_cols: int = 1,
         figure_style: str = "default",
@@ -740,8 +721,6 @@ class ResonatorFitterGrapher:
             Figure size. Default depends on the ``figure_style`` configuration.
         title : str, optional
             Figure title.
-        show_grid : bool, optional
-            Display the grid. Default depends on the ``figure_style`` configuration.
         legend_loc : str, optional
             Positionning of the legend. Can be one of {"best", "upper right", "upper left",
             "lower left", "lower right", "right", "center left", "center right", "lower center",
@@ -778,7 +757,6 @@ class ResonatorFitterGrapher:
             x_lim=x_lim,
             y_lim=y_lim,
             size=size,
-            show_grid=show_grid,
             figure_style=figure_style,
             title=title,
         )
@@ -856,7 +834,6 @@ class ResonatorFitterGrapher:
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
-        show_grid: bool | Literal["default"] = "default",
         legend_loc: str = "best",
         legend_cols: int = 1,
         figure_style: str = "default",
@@ -877,8 +854,6 @@ class ResonatorFitterGrapher:
             Figure size. Default depends on the ``figure_style`` configuration.
         title : str, optional
             Figure title.
-        show_grid : bool, optional
-            Display the grid. Default depends on the ``figure_style`` configuration.
         legend_loc : str, optional
             Positionning of the legend. Can be one of {"best", "upper right", "upper left",
             "lower left", "lower right", "right", "center left", "center right", "lower center",
@@ -906,7 +881,6 @@ class ResonatorFitterGrapher:
             x_lim=x_lim,
             y_lim=y_lim,
             size=size,
-            show_grid=show_grid,
             figure_style=figure_style,
             title=title,
         )
@@ -983,7 +957,6 @@ class ResonatorFitterGrapher:
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
         title: Optional[str] = None,
-        show_grid: bool | Literal["default"] = "default",
         legend_loc: str = "best",
         legend_cols: int = 1,
         figure_style: str = "default",
@@ -1004,8 +977,6 @@ class ResonatorFitterGrapher:
             Figure size. Default depends on the ``figure_style`` configuration.
         title : str, optional
             Figure title.
-        show_grid : bool, optional
-            Display the grid. Default depends on the ``figure_style`` configuration.
         legend_loc : str, optional
             Positionning of the legend. Can be one of {"best", "upper right", "upper left",
             "lower left", "lower right", "right", "center left", "center right", "lower center",
@@ -1034,7 +1005,6 @@ class ResonatorFitterGrapher:
             x_lim=x_lim,
             y_lim=y_lim,
             size=size,
-            show_grid=show_grid,
             figure_style=figure_style,
             title=title,
         )

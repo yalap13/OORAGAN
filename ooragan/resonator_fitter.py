@@ -544,11 +544,9 @@ class ResonatorFitter:
                 overwrite = choice()
 
                 if overwrite:
-                    triptych.save(
-                        filename, general_legend=True, legend_loc="lower right"
-                    )
+                    triptych.save(filename)
             else:
-                triptych.save(filename, general_legend=True, legend_loc="lower right")
+                triptych.save(filename)
         elif show:
             triptych.show()
 
