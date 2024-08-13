@@ -759,9 +759,13 @@ class PPMSAnalysis:
             )
             for i, r in enumerate(resist):
                 t = self.temperature[f"Sweep {i+1}"]
-                label = "{} T".format(
-                    int(np.mean(self.magnetic_field["Sweep {}".format(i + 1)]) / 1e4)
-                )
+                mag_field_mean = np.mean(self.magnetic_field["Sweep {}".format(i + 1)])
+                if np.round(mag_field_mean / 10, 1) == 0:
+                    label = "0 T"
+                elif mag_field_mean / 1e4 < 0.999:
+                    label = "{} mT".format(int(mag_field_mean / 10))
+                else:
+                    label = "{} T".format(np.round(mag_field_mean / 1e4, 1))
                 if R_unit == "ohm":
                     curve = gl.Curve(t, r, label=label)
                     curve.add_errorbars(y_error=stddev[i])
