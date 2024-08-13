@@ -100,7 +100,7 @@ class DatasetGrapher:
         file_index : int or list of int, optional
             Index or list of indices (as displayed in the Dataset table) of files to
             get data from. Defaults to ``[]``.
-        power_index : float or list of float, optional
+        power : float or list of float, optional
             If specified, will fetch data for those power values. Defaults to ``[]``.
         size : tuple, optional
             Figure size. Default depends on the ``figure_style`` configuration.
@@ -164,7 +164,7 @@ class DatasetGrapher:
         file_index : int or list of int, optional
             Index or list of indices (as displayed in the Dataset table) of files to
             get data from. Defaults to ``[]``.
-        power_index : float or list of float, optional
+        power : float or list of float, optional
             If specified, will fetch data for those power values. Defaults to ``[]``.
         size : tuple, optional
             Figure size. Default depends on the ``figure_style`` configuration.
@@ -221,6 +221,30 @@ class DatasetGrapher:
         figure_style: str = "default",
         save: bool = True,
     ) -> None:
+        """
+        Plots the magnitude vs frequency, the phase vs frequency and the complex data in a
+        single figure.
+
+        Parameters
+        ----------
+        file_index : int or list of int, optional
+            Index or list of indices (as displayed in the Dataset table) of files to
+            get data from. Defaults to ``[]``.
+        power : float or list of float, optional
+            If specified, will fetch data for those power values. Defaults to ``[]``.
+        title : str, optional
+            Figure title applied to all figures and appended with the frequency range.
+            Defaults to ``None``.
+        freq_unit : {"GHz", "MHz", "kHz"}, optional
+            Units of frequency to use. Defaults to ``"GHz"``.
+        figure_style : str, optional
+            GraphingLib figure style to apply to the plot. See
+            [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
+            for more info.
+        save : bool, optional
+            If ``True``, saves the plot at the location specified for the class.
+            Defaults to ``True``.
+        """
         dataset = self._dataset.slice(file_index=file_index, power=power)
         _power = dataset._data_container.power
         if dataset.format == "complex":
