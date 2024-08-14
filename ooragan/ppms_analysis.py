@@ -11,7 +11,6 @@ import datetime
 import dateutil.tz
 import io
 import numpy as np
-import matplotlib.pyplot as plt
 import graphinglib as gl
 import os
 

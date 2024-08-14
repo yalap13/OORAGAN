@@ -893,6 +893,8 @@ class TXTData:
             key: {"start": info["start_freq"][key], "stop": info["stop_freq"][key]}
             for key in self.files
         }
+        for key in self.files:
+            print(info["vna_power"][key])
         self.power = {
             key: (
                 info["vna_power"][key] + attenuation_cryostat
@@ -1057,7 +1059,7 @@ class TXTData:
                 info["vna_power"][file] = (
                     np.array([file_info["power_dbm_port1"]])
                     if "power_dbm_port1" in file_info
-                    else np.array([file_info["port_power_level_dBm"]])
+                    else np.array([file_info["port_power_level_dBm"][0]]).astype(float)
                 )
             except KeyError:
                 info["vna_power"][file] = None

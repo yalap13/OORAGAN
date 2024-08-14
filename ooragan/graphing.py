@@ -3,56 +3,14 @@ import numpy as np
 import graphinglib as gl
 import pandas as pd
 
-from typing import overload, Optional, Literal, Protocol, Self, runtime_checkable
+from typing import overload, Optional, Literal
 from datetime import datetime
-from numpy.typing import NDArray, ArrayLike
-from graphinglib import Figure, MultiFigure
-from resonator import base, background
+from graphinglib import Figure
 from copy import deepcopy
 
-
-FREQ_UNIT_CONVERSION = {"GHz": 1e9, "MHz": 1e6, "kHz": 1e3}
-
-
-@runtime_checkable
-class Dataset(Protocol):
-    """
-    Dataset dummy class for type hinting.
-    """
-
-    def slice(
-        self, file_index: int | list[int] = [], power: float | list[float] = []
-    ) -> Self: ...
-
-    def convert_magphase_to_complex(
-        self, deg: bool = True, dBm: bool = True
-    ) -> None: ...
-
-    def convert_complex_to_magphase(self, deg: bool = True) -> None: ...
-
-
-@runtime_checkable
-class ResonatorFitter(Protocol):
-    """
-    ResonatorFitter dummy class for type hinting.
-    """
-
-    def fit(
-        self,
-        file_index: int | list[int] = [],
-        power: float | list[float] = [],
-        f_r: float = None,
-        couploss: float = 1e-6,
-        intloss: float = 1e-6,
-        bg: base.BackgroundModel = background.MagnitudePhaseDelay(),
-        savepic: bool = False,
-        showpic: bool = False,
-        write: bool = False,
-        threshold: float = 0.5,
-        start: int = 0,
-        jump: int = 10,
-        nodialog: bool = False,
-    ) -> None: ...
+from .dataset import Dataset
+from .util import FREQ_UNIT_CONVERSION, plot_triptych
+from .resonator_fitter import ResonatorFitter
 
 
 class DatasetGrapher:
@@ -135,9 +93,12 @@ class DatasetGrapher:
                 scatter = gl.Scatter(d[0, :] / 1e9, d[1, :], marker_style=".")
                 figure.add_elements(scatter)
                 if save:
-                    time = datetime.fromtimestamp(
-                        dataset._data_container.start_time[file]
-                    ).strftime("%Y-%m-%d_%H-%M-%S")
+                    if dataset._data_container.start_time[file] is not None:
+                        time = datetime.fromtimestamp(
+                            dataset._data_container.start_time[file]
+                        ).strftime("%Y-%m-%d_%H-%M-%S")
+                    else:
+                        time = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
                     fname = (
                         "mag_vs_freq_"
                         + str(np.mean(d[0, :]) / 1e9)[:5].replace(".", "_")
@@ -199,9 +160,12 @@ class DatasetGrapher:
                 scatter = gl.Scatter(d[0, :] / 1e9, d[2, :], marker_style=".")
                 figure.add_elements(scatter)
                 if save:
-                    time = datetime.fromtimestamp(
-                        dataset._data_container.start_time[file]
-                    ).strftime("%Y-%m-%d_%H-%M-%S")
+                    if dataset._data_container.start_time[file] is not None:
+                        time = datetime.fromtimestamp(
+                            dataset._data_container.start_time[file]
+                        ).strftime("%Y-%m-%d_%H-%M-%S")
+                    else:
+                        time = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
                     fname = (
                         "phase_vs_freq_"
                         + str(np.mean(d[0, :]) / 1e9)[:5].replace(".", "_")
@@ -279,9 +243,12 @@ class DatasetGrapher:
                     figure_style=figure_style,
                 )
                 if save:
-                    time = datetime.fromtimestamp(
-                        dataset._data_container.start_time[file]
-                    ).strftime("%Y-%m-%d_%H-%M-%S")
+                    if dataset._data_container.start_time[file] is not None:
+                        time = datetime.fromtimestamp(
+                            dataset._data_container.start_time[file]
+                        ).strftime("%Y-%m-%d_%H-%M-%S")
+                    else:
+                        time = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
                     fname = (
                         "triptych_"
                         + str(np.mean(data_complex[i][0, :]) / 1e9)[:4].replace(
@@ -1167,119 +1134,3 @@ def grapher(
         raise TypeError(
             "A Grapher can only be initiated from a Dataset or ResonatorFitter object"
         )
-
-
-def load_graph_data(path: str) -> dict[str, NDArray]:
-    """
-    Loads the data saved in csv files by the Grapher objects and returns it
-    as a dictionnary with label as key and NDArrays of the data.
-
-    Parameters
-    ----------
-    path : str
-        Complete file file path of the file containing the data.
-    """
-    df = pd.read_csv(path, header=[0, 1], index_col=0)
-    loaded_data = {}
-    for label in df.columns.get_level_values(0).unique():
-        loaded_data[label] = np.array(df[label]).T
-    return loaded_data
-
-
-def plot_triptych(
-    freq: ArrayLike,
-    mag: ArrayLike,
-    phase: ArrayLike,
-    real: ArrayLike,
-    imag: ArrayLike,
-    fit_result: Optional[base.ResonatorFitter] = None,
-    freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
-    title: Optional[str] = None,
-    figure_style: str = "default",
-) -> MultiFigure:
-    """
-    Plots the magnitude vs frequency, the phase vs frequency and the complex data in a
-    single figure.
-
-    Parameters
-    ----------
-    freq : ArrayLike
-        Frequency array.
-    mag : ArrayLike
-        Magnitude array.
-    phase : ArrayLike
-        Phase array.
-    real : ArrayLike
-        Real values array.
-    imag : ArrayLike
-        Imaginary values array.
-    fit_result : ResonatorFitter, optional
-        Fit result from the resonator library. Defaults to ``None``.
-    freq_unit : {"GHz", "MHz", "kHz"}, optional
-        Unit in which the frequency is given. Defaults to ``"GHz"``.
-    title : str, optional
-        Title of the figure. Defaults to ``None``.
-    figure_style : str, optional
-        GraphingLib figure style to apply to the plot. See
-        [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
-        for more info.
-    """
-    freq = np.asarray(freq) / FREQ_UNIT_CONVERSION[freq_unit]
-    fig_mag_vs_freq = gl.Figure(
-        f"Frequency ({freq_unit})", "Magnitude (dBm)", figure_style=figure_style
-    )
-    mag_vs_freq = gl.Scatter(freq, mag, marker_style=".")
-    fig_mag_vs_freq.add_elements(mag_vs_freq)
-    fig_phase_vs_freq = gl.Figure(
-        f"Frequency ({freq_unit})", "Phase (deg)", figure_style=figure_style
-    )
-    phase_vs_freq = gl.Scatter(freq, phase, marker_style=".")
-    fig_phase_vs_freq.add_elements(phase_vs_freq)
-    fig_complex = gl.Figure(
-        "real", "imag", figure_style=figure_style, aspect_ratio="equal"
-    )
-    complex = gl.Scatter(real, imag, marker_style=".", label="Data")
-    hline = gl.Hlines([0], line_styles=":", line_widths=1, colors="silver")
-    vline = gl.Vlines([0], line_styles=":", line_widths=1, colors="silver")
-    fig_complex.add_elements(hline, vline, complex)
-
-    if fit_result is not None:
-        fit = fit_result.evaluate_fit(fit_result.frequency)
-        fr = fit_result.evaluate_fit(fit_result.resonance_frequency)
-        mag_fit = gl.Curve(
-            fit_result.frequency / FREQ_UNIT_CONVERSION[freq_unit],
-            20 * np.log10(np.abs(fit)),
-            color="k",
-            line_width=1,
-        )
-        mag_point = gl.Scatter(
-            fit_result.resonance_frequency / FREQ_UNIT_CONVERSION[freq_unit],
-            20 * np.log10(np.abs(fr)),
-            face_color="k",
-        )
-        phase_fit = gl.Curve(
-            fit_result.frequency / FREQ_UNIT_CONVERSION[freq_unit],
-            np.degrees(np.angle(fit)),
-            color="k",
-            line_width=1,
-        )
-        phase_point = gl.Scatter(
-            fit_result.resonance_frequency / FREQ_UNIT_CONVERSION[freq_unit],
-            np.degrees(np.angle(fr)),
-            face_color="k",
-        )
-        complex_fit = gl.Curve(
-            fit.real, fit.imag, color="k", line_width=1, label="Best fit"
-        )
-        complex_point = gl.Scatter(fr.real, fr.imag, face_color="k", label="Resonance")
-        fig_mag_vs_freq.add_elements(mag_fit, mag_point)
-        fig_phase_vs_freq.add_elements(phase_fit, phase_point)
-        fig_complex.add_elements(complex_fit, complex_point)
-
-    triptych = gl.MultiFigure(
-        2, 2, (10, 6), title=title, reference_labels=False, figure_style=figure_style
-    )
-    triptych.add_figure(fig_mag_vs_freq, 0, 0, 1, 1)
-    triptych.add_figure(fig_phase_vs_freq, 1, 0, 1, 1)
-    triptych.add_figure(fig_complex, 0, 1, 2, 1)
-    return triptych

@@ -10,8 +10,7 @@ from lmfit import Parameter
 from graphinglib import MultiFigure
 
 from .dataset import Dataset
-from .util import choice, convert_complex_to_magphase, is_interactive
-from .graphing import plot_triptych
+from .util import choice, convert_complex_to_magphase, is_interactive, plot_triptych
 
 if is_interactive():
     from IPython.display import display, clear_output
