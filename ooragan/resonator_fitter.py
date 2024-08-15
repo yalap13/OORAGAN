@@ -534,6 +534,7 @@ class ResonatorFitter:
             trimmed_data["real"],
             trimmed_data["imag"],
             fit_result=result,
+            three_ticks=True,
         )
 
         if save:

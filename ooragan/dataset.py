@@ -893,8 +893,6 @@ class TXTData:
             key: {"start": info["start_freq"][key], "stop": info["stop_freq"][key]}
             for key in self.files
         }
-        for key in self.files:
-            print(info["vna_power"][key])
         self.power = {
             key: (
                 info["vna_power"][key] + attenuation_cryostat

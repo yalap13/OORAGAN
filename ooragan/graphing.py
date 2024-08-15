@@ -37,8 +37,6 @@ class DatasetGrapher:
         self._savepath = savepath
         if self._savepath is None:
             self._savepath = os.path.join(os.getcwd(), "data_plots")
-        if not os.path.exists(self._savepath):
-            os.mkdir(self._savepath)
         self._dataset = dataset
         self._image_type = image_type
 
@@ -47,6 +45,7 @@ class DatasetGrapher:
         file_index: int | list[int] = [],
         power: float | list[float] = [],
         size: tuple | Literal["default"] = "default",
+        three_ticks: bool = False,
         title: Optional[str] = None,
         save: bool = True,
     ) -> None:
@@ -62,6 +61,9 @@ class DatasetGrapher:
             If specified, will fetch data for those power values. Defaults to ``[]``.
         size : tuple, optional
             Figure size. Default depends on the ``figure_style`` configuration.
+        three_ticks : bool, optional
+            If ``True``, only three ticks will be displayed on the x axis: the minimum
+            frequency, the maximum and the frequency. Defaults to ``False``.
         title : str, optional
             Figure title applied to all figures and appended with the frequency range.
             Defaults to ``None``.
@@ -92,7 +94,17 @@ class DatasetGrapher:
                 )
                 scatter = gl.Scatter(d[0, :] / 1e9, d[1, :], marker_style=".")
                 figure.add_elements(scatter)
+                if three_ticks:
+                    figure.set_ticks(
+                        xticks=[
+                            np.min(d[0, :]) / 1e9,
+                            np.mean(d[0, :]) / 1e9,
+                            np.max(d[0, :]) / 1e9,
+                        ]
+                    )
                 if save:
+                    if not os.path.exists(self._savepath):
+                        os.mkdir(self._savepath)
                     if dataset._data_container.start_time[file] is not None:
                         time = datetime.fromtimestamp(
                             dataset._data_container.start_time[file]
@@ -114,6 +126,7 @@ class DatasetGrapher:
         file_index: int | list[int] = [],
         power: float | list[float] = [],
         size: tuple | Literal["default"] = "default",
+        three_ticks: bool = False,
         title: Optional[str] = None,
         save: bool = True,
     ) -> None:
@@ -129,6 +142,9 @@ class DatasetGrapher:
             If specified, will fetch data for those power values. Defaults to ``[]``.
         size : tuple, optional
             Figure size. Default depends on the ``figure_style`` configuration.
+        three_ticks : bool, optional
+            If ``True``, only three ticks will be displayed on the x axis: the minimum
+            frequency, the maximum and the mean frequency. Defaults to ``False``.
         title : str, optional
             Figure title applied to all figures and appended with the frequency range.
             Defaults to ``None``.
@@ -159,7 +175,17 @@ class DatasetGrapher:
                 )
                 scatter = gl.Scatter(d[0, :] / 1e9, d[2, :], marker_style=".")
                 figure.add_elements(scatter)
+                if three_ticks:
+                    figure.set_ticks(
+                        xticks=[
+                            np.min(d[0, :]) / 1e9,
+                            np.mean(d[0, :]) / 1e9,
+                            np.max(d[0, :]) / 1e9,
+                        ]
+                    )
                 if save:
+                    if not os.path.exists(self._savepath):
+                        os.mkdir(self._savepath)
                     if dataset._data_container.start_time[file] is not None:
                         time = datetime.fromtimestamp(
                             dataset._data_container.start_time[file]
@@ -178,10 +204,11 @@ class DatasetGrapher:
 
     def plot_triptych(
         self,
-        file_index: int | list[int],
-        power: float | list[float],
+        file_index: int | list[int] = [],
+        power: float | list[float] = [],
         title: Optional[str] = None,
         freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
+        three_ticks: bool = False,
         figure_style: str = "default",
         save: bool = True,
     ) -> None:
@@ -201,6 +228,9 @@ class DatasetGrapher:
             Defaults to ``None``.
         freq_unit : {"GHz", "MHz", "kHz"}, optional
             Units of frequency to use. Defaults to ``"GHz"``.
+        three_ticks : bool, optional
+            If ``True``, only three ticks will be displayed on the x axis: the minimum
+            frequency, the maximum and the mean frequency. Defaults to ``False``.
         figure_style : str, optional
             GraphingLib figure style to apply to the plot. See
             [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
@@ -240,9 +270,12 @@ class DatasetGrapher:
                     data_complex[file][i][2, :],
                     freq_unit=freq_unit,
                     title=new_title,
+                    three_ticks=three_ticks,
                     figure_style=figure_style,
                 )
                 if save:
+                    if not os.path.exists(self._savepath):
+                        os.mkdir(self._savepath)
                     if dataset._data_container.start_time[file] is not None:
                         time = datetime.fromtimestamp(
                             dataset._data_container.start_time[file]
@@ -303,8 +336,6 @@ class ResonatorFitterGrapher:
         self._save_graph_data = save_graph_data
         if self._savepath is None:
             self._savepath = os.getcwd()
-        if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
-            os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
 
     def plot_Qi_vs_power(
         self,
@@ -407,6 +438,8 @@ class ResonatorFitterGrapher:
             curve.add_errorbars(y_error=Qi_err)
             figure.add_elements(curve)
         if save:
+            if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
+                os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
             name = f"Qi_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "fit_results_plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
@@ -531,6 +564,8 @@ class ResonatorFitterGrapher:
             curve.add_errorbars(y_error=Qc_err)
             figure.add_elements(curve)
         if save:
+            if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
+                os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
             name = f"Qc_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "fit_results_plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
@@ -655,6 +690,8 @@ class ResonatorFitterGrapher:
             curve.add_errorbars(y_error=Qt_err)
             figure.add_elements(curve)
         if save:
+            if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
+                os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
             name = f"Qt_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "fit_results_plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
@@ -793,6 +830,8 @@ class ResonatorFitterGrapher:
             curve.add_errorbars(y_error=fshift_err)
             figure.add_elements(curve)
         if save:
+            if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
+                os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
             name = f"Fshift_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "fit_restults_plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
@@ -916,6 +955,8 @@ class ResonatorFitterGrapher:
             curve.add_errorbars(y_error=fr_err)
             figure.add_elements(curve)
         if save:
+            if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
+                os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
             name = f"Fr_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "fit_results_plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
@@ -1040,6 +1081,8 @@ class ResonatorFitterGrapher:
             curve.add_errorbars(y_error=Li_err)
             figure.add_elements(curve)
         if save:
+            if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
+                os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
             name = f"Li_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "fit_results_plots", name)
             figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
