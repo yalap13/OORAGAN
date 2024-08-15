@@ -171,6 +171,7 @@ def plot_triptych(
     fit_result: Optional[base.ResonatorFitter] = None,
     freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
     title: Optional[str] = None,
+    three_ticks: bool = False,
     figure_style: str = "default",
 ) -> MultiFigure:
     """
@@ -195,6 +196,9 @@ def plot_triptych(
         Unit in which the frequency is given. Defaults to ``"GHz"``.
     title : str, optional
         Title of the figure. Defaults to ``None``.
+    three_ticks : bool, optional
+        If ``True``, only three ticks will be displayed on the x axis: the minimum
+        frequency, the maximum and the frequency. Defaults to ``False``.
     figure_style : str, optional
         GraphingLib figure style to apply to the plot. See
         [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
@@ -252,6 +256,9 @@ def plot_triptych(
         fig_phase_vs_freq.add_elements(phase_fit, phase_point)
         fig_complex.add_elements(complex_fit, complex_point)
 
+    if three_ticks:
+        fig_mag_vs_freq.set_ticks(xticks=[np.min(freq), np.mean(freq), np.max(freq)])
+        fig_phase_vs_freq.set_ticks(xticks=[np.min(freq), np.mean(freq), np.max(freq)])
     triptych = gl.MultiFigure(
         2, 2, (10, 6), title=title, reference_labels=False, figure_style=figure_style
     )
