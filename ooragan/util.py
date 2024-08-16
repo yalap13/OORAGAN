@@ -259,6 +259,7 @@ def plot_triptych(
     if three_ticks:
         fig_mag_vs_freq.set_ticks(xticks=[np.min(freq), np.mean(freq), np.max(freq)])
         fig_phase_vs_freq.set_ticks(xticks=[np.min(freq), np.mean(freq), np.max(freq)])
+        fig_complex.set_ticks(xticks=[np.min(real), 0, np.max(real)])
     triptych = gl.MultiFigure(
         2, 2, (10, 6), title=title, reference_labels=False, figure_style=figure_style
     )
