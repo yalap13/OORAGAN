@@ -48,6 +48,7 @@ class DatasetGrapher:
         size: tuple | Literal["default"] = "default",
         three_ticks: bool = False,
         title: Optional[str] = None,
+        figure_style: str = "default",
         save: bool = True,
     ) -> None:
         """
@@ -70,6 +71,10 @@ class DatasetGrapher:
         title : str, optional
             Figure title applied to all figures and appended with the frequency range.
             Defaults to ``None``.
+        figure_style : str, optional
+            GraphingLib figure style to apply to the plot. See
+            [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
+            for more info.
         save : bool, optional
             If ``True``, saves the plot at the location specified for the class.
             Defaults to ``True``.
@@ -85,8 +90,10 @@ class DatasetGrapher:
             for i, d in enumerate(data[file]):
                 if title is not None:
                     new_title = title + "_"
-                    new_title += str(np.mean(d[0, :]) / 1e9)[:4].replace(".", "_")
-                    new_title += f"GHz_{squeezed_power[i]}dBm"
+                    new_title += str(
+                        np.mean(d[0, :]) / FREQ_UNIT_CONVERSION[freq_unit]
+                    )[:4].replace(".", "_")
+                    new_title += f"{freq_unit}_{squeezed_power[i]}dBm"
                 else:
                     new_title = title
                 figure = gl.Figure(
@@ -94,6 +101,7 @@ class DatasetGrapher:
                     "Magnitude (dBm)",
                     title=new_title,
                     size=size,
+                    figure_style=figure_style,
                 )
                 scatter = gl.Scatter(
                     d[0, :] / FREQ_UNIT_CONVERSION[freq_unit], d[1, :], marker_style="."
@@ -102,9 +110,9 @@ class DatasetGrapher:
                 if three_ticks:
                     figure.set_ticks(
                         xticks=[
-                            np.min(d[0, :]) / 1e9,
-                            np.mean(d[0, :]) / 1e9,
-                            np.max(d[0, :]) / 1e9,
+                            np.min(d[0, :]) / FREQ_UNIT_CONVERSION[freq_unit],
+                            np.mean(d[0, :]) / FREQ_UNIT_CONVERSION[freq_unit],
+                            np.max(d[0, :]) / FREQ_UNIT_CONVERSION[freq_unit],
                         ]
                     )
                 if save:
@@ -118,8 +126,10 @@ class DatasetGrapher:
                         time = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
                     fname = (
                         "mag_vs_freq_"
-                        + str(np.mean(d[0, :]) / 1e9)[:5].replace(".", "_")
-                        + f"GHz_{squeezed_power[i]}dBm_{time}."
+                        + str(np.mean(d[0, :]) / FREQ_UNIT_CONVERSION[freq_unit])[
+                            :5
+                        ].replace(".", "_")
+                        + f"{freq_unit}_{squeezed_power[i]}dBm_{time}."
                         + self._image_type
                     )
                     figure.save(os.path.join(self._savepath, fname))
@@ -134,10 +144,11 @@ class DatasetGrapher:
         size: tuple | Literal["default"] = "default",
         three_ticks: bool = False,
         title: Optional[str] = None,
+        figure_style: str = "default",
         save: bool = True,
     ) -> None:
         """
-        Plots the phase in radians as a function of frequency in GHz.
+        Plots the phase in degrees as a function of frequency in GHz.
 
         Parameters
         ----------
@@ -156,6 +167,10 @@ class DatasetGrapher:
         title : str, optional
             Figure title applied to all figures and appended with the frequency range.
             Defaults to ``None``.
+        figure_style : str, optional
+            GraphingLib figure style to apply to the plot. See
+            [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
+            for more info.
         save : bool, optional
             If ``True``, saves the plot at the location specified for the class.
             Defaults to ``True``.
@@ -171,8 +186,10 @@ class DatasetGrapher:
             for i, d in enumerate(data[file]):
                 if title is not None:
                     new_title = title + "_"
-                    new_title += str(np.mean(d[0, :]) / 1e9)[:4].replace(".", "_")
-                    new_title += f"GHz_{squeezed_power[i]}dBm"
+                    new_title += str(
+                        np.mean(d[0, :]) / FREQ_UNIT_CONVERSION[freq_unit]
+                    )[:4].replace(".", "_")
+                    new_title += f"{freq_unit}_{squeezed_power[i]}dBm"
                 else:
                     new_title = title
                 figure = gl.Figure(
@@ -180,6 +197,7 @@ class DatasetGrapher:
                     "Phase (rad)",
                     title=new_title,
                     size=size,
+                    figure_style=figure_style,
                 )
                 scatter = gl.Scatter(
                     d[0, :] / FREQ_UNIT_CONVERSION[freq_unit], d[2, :], marker_style="."
@@ -188,9 +206,9 @@ class DatasetGrapher:
                 if three_ticks:
                     figure.set_ticks(
                         xticks=[
-                            np.min(d[0, :]) / 1e9,
-                            np.mean(d[0, :]) / 1e9,
-                            np.max(d[0, :]) / 1e9,
+                            np.min(d[0, :]) / FREQ_UNIT_CONVERSION[freq_unit],
+                            np.mean(d[0, :]) / FREQ_UNIT_CONVERSION[freq_unit],
+                            np.max(d[0, :]) / FREQ_UNIT_CONVERSION[freq_unit],
                         ]
                     )
                 if save:
@@ -204,8 +222,100 @@ class DatasetGrapher:
                         time = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
                     fname = (
                         "phase_vs_freq_"
-                        + str(np.mean(d[0, :]) / 1e9)[:5].replace(".", "_")
-                        + f"GHz_{squeezed_power[i]}dBm_{time}."
+                        + str(np.mean(d[0, :]) / FREQ_UNIT_CONVERSION[freq_unit])[
+                            :5
+                        ].replace(".", "_")
+                        + f"{freq_unit}_{squeezed_power[i]}dBm_{time}."
+                        + self._image_type
+                    )
+                    figure.save(os.path.join(self._savepath, fname))
+                else:
+                    figure.show()
+
+    def plot_complex(
+        self,
+        file_index: int | list[int] = [],
+        power: float | list[float] = [],
+        freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
+        size: tuple | Literal["default"] = "default",
+        three_ticks: bool = False,
+        title: Optional[str] = None,
+        figure_style: str = "default",
+        save: bool = True,
+    ) -> None:
+        """
+        Plots the signal in the complex plane.
+
+        Parameters
+        ----------
+        file_index : int or list of int, optional
+            Index or list of indices (as displayed in the Dataset table) of files to
+            get data from. Defaults to ``[]``.
+        power : float or list of float, optional
+            If specified, will fetch data for those power values. Defaults to ``[]``.
+        freq_unit : {"GHz", "MHz", "kHz"}, optional
+            Units of frequency to use. Defaults to ``"GHz"``.
+        size : tuple, optional
+            Figure size. Default depends on the ``figure_style`` configuration.
+        three_ticks : bool, optional
+            If ``True``, only three ticks will be displayed on the x axis: the minimum
+            frequency, the maximum and the mean frequency. Defaults to ``False``.
+        title : str, optional
+            Figure title applied to all figures and appended with the frequency range.
+            Defaults to ``None``.
+        figure_style : str, optional
+            GraphingLib figure style to apply to the plot. See
+            [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
+            for more info.
+        save : bool, optional
+            If ``True``, saves the plot at the location specified for the class.
+            Defaults to ``True``.
+        """
+        dataset = self._dataset.slice(file_index=file_index, power=power)
+        dataset.convert_magphase_to_complex()
+        _power = dataset._data_container.power
+        data = dataset._data_container.data
+        for file in dataset._data_container.files:
+            squeezed_power = (
+                np.squeeze(_power[file]) if _power[file].shape != (1,) else _power[file]
+            )
+            for i, d in enumerate(data[file]):
+                if title is not None:
+                    new_title = title + "_"
+                    new_title += str(
+                        np.mean(d[0, :]) / FREQ_UNIT_CONVERSION[freq_unit]
+                    )[:4].replace(".", "_")
+                    new_title += f"{freq_unit}_{squeezed_power[i]}dBm"
+                else:
+                    new_title = title
+                figure = gl.Figure(
+                    "real",
+                    "imag",
+                    size=size,
+                    title=title,
+                    figure_style=figure_style,
+                )
+                scatter = gl.Scatter(d[1, :], d[2, :], marker_style=".")
+                hline = gl.Hlines(0, line_styles="--", line_widths=1, colors="silver")
+                vline = gl.Vlines(0, line_styles="--", line_widths=1, colors="silver")
+                figure.add_elements(scatter, hline, vline)
+                if three_ticks:
+                    figure.set_ticks(xticks=[np.min(d[1, :]), 0, np.max(d[1, :])])
+                if save:
+                    if not os.path.exists(self._savepath):
+                        os.mkdir(self._savepath)
+                    if dataset._data_container.start_time[file] is not None:
+                        time = datetime.fromtimestamp(
+                            dataset._data_container.start_time[file]
+                        ).strftime("%Y-%m-%d_%H-%M-%S")
+                    else:
+                        time = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
+                    fname = (
+                        "complex_"
+                        + str(np.mean(d[0, :]) / FREQ_UNIT_CONVERSION[freq_unit])[
+                            :5
+                        ].replace(".", "_")
+                        + f"{freq_unit}_{squeezed_power[i]}dBm_{time}."
                         + self._image_type
                     )
                     figure.save(os.path.join(self._savepath, fname))
@@ -266,10 +376,10 @@ class DatasetGrapher:
             for i in range(len(data_complex[file])):
                 if title is not None:
                     new_title = title + "_"
-                    new_title += str(np.mean(data_complex[i][0, :]) / 1e9)[:4].replace(
-                        ".", "_"
-                    )
-                    new_title += f"GHz_{squeezed_power[i]}dBm"
+                    new_title += str(
+                        np.mean(data_complex[i][0, :]) / FREQ_UNIT_CONVERSION[freq_unit]
+                    )[:4].replace(".", "_")
+                    new_title += f"{freq_unit}_{squeezed_power[i]}dBm"
                 else:
                     new_title = title
                 triptych = plot_triptych(
@@ -294,10 +404,11 @@ class DatasetGrapher:
                         time = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
                     fname = (
                         "triptych_"
-                        + str(np.mean(data_complex[i][0, :]) / 1e9)[:4].replace(
-                            ".", "_"
-                        )
-                        + f"GHz_{squeezed_power[i]}dBm_{time}."
+                        + str(
+                            np.mean(data_complex[i][0, :])
+                            / FREQ_UNIT_CONVERSION[freq_unit]
+                        )[:4].replace(".", "_")
+                        + f"{freq_unit}_{squeezed_power[i]}dBm_{time}."
                         + self._image_type
                     )
                     triptych.save(os.path.join(self._savepath, fname))
@@ -350,6 +461,7 @@ class ResonatorFitterGrapher:
     def plot_Qi_vs_power(
         self,
         photon: bool = False,
+        freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -366,6 +478,8 @@ class ResonatorFitterGrapher:
         ----------
         photon : bool
             If ``True``, plots as a function of photon number. Defaults to ``False``.
+        freq_unit : {"GHz", "MHz", "kHz"}, optional
+            Units of frequency to use. Defaults to ``"GHz"``.
         x_lim : tuple, optional
             Limits for the x-axis.
         y_lim : tuple, optional
@@ -435,7 +549,7 @@ class ResonatorFitterGrapher:
                 curve.add_errorbars(y_error=Qi_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r[file][0]/1e9:.3f} GHz"
+            label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
@@ -478,6 +592,7 @@ class ResonatorFitterGrapher:
     def plot_Qc_vs_power(
         self,
         photon: bool = False,
+        freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -494,6 +609,8 @@ class ResonatorFitterGrapher:
         ----------
         photon : bool
             If ``True``, plots as a function of photon number. Defaults to ``False``.
+        freq_unit : {"GHz", "MHz", "kHz"}, optional
+            Units of frequency to use. Defaults to ``"GHz"``.
         x_lim : tuple, optional
             Limits for the x-axis.
         y_lim : tuple, optional
@@ -558,11 +675,12 @@ class ResonatorFitterGrapher:
                 Qc_err = [
                     x for _, x in sorted(zip(power, Qc_err), key=lambda pair: pair[0])
                 ]
+                power.sort()
                 curve = gl.Curve(power, Qc, label=label)
                 curve.add_errorbars(y_error=Qc_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r[file][0]/1e9:.3f} GHz"
+            label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
@@ -604,6 +722,7 @@ class ResonatorFitterGrapher:
     def plot_Qt_vs_power(
         self,
         photon: bool = False,
+        freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -620,6 +739,8 @@ class ResonatorFitterGrapher:
         ----------
         photon : bool
             If ``True``, plots as a function of photon number. Defaults to ``False``.
+        freq_unit : {"GHz", "MHz", "kHz"}, optional
+            Units of frequency to use. Defaults to ``"GHz"``.
         x_lim : tuple, optional
             Limits for the x-axis.
         y_lim : tuple, optional
@@ -684,11 +805,12 @@ class ResonatorFitterGrapher:
                 Qt_err = [
                     x for _, x in sorted(zip(power, Qt_err), key=lambda pair: pair[0])
                 ]
+                power.sort()
                 curve = gl.Curve(power, Qt, label=label)
                 curve.add_errorbars(y_error=Qt_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r[file][0]/1e9:.3f} GHz"
+            label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
@@ -833,18 +955,19 @@ class ResonatorFitterGrapher:
                     x
                     for _, x in sorted(zip(power, fshift_err), key=lambda pair: pair[0])
                 ]
+                power.sort()
                 curve = gl.Curve(power, fshift, label=label)
                 curve.add_errorbars(y_error=fshift_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r[file][0]/1e9:.3f} GHz"
+            label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
                 else self._res_fitter.input_power[file]
             )
-            fshift = F_diff[file] / 1e9
-            fshift_err = F_diff_err[file] / 1e9
+            fshift = F_diff[file] / FREQ_UNIT_CONVERSION[freq_unit]
+            fshift_err = F_diff_err[file] / FREQ_UNIT_CONVERSION[freq_unit]
             curve = gl.Curve(power, fshift, label=label)
             curve.add_errorbars(y_error=fshift_err)
             figure.add_elements(curve)
@@ -965,18 +1088,19 @@ class ResonatorFitterGrapher:
                 fr_err = [
                     x for _, x in sorted(zip(power, fr_err), key=lambda pair: pair[0])
                 ]
+                power.sort()
                 curve = gl.Curve(power, fr, label=label)
                 curve.add_errorbars(y_error=fr_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r[file][0]/1e9:.3f} GHz"
+            label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
                 else self._res_fitter.input_power[file]
             )
-            fr = self._res_fitter.f_r[file] / 1e9
-            fr_err = self._res_fitter.f_r_err[file] / 1e9
+            fr = self._res_fitter.f_r[file] / FREQ_UNIT_CONVERSION[freq_unit]
+            fr_err = self._res_fitter.f_r_err[file] / FREQ_UNIT_CONVERSION[freq_unit]
             curve = gl.Curve(power, fr, label=label)
             curve.add_errorbars(y_error=fr_err)
             figure.add_elements(curve)
@@ -1011,6 +1135,7 @@ class ResonatorFitterGrapher:
     def plot_internal_loss_vs_power(
         self,
         photon: bool = False,
+        freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -1027,6 +1152,8 @@ class ResonatorFitterGrapher:
         ----------
         photon : bool
             If ``True``, plots as a function of photon number. Defaults to ``False``.
+        freq_unit : {"GHz", "MHz", "kHz"}, optional
+            Units of frequency to use. Defaults to ``"GHz"``.
         x_lim : tuple, optional
             Limits for the x-axis.
         y_lim : tuple, optional
@@ -1091,11 +1218,12 @@ class ResonatorFitterGrapher:
                 Li_err = [
                     x for _, x in sorted(zip(power, Li_err), key=lambda pair: pair[0])
                 ]
+                power.sort()
                 curve = gl.Curve(power, Li, label=label)
                 curve.add_errorbars(y_error=Li_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r[file][0]/1e9:.3f} GHz"
+            label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
