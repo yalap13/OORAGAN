@@ -44,6 +44,7 @@ class DatasetGrapher:
         self,
         file_index: int | list[int] = [],
         power: float | list[float] = [],
+        freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
         size: tuple | Literal["default"] = "default",
         three_ticks: bool = False,
         title: Optional[str] = None,
@@ -59,6 +60,8 @@ class DatasetGrapher:
             get data from. Defaults to ``[]``.
         power : float or list of float, optional
             If specified, will fetch data for those power values. Defaults to ``[]``.
+        freq_unit : {"GHz", "MHz", "kHz"}, optional
+            Units of frequency to use. Defaults to ``"GHz"``.
         size : tuple, optional
             Figure size. Default depends on the ``figure_style`` configuration.
         three_ticks : bool, optional
@@ -87,12 +90,14 @@ class DatasetGrapher:
                 else:
                     new_title = title
                 figure = gl.Figure(
-                    "Frequency (GHz)",
+                    f"Frequency ({freq_unit})",
                     "Magnitude (dBm)",
                     title=new_title,
                     size=size,
                 )
-                scatter = gl.Scatter(d[0, :] / 1e9, d[1, :], marker_style=".")
+                scatter = gl.Scatter(
+                    d[0, :] / FREQ_UNIT_CONVERSION[freq_unit], d[1, :], marker_style="."
+                )
                 figure.add_elements(scatter)
                 if three_ticks:
                     figure.set_ticks(
@@ -125,6 +130,7 @@ class DatasetGrapher:
         self,
         file_index: int | list[int] = [],
         power: float | list[float] = [],
+        freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
         size: tuple | Literal["default"] = "default",
         three_ticks: bool = False,
         title: Optional[str] = None,
@@ -140,6 +146,8 @@ class DatasetGrapher:
             get data from. Defaults to ``[]``.
         power : float or list of float, optional
             If specified, will fetch data for those power values. Defaults to ``[]``.
+        freq_unit : {"GHz", "MHz", "kHz"}, optional
+            Units of frequency to use. Defaults to ``"GHz"``.
         size : tuple, optional
             Figure size. Default depends on the ``figure_style`` configuration.
         three_ticks : bool, optional
@@ -168,12 +176,14 @@ class DatasetGrapher:
                 else:
                     new_title = title
                 figure = gl.Figure(
-                    "Frequency (GHz)",
+                    f"Frequency ({freq_unit})",
                     "Phase (rad)",
                     title=new_title,
                     size=size,
                 )
-                scatter = gl.Scatter(d[0, :] / 1e9, d[2, :], marker_style=".")
+                scatter = gl.Scatter(
+                    d[0, :] / FREQ_UNIT_CONVERSION[freq_unit], d[2, :], marker_style="."
+                )
                 figure.add_elements(scatter)
                 if three_ticks:
                     figure.set_ticks(
@@ -721,6 +731,7 @@ class ResonatorFitterGrapher:
         self,
         f_design: dict[str, float],
         photon: bool = False,
+        freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -741,6 +752,8 @@ class ResonatorFitterGrapher:
             same index as used in the Dataset and ResonatorFitter classes.
         photon : bool
             If ``True``, plots as a function of photon number. Defaults to ``False``.
+        freq_unit : {"GHz", "MHz", "kHz"}, optional
+            Units of frequency to use. Defaults to ``"GHz"``.
         x_lim : tuple, optional
             Limits for the x-axis.
         y_lim : tuple, optional
@@ -780,7 +793,7 @@ class ResonatorFitterGrapher:
             x_label = "Input power (dBm)"
         figure = gl.Figure(
             x_label,
-            r"$f_r-f_0$ (GHz)",
+            rf"$f_r-f_0$ ({freq_unit})",
             log_scale_x=photon,
             x_lim=x_lim,
             y_lim=y_lim,
@@ -804,8 +817,14 @@ class ResonatorFitterGrapher:
                         power.extend(
                             self._res_fitter.input_power[self._file_index_dict[str(i)]]
                         )
-                    fshift.extend(F_diff[self._file_index_dict[str(i)]] / 1e9)
-                    fshift_err.extend(F_diff_err[self._file_index_dict[str(i)]] / 1e9)
+                    fshift.extend(
+                        F_diff[self._file_index_dict[str(i)]]
+                        / FREQ_UNIT_CONVERSION[freq_unit]
+                    )
+                    fshift_err.extend(
+                        F_diff_err[self._file_index_dict[str(i)]]
+                        / FREQ_UNIT_CONVERSION[freq_unit]
+                    )
                     files.remove(self._file_index_dict[str(i)])
                 fshift = [
                     x for _, x in sorted(zip(power, fshift), key=lambda pair: pair[0])
@@ -860,6 +879,7 @@ class ResonatorFitterGrapher:
     def plot_Fr_vs_power(
         self,
         photon: bool = False,
+        freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -876,6 +896,8 @@ class ResonatorFitterGrapher:
         ----------
         photon : bool
             If ``True``, plots as a function of photon number. Defaults to ``False``.
+        freq_unit : {"GHz", "MHz", "kHz"}, optional
+            Units of frequency to use. Defaults to ``"GHz"``.
         x_lim : tuple, optional
             Limits for the x-axis.
         y_lim : tuple, optional
@@ -906,7 +928,7 @@ class ResonatorFitterGrapher:
             x_label = "Input power (dBm)"
         figure = gl.Figure(
             x_label,
-            r"$f_r$ (GHz)",
+            rf"$f_r$ ({freq_unit})",
             log_scale_x=photon,
             x_lim=x_lim,
             y_lim=y_lim,
@@ -930,9 +952,13 @@ class ResonatorFitterGrapher:
                         power.extend(
                             self._res_fitter.input_power[self._file_index_dict[str(i)]]
                         )
-                    fr.extend(self._res_fitter.f_r[self._file_index_dict[str(i)]] / 1e9)
+                    fr.extend(
+                        self._res_fitter.f_r[self._file_index_dict[str(i)]]
+                        / FREQ_UNIT_CONVERSION[freq_unit]
+                    )
                     fr_err.extend(
-                        self._res_fitter.f_r_err[self._file_index_dict[str(i)]] / 1e9
+                        self._res_fitter.f_r_err[self._file_index_dict[str(i)]]
+                        / FREQ_UNIT_CONVERSION[freq_unit]
                     )
                     files.remove(self._file_index_dict[str(i)])
                 fr = [x for _, x in sorted(zip(power, fr), key=lambda pair: pair[0])]
