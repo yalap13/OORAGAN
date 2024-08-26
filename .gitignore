@@ -10,8 +10,11 @@ TODO.md
 *.dat
 *.txt
 *.svg
+docs/generated
+docs/_build
 
 !ooragan_logo.svg
 !ooragan/*.py
 !unit_testing/*.py
 !unit_testing/Fit results
+!docs/conf.py
