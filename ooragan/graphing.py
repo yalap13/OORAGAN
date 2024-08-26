@@ -5,7 +5,7 @@ import pandas as pd
 
 from typing import overload, Optional, Literal
 from datetime import datetime
-from graphinglib import Figure
+from graphinglib import Figure, MultiFigure
 from copy import deepcopy
 
 from .dataset import Dataset
@@ -50,7 +50,7 @@ class DatasetGrapher:
         title: Optional[str] = None,
         figure_style: str = "default",
         save: bool = True,
-    ) -> None:
+    ) -> list[Figure]:
         """
         Plots the magnitude in dBm as a function of frequency in GHz.
 
@@ -83,6 +83,7 @@ class DatasetGrapher:
         dataset.convert_complex_to_magphase()
         _power = dataset._data_container.power
         data = dataset._data_container.data
+        _figures = []
         for file in dataset._data_container.files:
             squeezed_power = (
                 np.squeeze(_power[file]) if _power[file].shape != (1,) else _power[file]
@@ -135,6 +136,8 @@ class DatasetGrapher:
                     figure.save(os.path.join(self._savepath, fname))
                 else:
                     figure.show()
+                _figures.append(figure)
+        return _figures
 
     def plot_phase_vs_freq(
         self,
@@ -146,7 +149,7 @@ class DatasetGrapher:
         title: Optional[str] = None,
         figure_style: str = "default",
         save: bool = True,
-    ) -> None:
+    ) -> list[Figure]:
         """
         Plots the phase in degrees as a function of frequency in GHz.
 
@@ -179,6 +182,7 @@ class DatasetGrapher:
         dataset.convert_complex_to_magphase()
         _power = dataset._data_container.power
         data = dataset._data_container.data
+        _figures = []
         for file in dataset._data_container.files:
             squeezed_power = (
                 np.squeeze(_power[file]) if _power[file].shape != (1,) else _power[file]
@@ -231,6 +235,8 @@ class DatasetGrapher:
                     figure.save(os.path.join(self._savepath, fname))
                 else:
                     figure.show()
+                _figures.append(figure)
+        return _figures
 
     def plot_complex(
         self,
@@ -242,7 +248,7 @@ class DatasetGrapher:
         title: Optional[str] = None,
         figure_style: str = "default",
         save: bool = True,
-    ) -> None:
+    ) -> list[Figure]:
         """
         Plots the signal in the complex plane.
 
@@ -275,6 +281,7 @@ class DatasetGrapher:
         dataset.convert_magphase_to_complex()
         _power = dataset._data_container.power
         data = dataset._data_container.data
+        _figures = []
         for file in dataset._data_container.files:
             squeezed_power = (
                 np.squeeze(_power[file]) if _power[file].shape != (1,) else _power[file]
@@ -321,6 +328,8 @@ class DatasetGrapher:
                     figure.save(os.path.join(self._savepath, fname))
                 else:
                     figure.show()
+                _figures.append(figure)
+        return _figures
 
     def plot_triptych(
         self,
@@ -331,7 +340,7 @@ class DatasetGrapher:
         three_ticks: bool = False,
         figure_style: str = "default",
         save: bool = True,
-    ) -> None:
+    ) -> list[MultiFigure]:
         """
         Plots the magnitude vs frequency, the phase vs frequency and the complex data in a
         single figure.
@@ -369,6 +378,7 @@ class DatasetGrapher:
             data_magphase = deepcopy(dataset._data_container.data)
             dataset.convert_magphase_to_complex()
             data_complex = deepcopy(dataset._data_container.data)
+        _figures = []
         for file in dataset._data_container.files:
             squeezed_power = (
                 np.squeeze(_power[file]) if _power[file].shape != (1,) else _power[file]
@@ -414,6 +424,8 @@ class DatasetGrapher:
                     triptych.save(os.path.join(self._savepath, fname))
                 else:
                     triptych.show()
+                _figures.append(triptych)
+        return _figures
 
 
 class ResonatorFitterGrapher:
