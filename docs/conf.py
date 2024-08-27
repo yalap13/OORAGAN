@@ -24,6 +24,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx_favicon",
+    "sphinx_design",
 ]
 
 templates_path = ["_templates"]
@@ -33,6 +34,15 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "insegel"
-html_logo = "_static/ooragan_logo.png"
+html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
+html_css_files = ["ooragan.css"]
+favicons = ["icons/ooragan_favicon.png"]
+html_theme_options = {
+    "logo": {
+        "image_light": "../ooragan_logo.svg",
+        "image_dark": "../ooragan_logo.svg",
+    },
+    "navbar_end": ["navbar-icon-links"],
+}
+html_context = {"default_mode": "dark"}
