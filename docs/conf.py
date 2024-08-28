@@ -19,10 +19,13 @@ author = "Yannick Lapointe and Gabriel Ouellet"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    "numpydoc",
-    "sphinx_copybutton",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.todo",
+    "numpydoc",
+    "sphinx.ext.intersphinx",
+    "sphinx_copybutton",
     "sphinx_favicon",
     "sphinx_design",
 ]
@@ -39,10 +42,17 @@ html_static_path = ["_static"]
 html_css_files = ["ooragan.css"]
 favicons = ["icons/ooragan_favicon.png"]
 html_theme_options = {
-    "logo": {
-        "image_light": "../ooragan_logo.svg",
-        "image_dark": "../ooragan_logo.svg",
-    },
+    "logo": {"text": "OORAGAN", "image_light": "../ooragan_logo.svg"},
     "navbar_end": ["navbar-icon-links"],
+    "pygment_light_style": "trac",
+    "show_prev_next": False,
+    "github_url": "https://github.com/yalap13/ooragan/",
 }
-html_context = {"default_mode": "dark"}
+html_context = {"default_mode": "light"}
+html_show_sourcelink = False
+html_sidebars = {"installation": []}
+
+# -- Options for the Sphinx extensions ---------------------------------------
+
+autosummary_generate = True
+numpydoc_show_class_members = False

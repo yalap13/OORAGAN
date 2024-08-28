@@ -1,44 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
 
 :root {
     --pst-header-height: 80px;
 }
 
 body {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'IBM Plex Sans', serif;
 }
 
-html[data-theme=dark] {
-    --pst-color-primary: rgb(25, 142, 254);
-    --pst-color-secondary: rgb(225, 164, 0);
-    --pst-color-inline-code-links: rgb(25, 142, 254);
-    --pst-color-inline-code: rgb(228, 127, 215);
-    --pst-color-primary-highlight: rgb(19, 107, 188) !important;
-    .bd-header-announcement {
-        &:after {
-            background-color: rgb(19, 107, 188);
-        }
-    }
+html[data-theme=light] {
+    --pst-color-background: rgb(242, 242, 242);
+    --pst-color-on-background: rgb(230, 230, 230) !important;
+    --pst-color-surface: rgb(217, 217, 217);
+    --pst-color-info: rgb(45, 45, 45);
+    --pst-color-info-bg: rgb(204, 204, 204);
+    --pst-color-primary: rgb(0, 0, 0);
+    --pst-color-secondary: rgb(0, 0, 0);
+    --pst-color-inline-code-links: rgb(0, 0, 0);
+    --pst-color-inline-code: rgb(38, 140, 115);
+    --pst-color-target: rgb(195, 239, 228);
+    --pst-color-primary-highlight: rgb(0, 0, 0) !important;
 }
 
 html[data-theme=dark] .sd-shadow-sm {
     box-shadow: 0 .1rem 1rem rgba(0, 0, 0, .6) !important
-}
-
-html[data-theme=light] {
-    --pst-color-primary: rgb(22, 118, 208);
-    --pst-color-secondary: rgb(203, 149, 0);
-    --pst-color-inline-code-links: rgb(22, 118, 208);
-    --pst-color-primary-highlight: rgb(19, 107, 188) !important;
-    .bd-header-announcement {
-        &:after {
-            background-color: rgb(25, 142, 254);
-        }
-    }
-}
-
-html[data-theme=light] .sd-shadow-sm {
-    box-shadow: 0 .1rem 1rem rgba(0, 0, 0, 0.2) !important
 }
 
 div.bd-sidebar {

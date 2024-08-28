@@ -480,13 +480,13 @@ class PPMSAnalysis:
                 ],
             }
             self.std_dev[sweep] = {
-                "bridge1": self._temp_dict["Bridge 1 Std. Dev. (Ohm)"][
+                "bridge1": self._temp_dict["Bridge 1 Std. Dev. (Ohm-m)"][
                     index[0] : index[1]
                 ],
-                "bridge2": self._temp_dict["Bridge 2 Std. Dev. (Ohm)"][
+                "bridge2": self._temp_dict["Bridge 2 Std. Dev. (Ohm-m)"][
                     index[0] : index[1]
                 ],
-                "bridge3": self._temp_dict["Bridge 3 Std. Dev. (Ohm)"][
+                "bridge3": self._temp_dict["Bridge 3 Std. Dev. (Ohm-m)"][
                     index[0] : index[1]
                 ],
             }

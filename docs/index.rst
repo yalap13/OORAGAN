@@ -14,4 +14,5 @@ Object Oriented Resonator Advanced Graphing and ANalysis (OORAGAN) is a library 
    :caption: Contents:
    :hidden:
 
+   installation
    api

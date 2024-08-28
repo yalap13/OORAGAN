@@ -29,12 +29,12 @@ class ResonatorFitter:
         results and images. The default is the current working directory.
     """
 
-    def __init__(self, dataset: Dataset, savepath: str = os.getcwd()):
+    def __init__(self, dataset: Dataset, savepath: Optional[str] = None):
         self.dataset = dataset
         if self.dataset.format == "magphase":
             self.dataset.convert_magphase_to_complex()
         self._fit_results = {}
-        self._savepath = savepath
+        self._savepath = savepath if savepath is not None else os.getcwd()
 
     @property
     def Q_c(self) -> dict:
