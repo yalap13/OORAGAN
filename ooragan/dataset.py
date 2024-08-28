@@ -3,7 +3,7 @@ import numpy as np
 import h5py
 import re
 
-from typing import Optional, Union, Self
+from typing import Optional, Union
 from os import PathLike
 from glob import glob
 from pathlib import Path
@@ -12,6 +12,11 @@ from numpy.typing import NDArray, ArrayLike
 from datetime import datetime
 from copy import deepcopy
 from warnings import warn
+
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 from .util import (
     strtime,
