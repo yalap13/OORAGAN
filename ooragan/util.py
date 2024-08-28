@@ -86,7 +86,7 @@ def strtime(s: str) -> float:
 def convert_magphase_to_complex(
     mag: NDArray, phase: NDArray, deg: bool = True, dBm: bool = True
 ) -> NDArray:
-    """
+    r"""
     Converts magnitude and phase data into real and imaginary.
 
     Parameters
@@ -99,6 +99,16 @@ def convert_magphase_to_complex(
         Set to ``True`` if the phase is in degrees. Defaults to ``True``.
     dBm : bool, optional
         Set to ``True`` if the magnitude is in dBm. Defaults to ``True``.
+
+    Notes
+    -----
+    This conversion is defined as
+
+    .. math::
+
+        S_{21}^\text{complex} = 10^{\frac{|S_{21}|}{20}}e^{i\phi}
+
+    where the magnitude :math:`|S_{21}|` is in dB and the phase :math:`\phi` is in degrees.
     """
     if deg:
         phase = np.deg2rad(phase)
@@ -113,7 +123,7 @@ def convert_magphase_to_complex(
 def convert_complex_to_magphase(
     real: NDArray, imag: NDArray, deg: bool = True
 ) -> NDArray:
-    """
+    r"""
     Converts real and imaginary data into magnitude (dBm) and phase.
 
     Parameters
@@ -124,6 +134,16 @@ def convert_complex_to_magphase(
         Imaginary data array.
     deg : bool, optional
         If ``True`` the phase is returned in degrees. Defaults to ``True``.
+
+    Notes
+    -----
+    This conversion is defined as
+
+    .. math::
+
+        |S_{21}|=20\cdot\log_{10}\sqrt{\mathrm{Re}(S_{21})^2+\mathrm{Im}(S_{21})^2}
+
+        \phi=\arctan\left(\frac{\mathrm{Im}(S_{21})}{\mathrm{Re}(S_{21})}\right)
     """
 
     phase = np.angle(real + 1j * imag, deg=deg)

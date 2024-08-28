@@ -16,3 +16,16 @@
         {%- endfor %}
     {% endif %}
     {% endblock %}
+
+    {% block attributes %}
+    {% if attributes %}
+    .. Autosummary generates the pages but the table wont be generated.
+        .. autosummary::
+            :toctree: ./
+        {% for item in attributes %}
+            {%- if not item.startswith('_') %}
+                ~{{ name }}.{{ item }}
+            {%- endif %}
+        {%- endfor %}
+    {% endif %}
+    {% endblock %}

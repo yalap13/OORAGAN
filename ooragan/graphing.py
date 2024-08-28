@@ -1298,6 +1298,8 @@ def grapher(
 
     .. note:: To see the available plots, see :class:`DatasetGrapher <ooragan.graphing.DatasetGrapher>` or :class:`ResonatorFitterGrapher <ooragan.graphing.ResonatorFitterGrapher>`.
 
+    .. seealso:: The Graphers use the `GraphingLib library <https://graphinglib.org/>`_ to generate plots.
+
     Parameters
     ----------
     data_object : Dataset or ResonatorFitter

@@ -20,6 +20,8 @@ class ResonatorFitter:
     """
     Resonator fitting object
 
+    .. seealso:: This object is a wrapper of the `resonator <https://github.com/danielflanigan/resonator/>`_ library.
+
     Parameters
     ----------
     dataset : Dataset
@@ -173,7 +175,7 @@ class ResonatorFitter:
         jump: int = 10,
         nodialog: bool = False,
     ) -> None:
-        """
+        r"""
         Fitting specified resonator data.
 
         Parameters
@@ -211,6 +213,23 @@ class ResonatorFitter:
         nodialog : bool, optional
             If ``True``, does not display the overwriting warning popup.
             The default is ``False``.
+
+        Notes
+        -----
+        In the **shunt** mode, the resonance is fitted using
+
+        .. math:: S_{21}(f) = 1-\frac{\frac{Q}{Q_c}}{1+2iQ\frac{f-f_0}{f_0}}
+
+        In the **reflection** mode, the resonance is fitted using
+
+        .. math:: S_{21}(f) = -1+\frac{\frac{Q}{Q_c}}{1+2iQ\frac{f-f_0}{f_0}}
+
+        The fit itself is performed by the lmfit library.
+        The `fit` method uses an auxilary method `_test_fit` to verify the maximum error tolerance
+        on the fit results is respected. If not, the data is trimmed by a specified amount on both
+        sides and the fit is tried again.
+
+        .. seealso:: See the `lmfit library <https://lmfit.github.io/lmfit-py/>`_.
         """
         if savepic and not os.path.exists(os.path.join(self._savepath, "fit_images")):
             os.mkdir(os.path.join(self._savepath, "fit_images"))

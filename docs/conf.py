@@ -47,6 +47,7 @@ html_theme_options = {
     "pygment_light_style": "trac",
     "show_prev_next": False,
     "github_url": "https://github.com/yalap13/ooragan/",
+    "show_toc_level": 2,
 }
 html_context = {"default_mode": "light"}
 html_show_sourcelink = False
@@ -54,5 +55,11 @@ html_sidebars = {"installation": []}
 
 # -- Options for the Sphinx extensions ---------------------------------------
 
+intersphinx_mapping = {
+    "Numpy": ("https://numpy.org/doc/stable/", None),
+    "GraphingLib": ("https://www.graphinglib.org/latest/", None),
+    "Python": ("https://docs.python.org/", None),
+}
+autodoc_type_aliases = {"ArrayLike": "ArrayLike", "NDArray": "NDArray"}
 autosummary_generate = True
 numpydoc_show_class_members = True

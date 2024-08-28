@@ -33,6 +33,11 @@ Functions
 Internal Objects
 ----------------
 
+.. warning:: 
+   
+   These objects are not directly created by the user, but once they are, their methods can be used.
+   These objetcs **are not included in the package's __init__ file** and **cannot be imported** from OORAGAN. 
+
 Dataset data containers
 ^^^^^^^^^^^^^^^^^^^^^^^
 

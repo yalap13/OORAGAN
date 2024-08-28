@@ -14,6 +14,10 @@ html[data-theme=light] {
     --pst-color-surface: rgb(217, 217, 217);
     --pst-color-info: rgb(45, 45, 45);
     --pst-color-info-bg: rgb(204, 204, 204);
+    --pst-color-success: rgb(54, 201, 164);
+    --pst-color-success-bg: rgb(195, 239, 228);
+    --pst-color-warning: rgb(205, 73, 73);
+    --pst-color-warning-bg: rgb(239, 194, 194);
     --pst-color-primary: rgb(0, 0, 0);
     --pst-color-secondary: rgb(0, 0, 0);
     --pst-color-inline-code-links: rgb(0, 0, 0);
