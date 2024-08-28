@@ -439,7 +439,7 @@ class Dataset:
 
     def convert_magphase_to_complex(self, deg: bool = True, dBm: bool = True) -> None:
         """
-        Converts the Dataset's data from magnitude and phase to complex.
+        Converts the Dataset's data from magnitude and phase to complex using :func:`convert_magphase_to_complex`.
 
         Parameters
         ----------
@@ -452,7 +452,7 @@ class Dataset:
 
     def convert_complex_to_magphase(self, deg: bool = True) -> None:
         """
-        Converts the Dataset's data from complex to magnitude and phase.
+        Converts the Dataset's data from complex to magnitude and phase using :func:`convert_complex_to_magphase`.
 
         Parameters
         ----------
@@ -806,6 +806,10 @@ class HDF5Data:
         deg : bool
             If ``True`` the phase is returned in degrees, else in radians.
             Defaults to ``False``.
+
+        See Also
+        --------
+        :func:`ooragan.convert_complex_to_magphase`
         """
         if self.format == "magphase":
             return
@@ -826,6 +830,10 @@ class HDF5Data:
             Set to ``True`` if the phase is in degrees. Defaults to ``False``.
         dBm : bool, optional
             Set to ``True`` if the magnitude is in dBm. Defaults to ``False``.
+
+        See Also
+        --------
+        :func:`ooragan.convert_magphase_to_complex`
         """
         if self.format == "complex":
             return
@@ -1181,6 +1189,10 @@ class TXTData:
         deg : bool
             If ``True`` the phase is returned in degrees, else in radians.
             Defaults to ``False``.
+
+        See Also
+        --------
+        :func:`ooragan.convert_complex_to_magphase`
         """
         if self.format == "magphase":
             return
@@ -1202,6 +1214,10 @@ class TXTData:
             Set to ``True`` if the phase is in degrees. Defaults to ``False``.
         dBm : bool, optional
             Set to ``True`` if the magnitude is in dBm. Defaults to ``False``.
+
+        See Also
+        --------
+        :func:`ooragan.convert_magphase_to_complex`
         """
         if self.format == "complex":
             return
@@ -1256,11 +1272,11 @@ class AbstractData:
     """
     Data container for a mix of different file formats.
 
-    Note
-    ----
-    This data container class does not extract data from file as the other data
-    container classes do. It is mearly intended to be used when merging two
-    previously created Datasets from different file formats.
+    .. attention::
+
+        This data container class does not extract data from file as the other data
+        container classes do. It is mearly intended to be used when merging two
+        previously created Datasets from different file formats.
 
     Parameters
     ----------
@@ -1493,6 +1509,10 @@ class AbstractData:
         deg : bool
             If ``True`` the phase is returned in degrees, else in radians.
             Defaults to ``False``.
+
+        See Also
+        --------
+        :func:`ooragan.convert_complex_to_magphase`
         """
         if self.format == "magphase":
             return
@@ -1513,6 +1533,10 @@ class AbstractData:
             Set to ``True`` if the phase is in degrees. Defaults to ``False``.
         dBm : bool, optional
             Set to ``True`` if the magnitude is in dBm. Defaults to ``False``.
+
+        See Also
+        --------
+        :func:`ooragan.convert_magphase_to_complex`
         """
         if self.format == "complex":
             return

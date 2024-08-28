@@ -440,7 +440,7 @@ class PPMSAnalysis:
         start_temp: float = 18,
         end_temp: float = 3,
         temp_tolerance: float = 0,
-        savepath: str = os.getcwd(),
+        savepath: Optional[str] = None,
         fname: Optional[str] = None,
     ) -> None:
         self._data = QD_Data(filename_or_data=path)
@@ -454,7 +454,7 @@ class PPMSAnalysis:
             end=end_temp,
             tolerance=temp_tolerance,
         )
-        self._savepath = savepath
+        self._savepath = savepath if savepath is not None else os.getcwd()
         self._fname = (
             fname
             if fname is not None
@@ -480,13 +480,13 @@ class PPMSAnalysis:
                 ],
             }
             self.std_dev[sweep] = {
-                "bridge1": self._temp_dict["Bridge 1 Std. Dev. (Ohm)"][
+                "bridge1": self._temp_dict["Bridge 1 Std. Dev. (Ohm-m)"][
                     index[0] : index[1]
                 ],
-                "bridge2": self._temp_dict["Bridge 2 Std. Dev. (Ohm)"][
+                "bridge2": self._temp_dict["Bridge 2 Std. Dev. (Ohm-m)"][
                     index[0] : index[1]
                 ],
-                "bridge3": self._temp_dict["Bridge 3 Std. Dev. (Ohm)"][
+                "bridge3": self._temp_dict["Bridge 3 Std. Dev. (Ohm-m)"][
                     index[0] : index[1]
                 ],
             }

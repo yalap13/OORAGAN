@@ -1373,9 +1373,13 @@ def grapher(
     """
     Factory function to create a Grapher according to the type of the data_object parameter.
 
+    .. note:: To see the available plots, see :class:`DatasetGrapher <ooragan.graphing.DatasetGrapher>` or :class:`ResonatorFitterGrapher <ooragan.graphing.ResonatorFitterGrapher>`.
+
+    .. seealso:: The Graphers use the `GraphingLib library <https://graphinglib.org/>`_ to generate plots.
+
     Parameters
     ----------
-    data_object : Dataset | ResonatorFitter
+    data_object : Dataset or ResonatorFitter
         Object from which to create the Grapher.
     savepath : str, optional
         Path where to create the ``plots`` folder to save the generated plots. Defaults

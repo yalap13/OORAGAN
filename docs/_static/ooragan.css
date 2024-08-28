@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
+
+:root {
+    --pst-header-height: 80px;
+}
+
+body {
+    font-family: 'IBM Plex Sans', serif;
+}
+
+html[data-theme=light] {
+    --pst-color-background: rgb(242, 242, 242);
+    --pst-color-on-background: rgb(230, 230, 230) !important;
+    --pst-color-surface: rgb(217, 217, 217);
+    --pst-color-info: rgb(45, 45, 45);
+    --pst-color-info-bg: rgb(204, 204, 204);
+    --pst-color-success: rgb(54, 201, 164);
+    --pst-color-success-bg: rgb(195, 239, 228);
+    --pst-color-warning: rgb(205, 73, 73);
+    --pst-color-warning-bg: rgb(239, 194, 194);
+    --pst-color-primary: rgb(0, 0, 0);
+    --pst-color-secondary: rgb(0, 0, 0);
+    --pst-color-inline-code-links: rgb(0, 0, 0);
+    --pst-color-inline-code: rgb(38, 140, 115);
+    --pst-color-target: rgb(195, 239, 228);
+    --pst-color-primary-highlight: rgb(0, 0, 0) !important;
+}
+
+html[data-theme=dark] .sd-shadow-sm {
+    box-shadow: 0 .1rem 1rem rgba(0, 0, 0, .6) !important
+}
+
+div.bd-sidebar {
+    overflow-x: hidden !important
+}
+
+.bd-main .bd-content .bd-article-container {
+    max-width: 70rem;  /* default is 60em */
+}
+
+.bd-page-width {
+    max-width: 95rem;  /* default is 88rem */
+}
+
+/* Dark theme tweaking */
+html[data-theme=dark] .sd-card img[src*='.svg'] {
+    filter: invert(1) brightness(1) contrast(1);
+}
+
+.bd-content img:not(.only-dark):not(.dark-light) {
+    background: transparent !important
+}
+
+/* Main page overview cards */
+
+.sd-card {
+    border-radius: 3;
+    padding: 30px 10px 20px 10px;
+    margin: 10px 0px;
+}
+  
+.sd-card .sd-card-header {
+    text-align: center;
+}
+  
+.sd-card .sd-card-header .sd-card-text {
+    margin: 0px;
+}
+  
+.sd-card .sd-card-img-top {
+    height: 52px;
+    width: 52px;
+    margin-left: auto;
+    margin-right: auto;
+}
+  
+.sd-card .sd-card-header {
+    border: none;
+    font-size: var(--pst-font-size-h5);
+    font-weight: bold;
+    padding: 2.5rem 0rem 0.5rem 0rem;
+}
+  
+.sd-card .sd-card-footer {
+    border: none;
+}
+  
+.sd-card .sd-card-footer .sd-card-text {
+    max-width: 220px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.table tbody tr:nth-child(2n+1):hover {
+    background-color: var(--pst-color-table-row-zebra-low-bg);
+}
+
+.table tbody tr:nth-child(2n):hover {
+    background-color: var(--pst-color-table-row-zebra-high-bg);
+}

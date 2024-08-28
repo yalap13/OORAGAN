@@ -16,10 +16,17 @@ ipython = "^8.26.0"
 loess = "^2.1.2"
 seaborn = "^0.13.2"
 graphinglib = {git = "https://github.com/GraphingLib/GraphingLib.git"}
+pydata-sphinx-theme = "^0.15.4"
+sphinx-design = "^0.6.1"
 
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.4"
+sphinx = "^8.0.2"
+black = "^24.8.0"
+sphinx-copybutton = "^0.5.2"
+sphinx-favicon = "^1.0.1"
+numpydoc = "^1.8.0"
 
 [build-system]
 requires = ["poetry-core"]
