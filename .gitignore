@@ -18,3 +18,4 @@ docs/_build
 !unit_testing/*.py
 !unit_testing/Fit results
 !docs/conf.py
+!docs/requirements.txt

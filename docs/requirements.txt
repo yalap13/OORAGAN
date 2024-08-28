@@ -1,0 +1,6 @@
+git+https://github.com/yalap13/OORAGAN.git
+sphinx-copybutton
+pydata-sphinx-theme
+sphinx-favicon
+sphinx-design
+numpydoc
