@@ -1,5 +1,5 @@
 
-![ooragan](ooragan_logo.svg)
+![ooragan](docs/_static/icons/ooragan_logo.svg)
 
 # OORAGAN
 
