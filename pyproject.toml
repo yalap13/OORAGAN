@@ -6,7 +6,7 @@ authors = ["yalap13 <yannicklapointe77@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
+python = ">=3.10,<3.13"
 h5py = "^3.11.0"
 easygui = "^0.98.3"
 resonator = {git = "https://github.com/danielflanigan/resonator.git"}
