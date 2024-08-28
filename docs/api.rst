@@ -30,8 +30,8 @@ Functions
    load_graph_data
    strtime
    
-Hidden Objects
---------------
+Internal Objects
+----------------
 
 Dataset data containers
 ^^^^^^^^^^^^^^^^^^^^^^^
