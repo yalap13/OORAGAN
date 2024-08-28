@@ -3,4 +3,4 @@ sphinx-copybutton
 pydata-sphinx-theme
 sphinx-favicon
 sphinx-design
-numpy
+numpydoc
