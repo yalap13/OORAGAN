@@ -5,7 +5,7 @@ import pandas as pd
 
 from typing import overload, Optional, Literal
 from datetime import datetime
-from graphinglib import Figure, MultiFigure
+from graphinglib import Figure
 from copy import deepcopy
 
 from .dataset import Dataset
@@ -50,7 +50,7 @@ class DatasetGrapher:
         title: Optional[str] = None,
         figure_style: str = "default",
         save: bool = True,
-    ) -> list[Figure]:
+    ) -> None:
         """
         Plots the magnitude in dBm as a function of frequency in GHz.
 
@@ -83,7 +83,6 @@ class DatasetGrapher:
         dataset.convert_complex_to_magphase()
         _power = dataset._data_container.power
         data = dataset._data_container.data
-        _figures = []
         for file in dataset._data_container.files:
             squeezed_power = (
                 np.squeeze(_power[file]) if _power[file].shape != (1,) else _power[file]
@@ -136,8 +135,6 @@ class DatasetGrapher:
                     figure.save(os.path.join(self._savepath, fname))
                 else:
                     figure.show()
-                _figures.append(figure)
-        return _figures
 
     def plot_phase_vs_freq(
         self,
@@ -149,7 +146,7 @@ class DatasetGrapher:
         title: Optional[str] = None,
         figure_style: str = "default",
         save: bool = True,
-    ) -> list[Figure]:
+    ) -> None:
         """
         Plots the phase in degrees as a function of frequency in GHz.
 
@@ -182,7 +179,6 @@ class DatasetGrapher:
         dataset.convert_complex_to_magphase()
         _power = dataset._data_container.power
         data = dataset._data_container.data
-        _figures = []
         for file in dataset._data_container.files:
             squeezed_power = (
                 np.squeeze(_power[file]) if _power[file].shape != (1,) else _power[file]
@@ -235,8 +231,6 @@ class DatasetGrapher:
                     figure.save(os.path.join(self._savepath, fname))
                 else:
                     figure.show()
-                _figures.append(figure)
-        return _figures
 
     def plot_complex(
         self,
@@ -248,7 +242,7 @@ class DatasetGrapher:
         title: Optional[str] = None,
         figure_style: str = "default",
         save: bool = True,
-    ) -> list[Figure]:
+    ) -> None:
         """
         Plots the signal in the complex plane.
 
@@ -281,7 +275,6 @@ class DatasetGrapher:
         dataset.convert_magphase_to_complex()
         _power = dataset._data_container.power
         data = dataset._data_container.data
-        _figures = []
         for file in dataset._data_container.files:
             squeezed_power = (
                 np.squeeze(_power[file]) if _power[file].shape != (1,) else _power[file]
@@ -328,8 +321,6 @@ class DatasetGrapher:
                     figure.save(os.path.join(self._savepath, fname))
                 else:
                     figure.show()
-                _figures.append(figure)
-        return _figures
 
     def plot_triptych(
         self,
@@ -340,7 +331,7 @@ class DatasetGrapher:
         three_ticks: bool = False,
         figure_style: str = "default",
         save: bool = True,
-    ) -> list[MultiFigure]:
+    ) -> None:
         """
         Plots the magnitude vs frequency, the phase vs frequency and the complex data in a
         single figure.
@@ -378,7 +369,6 @@ class DatasetGrapher:
             data_magphase = deepcopy(dataset._data_container.data)
             dataset.convert_magphase_to_complex()
             data_complex = deepcopy(dataset._data_container.data)
-        _figures = []
         for file in dataset._data_container.files:
             squeezed_power = (
                 np.squeeze(_power[file]) if _power[file].shape != (1,) else _power[file]
@@ -424,8 +414,6 @@ class DatasetGrapher:
                     triptych.save(os.path.join(self._savepath, fname))
                 else:
                     triptych.show()
-                _figures.append(triptych)
-        return _figures
 
 
 class ResonatorFitterGrapher:
@@ -474,7 +462,6 @@ class ResonatorFitterGrapher:
         self,
         photon: bool = False,
         freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
-        figure: Optional[Figure] = None,
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -493,8 +480,6 @@ class ResonatorFitterGrapher:
             If ``True``, plots as a function of photon number. Defaults to ``False``.
         freq_unit : {"GHz", "MHz", "kHz"}, optional
             Units of frequency to use. Defaults to ``"GHz"``.
-        figure : Figure, optional
-            Previously created figure to which to add curves. Defaults to ``None``.
         x_lim : tuple, optional
             Limits for the x-axis.
         y_lim : tuple, optional
@@ -523,25 +508,17 @@ class ResonatorFitterGrapher:
             x_label = "Photon number"
         else:
             x_label = "Input power (dBm)"
-        if figure is None:
-            _figure = gl.Figure(
-                x_label,
-                r"$Q_i$",
-                log_scale_y=True,
-                log_scale_x=photon,
-                x_lim=x_lim,
-                y_lim=y_lim,
-                size=size,
-                figure_style=figure_style,
-                title=title,
-            )
-        else:
-            _figure = deepcopy(figure)
-            _figure._x_lim = x_lim
-            _figure._y_lim = y_lim
-            _figure._size = size
-            _figure._figure_style = figure_style
-            _figure._title = title
+        figure = gl.Figure(
+            x_label,
+            r"$Q_i$",
+            log_scale_y=True,
+            log_scale_x=photon,
+            x_lim=x_lim,
+            y_lim=y_lim,
+            size=size,
+            figure_style=figure_style,
+            title=title,
+        )
         if self._match_pattern is not None:
             for label, indices in self._match_pattern.items():
                 power = []
@@ -570,7 +547,7 @@ class ResonatorFitterGrapher:
                 power.sort()
                 curve = gl.Curve(power, Qi, label=label)
                 curve.add_errorbars(y_error=Qi_err)
-                _figure.add_elements(curve)
+                figure.add_elements(curve)
         for file in files:
             label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
@@ -583,20 +560,20 @@ class ResonatorFitterGrapher:
             power.sort()
             curve = gl.Curve(power, Qi, label=label)
             curve.add_errorbars(y_error=Qi_err)
-            _figure.add_elements(curve)
+            figure.add_elements(curve)
         if save:
             if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
                 os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
             name = f"Qi_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "fit_results_plots", name)
-            _figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
+            figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
-            _figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+            figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
         if self._save_graph_data:
             name = f"Qi_vs_power_{self._name}.csv"
             path = os.path.join(self._savepath, "fit_results_plots", name)
             temp = {}
-            for element in _figure._elements:
+            for element in figure._elements:
                 temp[element._label] = {
                     "power": element._x_data,
                     "Qi": element._y_data,
@@ -610,13 +587,12 @@ class ResonatorFitterGrapher:
                 }
             )
             df.to_csv(path)
-        return _figure
+        return figure
 
     def plot_Qc_vs_power(
         self,
         photon: bool = False,
         freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
-        figure: Optional[Figure] = None,
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -635,8 +611,6 @@ class ResonatorFitterGrapher:
             If ``True``, plots as a function of photon number. Defaults to ``False``.
         freq_unit : {"GHz", "MHz", "kHz"}, optional
             Units of frequency to use. Defaults to ``"GHz"``.
-        figure : Figure, optional
-            Previously created figure to which to add curves. Defaults to ``None``.
         x_lim : tuple, optional
             Limits for the x-axis.
         y_lim : tuple, optional
@@ -665,25 +639,17 @@ class ResonatorFitterGrapher:
             x_label = "Photon number"
         else:
             x_label = "Input power (dBm)"
-        if figure is None:
-            _figure = gl.Figure(
-                x_label,
-                r"$Q_c$",
-                log_scale_y=True,
-                log_scale_x=photon,
-                x_lim=x_lim,
-                y_lim=y_lim,
-                size=size,
-                figure_style=figure_style,
-                title=title,
-            )
-        else:
-            _figure = deepcopy(figure)
-            _figure._x_lim = x_lim
-            _figure._y_lim = y_lim
-            _figure._size = size
-            _figure._figure_style = figure_style
-            _figure._title = title
+        figure = gl.Figure(
+            x_label,
+            r"$Q_c$",
+            log_scale_y=True,
+            log_scale_x=photon,
+            x_lim=x_lim,
+            y_lim=y_lim,
+            size=size,
+            figure_style=figure_style,
+            title=title,
+        )
         if self._match_pattern is not None:
             for label, indices in self._match_pattern.items():
                 power = []
@@ -712,7 +678,7 @@ class ResonatorFitterGrapher:
                 power.sort()
                 curve = gl.Curve(power, Qc, label=label)
                 curve.add_errorbars(y_error=Qc_err)
-                _figure.add_elements(curve)
+                figure.add_elements(curve)
         for file in files:
             label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
@@ -724,20 +690,20 @@ class ResonatorFitterGrapher:
             Qc_err = self._res_fitter.Q_c_err[file]
             curve = gl.Curve(power, Qc, label=label)
             curve.add_errorbars(y_error=Qc_err)
-            _figure.add_elements(curve)
+            figure.add_elements(curve)
         if save:
             if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
                 os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
             name = f"Qc_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "fit_results_plots", name)
-            _figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
+            figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
-            _figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+            figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
         if self._save_graph_data:
             name = f"Qc_vs_power_{self._name}.csv"
             path = os.path.join(self._savepath, "fit_results_plots", name)
             temp = {}
-            for element in _figure._elements:
+            for element in figure._elements:
                 temp[element._label] = {
                     "power": element._x_data,
                     "Qc": element._y_data,
@@ -751,13 +717,12 @@ class ResonatorFitterGrapher:
                 }
             )
             df.to_csv(path)
-        return _figure
+        return figure
 
     def plot_Qt_vs_power(
         self,
         photon: bool = False,
         freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
-        figure: Optional[Figure] = None,
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -776,8 +741,6 @@ class ResonatorFitterGrapher:
             If ``True``, plots as a function of photon number. Defaults to ``False``.
         freq_unit : {"GHz", "MHz", "kHz"}, optional
             Units of frequency to use. Defaults to ``"GHz"``.
-        figure : Figure, optional
-            Previously created figure to which to add curves. Defaults to ``None``.
         x_lim : tuple, optional
             Limits for the x-axis.
         y_lim : tuple, optional
@@ -806,25 +769,17 @@ class ResonatorFitterGrapher:
             x_label = "Photon number"
         else:
             x_label = "Input power (dBm)"
-        if figure is None:
-            _figure = gl.Figure(
-                x_label,
-                r"$Q_t$",
-                log_scale_y=True,
-                log_scale_x=photon,
-                x_lim=x_lim,
-                y_lim=y_lim,
-                size=size,
-                figure_style=figure_style,
-                title=title,
-            )
-        else:
-            _figure = deepcopy(figure)
-            _figure._x_lim = x_lim
-            _figure._y_lim = y_lim
-            _figure._size = size
-            _figure._figure_style = figure_style
-            _figure._title = title
+        figure = gl.Figure(
+            x_label,
+            r"$Q_t$",
+            log_scale_y=True,
+            log_scale_x=photon,
+            x_lim=x_lim,
+            y_lim=y_lim,
+            size=size,
+            figure_style=figure_style,
+            title=title,
+        )
         if self._match_pattern is not None:
             for label, indices in self._match_pattern.items():
                 power = []
@@ -853,7 +808,7 @@ class ResonatorFitterGrapher:
                 power.sort()
                 curve = gl.Curve(power, Qt, label=label)
                 curve.add_errorbars(y_error=Qt_err)
-                _figure.add_elements(curve)
+                figure.add_elements(curve)
         for file in files:
             label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
@@ -865,20 +820,20 @@ class ResonatorFitterGrapher:
             Qt_err = self._res_fitter.Q_t_err[file]
             curve = gl.Curve(power, Qt, label=label)
             curve.add_errorbars(y_error=Qt_err)
-            _figure.add_elements(curve)
+            figure.add_elements(curve)
         if save:
             if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
                 os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
             name = f"Qt_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "fit_results_plots", name)
-            _figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
+            figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
-            _figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+            figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
         if self._save_graph_data:
             name = f"Qt_vs_power_{self._name}.csv"
             path = os.path.join(self._savepath, "fit_results_plots", name)
             temp = {}
-            for element in _figure._elements:
+            for element in figure._elements:
                 temp[element._label] = {
                     "power": element._x_data,
                     "Qt": element._y_data,
@@ -892,14 +847,13 @@ class ResonatorFitterGrapher:
                 }
             )
             df.to_csv(path)
-        return _figure
+        return figure
 
     def plot_Fshift_vs_power(
         self,
         f_design: dict[str, float],
         photon: bool = False,
         freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
-        figure: Optional[Figure] = None,
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -922,8 +876,6 @@ class ResonatorFitterGrapher:
             If ``True``, plots as a function of photon number. Defaults to ``False``.
         freq_unit : {"GHz", "MHz", "kHz"}, optional
             Units of frequency to use. Defaults to ``"GHz"``.
-        figure : Figure, optional
-            Previously created figure to which to add curves. Defaults to ``None``.
         x_lim : tuple, optional
             Limits for the x-axis.
         y_lim : tuple, optional
@@ -961,24 +913,16 @@ class ResonatorFitterGrapher:
             x_label = "Photon number"
         else:
             x_label = "Input power (dBm)"
-        if figure is None:
-            _figure = gl.Figure(
-                x_label,
-                rf"$f_r-f_0$ ({freq_unit})",
-                log_scale_x=photon,
-                x_lim=x_lim,
-                y_lim=y_lim,
-                size=size,
-                figure_style=figure_style,
-                title=title,
-            )
-        else:
-            _figure = deepcopy(figure)
-            _figure._x_lim = x_lim
-            _figure._y_lim = y_lim
-            _figure._size = size
-            _figure._figure_style = figure_style
-            _figure._title = title
+        figure = gl.Figure(
+            x_label,
+            rf"$f_r-f_0$ ({freq_unit})",
+            log_scale_x=photon,
+            x_lim=x_lim,
+            y_lim=y_lim,
+            size=size,
+            figure_style=figure_style,
+            title=title,
+        )
         if self._match_pattern is not None:
             for label, indices in self._match_pattern.items():
                 power = []
@@ -1014,7 +958,7 @@ class ResonatorFitterGrapher:
                 power.sort()
                 curve = gl.Curve(power, fshift, label=label)
                 curve.add_errorbars(y_error=fshift_err)
-                _figure.add_elements(curve)
+                figure.add_elements(curve)
         for file in files:
             label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
@@ -1026,20 +970,20 @@ class ResonatorFitterGrapher:
             fshift_err = F_diff_err[file] / FREQ_UNIT_CONVERSION[freq_unit]
             curve = gl.Curve(power, fshift, label=label)
             curve.add_errorbars(y_error=fshift_err)
-            _figure.add_elements(curve)
+            figure.add_elements(curve)
         if save:
             if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
                 os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
             name = f"Fshift_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "fit_restults_plots", name)
-            _figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
+            figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
-            _figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+            figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
         if self._save_graph_data:
             name = f"Fshift_vs_power_{self._name}.csv"
             path = os.path.join(self._savepath, "fit_results_plots", name)
             temp = {}
-            for element in _figure._elements:
+            for element in figure._elements:
                 temp[element._label] = {
                     "power": element._x_data,
                     "Fshift": element._y_data,
@@ -1053,13 +997,12 @@ class ResonatorFitterGrapher:
                 }
             )
             df.to_csv(path)
-        return _figure
+        return figure
 
     def plot_Fr_vs_power(
         self,
         photon: bool = False,
         freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
-        figure: Optional[Figure] = None,
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -1078,8 +1021,6 @@ class ResonatorFitterGrapher:
             If ``True``, plots as a function of photon number. Defaults to ``False``.
         freq_unit : {"GHz", "MHz", "kHz"}, optional
             Units of frequency to use. Defaults to ``"GHz"``.
-        figure : Figure, optional
-            Previously created figure to which to add curves. Defaults to ``None``.
         x_lim : tuple, optional
             Limits for the x-axis.
         y_lim : tuple, optional
@@ -1108,24 +1049,16 @@ class ResonatorFitterGrapher:
             x_label = "Photon number"
         else:
             x_label = "Input power (dBm)"
-        if figure is None:
-            _figure = gl.Figure(
-                x_label,
-                rf"$f_r$ ({freq_unit})",
-                log_scale_x=photon,
-                x_lim=x_lim,
-                y_lim=y_lim,
-                size=size,
-                figure_style=figure_style,
-                title=title,
-            )
-        else:
-            _figure = deepcopy(figure)
-            _figure._x_lim = x_lim
-            _figure._y_lim = y_lim
-            _figure._size = size
-            _figure._figure_style = figure_style
-            _figure._title = title
+        figure = gl.Figure(
+            x_label,
+            rf"$f_r$ ({freq_unit})",
+            log_scale_x=photon,
+            x_lim=x_lim,
+            y_lim=y_lim,
+            size=size,
+            figure_style=figure_style,
+            title=title,
+        )
         if self._match_pattern is not None:
             for label, indices in self._match_pattern.items():
                 power = []
@@ -1158,7 +1091,7 @@ class ResonatorFitterGrapher:
                 power.sort()
                 curve = gl.Curve(power, fr, label=label)
                 curve.add_errorbars(y_error=fr_err)
-                _figure.add_elements(curve)
+                figure.add_elements(curve)
         for file in files:
             label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
@@ -1170,20 +1103,20 @@ class ResonatorFitterGrapher:
             fr_err = self._res_fitter.f_r_err[file] / FREQ_UNIT_CONVERSION[freq_unit]
             curve = gl.Curve(power, fr, label=label)
             curve.add_errorbars(y_error=fr_err)
-            _figure.add_elements(curve)
+            figure.add_elements(curve)
         if save:
             if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
                 os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
             name = f"Fr_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "fit_results_plots", name)
-            _figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
+            figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
-            _figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+            figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
         if self._save_graph_data:
             name = f"Fr_vs_power_{self._name}.csv"
             path = os.path.join(self._savepath, "fit_results_plots", name)
             temp = {}
-            for element in _figure._elements:
+            for element in figure._elements:
                 temp[element._label] = {
                     "power": element._x_data,
                     "Fr": element._y_data,
@@ -1197,13 +1130,12 @@ class ResonatorFitterGrapher:
                 }
             )
             df.to_csv(path)
-        return _figure
+        return figure
 
     def plot_internal_loss_vs_power(
         self,
         photon: bool = False,
         freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
-        figure: Optional[Figure] = None,
         x_lim: Optional[tuple] = None,
         y_lim: Optional[tuple] = None,
         size: tuple | Literal["default"] = "default",
@@ -1222,8 +1154,6 @@ class ResonatorFitterGrapher:
             If ``True``, plots as a function of photon number. Defaults to ``False``.
         freq_unit : {"GHz", "MHz", "kHz"}, optional
             Units of frequency to use. Defaults to ``"GHz"``.
-        figure : Figure, optional
-            Previously created figure to which to add curves. Defaults to ``None``.
         x_lim : tuple, optional
             Limits for the x-axis.
         y_lim : tuple, optional
@@ -1252,24 +1182,17 @@ class ResonatorFitterGrapher:
             x_label = "Photon number"
         else:
             x_label = "Input power (dBm)"
-        if figure is None:
-            _figure = gl.Figure(
-                x_label,
-                r"$\delta_i$",
-                log_scale_x=photon,
-                x_lim=x_lim,
-                y_lim=y_lim,
-                size=size,
-                figure_style=figure_style,
-                title=title,
-            )
-        else:
-            _figure = deepcopy(figure)
-            _figure._x_lim = x_lim
-            _figure._y_lim = y_lim
-            _figure._size = size
-            _figure._figure_style = figure_style
-            _figure._title = title
+        figure = gl.Figure(
+            x_label,
+            r"$L_i$",
+            log_scale_y=True,
+            log_scale_x=photon,
+            x_lim=x_lim,
+            y_lim=y_lim,
+            size=size,
+            figure_style=figure_style,
+            title=title,
+        )
         if self._match_pattern is not None:
             for label, indices in self._match_pattern.items():
                 power = []
@@ -1298,7 +1221,7 @@ class ResonatorFitterGrapher:
                 power.sort()
                 curve = gl.Curve(power, Li, label=label)
                 curve.add_errorbars(y_error=Li_err)
-                _figure.add_elements(curve)
+                figure.add_elements(curve)
         for file in files:
             label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
@@ -1310,20 +1233,20 @@ class ResonatorFitterGrapher:
             Li_err = self._res_fitter.L_i_err[file]
             curve = gl.Curve(power, Li, label=label)
             curve.add_errorbars(y_error=Li_err)
-            _figure.add_elements(curve)
+            figure.add_elements(curve)
         if save:
             if not os.path.exists(os.path.join(self._savepath, "fit_results_plots")):
                 os.mkdir(os.path.join(self._savepath, "fit_results_plots"))
             name = f"Li_vs_power_{self._name}." + self._image_type
             path = os.path.join(self._savepath, "fit_results_plots", name)
-            _figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
+            figure.save(path, legend_loc=legend_loc, legend_cols=legend_cols)
         else:
-            _figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
+            figure.show(legend_loc=legend_loc, legend_cols=legend_cols)
         if self._save_graph_data:
             name = f"Li_vs_power_{self._name}.csv"
             path = os.path.join(self._savepath, "fit_results_plots", name)
             temp = {}
-            for element in _figure._elements:
+            for element in figure._elements:
                 temp[element._label] = {
                     "power": element._x_data,
                     "Li": element._y_data,
@@ -1337,7 +1260,7 @@ class ResonatorFitterGrapher:
                 }
             )
             df.to_csv(path)
-        return _figure
+        return figure
 
 
 @overload

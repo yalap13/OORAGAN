@@ -3,7 +3,7 @@ import numpy as np
 import h5py
 import re
 
-from typing import Optional, Union
+from typing import Optional, Union, Self
 from os import PathLike
 from glob import glob
 from pathlib import Path
@@ -12,11 +12,6 @@ from numpy.typing import NDArray, ArrayLike
 from datetime import datetime
 from copy import deepcopy
 from warnings import warn
-
-try:
-    from typing import Self
-except ImportError:
-    from typing_extensions import Self
 
 from .util import (
     strtime,
@@ -117,6 +112,12 @@ class Dataset:
              2  2023-08-31 01:48:44              4.89003             4.89053  -100.0, -90.0, -80.0, -70.0                   0.0136144
              3  2023-10-02 09:12:53              2                  18        -110.0, -100.0, -90.0, -80.0, -70.0
              4  2023-11-05 03:04:30              5.95844             5.96844  -110.0, -100.0, -90.0, -80.0                  0.0142297
+
+    Notes
+    -----
+    The ``Dataset`` uses a "data container" class to handle the differences in loading the data and information from hdf5 and txt files.
+    See :class:`HDF5Data <ooragan.dataset.HDF5Data>`, :class:`TXTData <ooragan.dataset.TXTData>` and :class:`AbstractData <ooragan.dataset.AbstractData>`
+    for more information.
     """
 
     def __init__(
