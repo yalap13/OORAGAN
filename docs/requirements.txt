@@ -4,3 +4,4 @@ pydata-sphinx-theme
 sphinx-favicon
 sphinx-design
 numpydoc
+sphinxext-opengraph
