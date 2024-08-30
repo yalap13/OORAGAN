@@ -28,6 +28,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_favicon",
     "sphinx_design",
+    "sphinxext.opengraph",
 ]
 
 templates_path = ["_templates"]
@@ -63,3 +64,7 @@ intersphinx_mapping = {
 autodoc_type_aliases = {"ArrayLike": "ArrayLike", "NDArray": "NDArray"}
 autosummary_generate = True
 numpydoc_show_class_members = True
+
+ogp_site_url = "https://ooragan.readthedocs.io/"
+ogp_image = "latest/_static/icons/ooragan_opengraph.png"
+ogp_social_cards = {"enable": False}

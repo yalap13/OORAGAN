@@ -14,6 +14,7 @@ docs/generated
 docs/_build
 
 !ooragan_logo.svg
+!ooragan_opengraph.svg
 !ooragan/*.py
 !unit_testing/*.py
 !unit_testing/Fit results
