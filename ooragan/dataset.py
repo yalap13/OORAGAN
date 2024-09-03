@@ -217,9 +217,7 @@ class Dataset:
         """
         Various informations about the cryostat
 
-        Warning
-        -------
-        Available only for Dataset created from hdf5 files.
+        .. warning:: Available only for Dataset created from hdf5 files.
         """
         if isinstance(self._data_container, HDF5Data):
             if len(self._data_container.files) == 1:
@@ -263,9 +261,7 @@ class Dataset:
         """
         Attenuation value of the variable attenuator
 
-        Warning
-        -------
-        Available only for Dataset created from hdf5 files.
+        .. warning:: Available only for Dataset created from hdf5 files.
         """
         if isinstance(self._data_container, HDF5Data):
             if len(self._data_container.files) == 1:
@@ -288,9 +284,7 @@ class Dataset:
         """
         End time of the measurement
 
-        Warning
-        -------
-        Available only for Dataset created from hdf5 files.
+        .. warning:: Available only for Dataset created from hdf5 files.
         """
         if isinstance(self._data_container, HDF5Data):
             if len(self._data_container.files) == 1:
@@ -306,9 +300,7 @@ class Dataset:
         """
         Mixing stage temperature
 
-        Warning
-        -------
-        Available only for Dataset created from hdf5 files.
+        .. warning:: Available only for Dataset created from hdf5 files.
         """
         if isinstance(self._data_container, HDF5Data):
             if len(self._data_container.files) == 1:

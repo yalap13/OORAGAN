@@ -43,7 +43,7 @@ html_static_path = ["_static"]
 html_css_files = ["ooragan.css"]
 favicons = ["icons/ooragan_favicon.png"]
 html_theme_options = {
-    "logo": {"text": "OORAGAN", "image_light": "../ooragan_logo.svg"},
+    "logo": {"text": "OORAGAN", "image_light": "icons/ooragan_logo.svg"},
     "navbar_end": ["navbar-icon-links"],
     "pygment_light_style": "trac",
     "show_prev_next": False,
