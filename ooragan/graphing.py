@@ -405,7 +405,7 @@ class DatasetGrapher:
                     fname = (
                         "triptych_"
                         + str(
-                            np.mean(data_complex[i][0, :])
+                            np.mean(data_complex[file][i][0, :])
                             / FREQ_UNIT_CONVERSION[freq_unit]
                         )[:4].replace(".", "_")
                         + f"{freq_unit}_{squeezed_power[i]}dBm_{time}."
