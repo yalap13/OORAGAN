@@ -549,7 +549,7 @@ class ResonatorFitter:
         triptych = plot_triptych(
             trimmed_data["freq"],
             trimmed_data["mag"],
-            trimmed_data["phase"],
+            np.unwrap(trimmed_data["phase"], 180),
             trimmed_data["real"],
             trimmed_data["imag"],
             fit_result=result,

@@ -498,19 +498,21 @@ class HDF5Data:
         info = self._get_info_from_hdf5()
         self.vna_average = {
             key: (
-                info[key]["vna_info"]["VNA Average"]
+                info[key]["vna_info"]["VNA Average"].flatten()
                 if "VNA Average" in info[key]["vna_info"]
                 else None
             )
             for key in self.files
         }
         self.vna_bandwidth = {
-            key: info[key]["vna_info"]["VNA Bandwidth"] for key in self.files
+            key: info[key]["vna_info"]["VNA Bandwidth"].flatten() for key in self.files
         }
-        self.vna_power = {key: info[key]["vna_info"]["VNA Power"] for key in self.files}
+        self.vna_power = {
+            key: info[key]["vna_info"]["VNA Power"].flatten() for key in self.files
+        }
         self.variable_attenuator = {
             key: (
-                info[key]["vna_info"]["Variable Attenuator"]
+                info[key]["vna_info"]["Variable Attenuator"].flatten()
                 if "Variable Attenuator" in info[key]["vna_info"]
                 else 0
             )
@@ -626,7 +628,7 @@ class HDF5Data:
                         try:
                             info_dict[key] = f[key][:]
                         except TypeError:
-                            info_dict[key] = f[key][key][0]
+                            info_dict[key] = f[key][key][:]
                         except Exception as err:
                             print("Unexpected error : ", err)
                     for atr in atrlst:
@@ -666,8 +668,10 @@ class HDF5Data:
                 with h5py.File(file, "r") as hdf5_data:
                     freq = hdf5_data["VNA"]["VNA Frequency"][:]
                     try:
-                        real = np.squeeze(hdf5_data["VNA"]["s21_real"][:])
-                        imag = np.squeeze(hdf5_data["VNA"]["s21_imag"][:])
+                        real = np.array(hdf5_data["VNA"]["s21_real"])
+                        imag = np.array(hdf5_data["VNA"]["s21_imag"])
+                        real = real.reshape(-1, real.shape[-1])
+                        imag = imag.reshape(-1, imag.shape[-1])
                         if real.ndim > 1:
                             for i in range(len(real)):
                                 arr = np.stack((freq.T, real[i].T, imag[i].T))
@@ -676,19 +680,22 @@ class HDF5Data:
                             arr = np.stack((freq.T, real.T, imag.T))
                             data.append(arr)
                     except KeyError:
-                        mag = np.squeeze(hdf5_data["VNA"]["s21_mag"][:])
-                        phase = np.squeeze(hdf5_data["VNA"]["s21_phase"][:])
+                        mag = np.array(hdf5_data["VNA"]["s21_mag"])
+                        phase = np.array(hdf5_data["VNA"]["s21_phase"])
+                        deg = hdf5_data["VNA"]["s21_phase"].attrs["Unit"] != "rad"
+                        mag = mag.reshape(-1, mag.shape[-1])
+                        phase = phase.reshape(-1, phase.shape[-1])
                         if mag.ndim > 1:
                             for i in range(len(mag)):
                                 real, imag = convert_magphase_to_complex(
-                                    mag[i],
-                                    phase[i],
-                                    dBm=True,
+                                    mag[i], phase[i], dBm=True, deg=deg
                                 )
                                 arr = np.stack((freq.T, real.T, imag.T))
                                 data.append(arr)
                         else:
-                            real, imag = convert_magphase_to_complex(mag, phase)
+                            real, imag = convert_magphase_to_complex(
+                                mag, phase, dBm=True, deg=deg
+                            )
                             arr = np.stack((freq.T, real.T, imag.T))
                             data.append(arr)
                     hdf5_data.close()
@@ -745,7 +752,7 @@ class HDF5Data:
             if power != []:
                 for p in power:
                     if p in self.power[file]:
-                        to_remove.remove(p)
+                        to_remove = [x for x in to_remove if x != p]
                         any_found = True
             else:
                 to_remove = []
@@ -765,39 +772,35 @@ class HDF5Data:
                 slice.power.pop(file)
                 slice.frequency_range.pop(file)
             else:
-                idx_to_remove = []
                 for p in sorted(to_remove, reverse=True):
-                    idx = np.where(np.squeeze(self.power[file]) == p)[0][0]
+                    idx = np.where(np.squeeze(slice.power[file]) == p)[0][0]
                     slice.data[file].pop(idx)
-                    idx_to_remove.append(idx)
-                try:
-                    slice.vna_average[file] = np.delete(
-                        slice.vna_average[file], idx_to_remove
-                    )
-                except IndexError:
-                    pass
-                try:
-                    slice.vna_bandwidth[file] = np.delete(
-                        slice.vna_bandwidth[file], idx_to_remove
-                    )
-                except IndexError:
-                    pass
-                try:
-                    slice.vna_power[file] = np.delete(
-                        slice.vna_power[file], idx_to_remove
-                    )
-                except IndexError:
-                    pass
-                try:
-                    slice.variable_attenuator[file] = np.delete(
-                        slice.variable_attenuator[file], idx_to_remove
-                    )
-                except IndexError:
-                    pass
-                try:
-                    slice.power[file] = np.delete(slice.power[file], idx_to_remove)
-                except IndexError:
-                    pass
+                    try:
+                        slice.vna_average[file] = np.delete(
+                            slice.vna_average[file], idx
+                        )
+                    except IndexError:
+                        pass
+                    try:
+                        slice.vna_bandwidth[file] = np.delete(
+                            slice.vna_bandwidth[file], idx
+                        )
+                    except IndexError:
+                        pass
+                    try:
+                        slice.vna_power[file] = np.delete(slice.vna_power[file], idx)
+                    except IndexError:
+                        pass
+                    try:
+                        slice.variable_attenuator[file] = np.delete(
+                            slice.variable_attenuator[file], idx
+                        )
+                    except IndexError:
+                        pass
+                    try:
+                        slice.power[file] = np.delete(slice.power[file], idx)
+                    except IndexError:
+                        pass
         if slice._is_empty():
             raise ValueError(f"No file contains the specified power values {power}")
         return slice
