@@ -287,3 +287,14 @@ def plot_triptych(
     triptych.add_figure(fig_phase_vs_freq, 1, 0, 1, 1)
     triptych.add_figure(fig_complex, 0, 1, 2, 1)
     return triptych
+
+
+def level_phase(phase: ArrayLike, deg: bool = False) -> ArrayLike:
+    """
+    Levels the phase by substracting the slope.
+    """
+    unwrapped_phase = np.unwrap(phase, 180) if deg else np.unwrap(phase)
+    pointA = unwrapped_phase[0]
+    pointB = unwrapped_phase[-1]
+    slope = np.linspace(pointA, pointB, len(unwrapped_phase))
+    return unwrapped_phase - slope

@@ -17,6 +17,7 @@ from .util import (
     strtime,
     convert_complex_to_magphase,
     convert_magphase_to_complex,
+    level_phase,
 )
 
 
@@ -680,8 +681,9 @@ class HDF5Data:
                         phase = phase.reshape(-1, phase.shape[-1])
                         if mag.ndim > 1:
                             for i in range(len(mag)):
+                                levelled_phase = level_phase(phase[i], deg=deg)
                                 real, imag = convert_magphase_to_complex(
-                                    mag[i], phase[i], dBm=True, deg=deg
+                                    mag[i], levelled_phase, dBm=True, deg=deg
                                 )
                                 arr = np.stack((freq.T, real.T, imag.T))
                                 data.append(arr)
