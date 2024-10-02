@@ -6,7 +6,7 @@ authors = ["yalap13 <yannicklapointe77@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
+python = ">=3.10,<3.13"
 h5py = "^3.11.0"
 easygui = "^0.98.3"
 resonator = {git = "https://github.com/danielflanigan/resonator.git"}
@@ -27,6 +27,7 @@ black = "^24.8.0"
 sphinx-copybutton = "^0.5.2"
 sphinx-favicon = "^1.0.1"
 numpydoc = "^1.8.0"
+sphinxext-opengraph = "^0.9.1"
 
 [build-system]
 requires = ["poetry-core"]

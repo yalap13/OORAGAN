@@ -4,7 +4,7 @@
 Overview
 ========
 
-Object Oriented Resonator Advanced Graphing and ANalysis (OORAGAN) is a library developped by me and other members of the Josephson Photonics and QIQSS research groups of the Université de Sherbrooke to fully process data from resonator measurements.
+Object Oriented Resonator Advanced Graphing and ANalysis (OORAGAN) is a library developped by members of the Josephson Photonics and QIQSS research groups of the Université de Sherbrooke to fully process data from resonator measurements.
 
 .. note:: 
    
