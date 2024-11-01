@@ -112,13 +112,101 @@ Here is an example of plotting a triptych:
 
 .. image:: images/triptych.png
   :scale: 40%
+   
+.. note:: For more information on the available options for the DatasetGrapher's plotting methods, see :class:`DatasetGrapher <ooragan.graphing.DatasetGrapher>`.
+   
+Now, let us plot some results from a previously fitted Dataset. As done previously, we create a Grapher object, in this case a :class:`ResonatorFitterGrapher <ooragan.graphing.ResonatorFitterGrapher>`, using the :func:`grapher <ooragan.grapher>` function:
+
+.. code::
+
+  fit_grapher = ra.grapher(my_fitter)
+
+We can then generate one of the following predefined plots:
+
+- Resonance frequency versus power
+- Frequency shift versus power
+- Coupling quality factor versus power
+- Internal quality factor versus power
+- Total quality factor versus power
+- Internal loss versus power
+
+Here is an example of plotting the internal quality factor versus the number of photons :
+
+.. code::
+
+    # Load data in a Dataset
+    fname = "/my_data/my_sample"
+    dataset = ra.Dataset(
+        fname,
+        -80,
+        print_out=True,
+    )
+
+    # Fit data
+    fitter = ra.ResonatorFitter(dataset)
+    fitter.fit(
+        file_index=[1, 2, 3, 4, 6, 7, 8, 9],
+        savepic=False,
+        showpic=False,
+        write=False,
+        nodialog=True,
+        threshold=0.5,
+    )
+
+    # Match files corresponding to the same measured resonance
+    match_dict = {
+        "5.474 GHz": (1, 6),
+        "6.033 GHz": (2, 7),
+        "7.161 GHz": (3, 8),
+        "7.122 GHz": (4, 9),
+    }
+
+    # Create the grapher and plot the Qi vs the photon number
+    grapher = ra.grapher(fitter, save_graph_data=True, match_pattern=match_dict)
+    grapher.plot_Qi_vs_power(
+        photon=True, y_lim=(8e3, 2e5), legend_loc="outside center right", save=True
+    )
+
+.. image:: images/Qi_vs_photon.png
+  :scale: 45%
+
+Here we also used the ``match_pattern`` argument to display a single curve for multiple data files corresponding to the same resonance at different power ranges. We have also used the option ``save_graph_data`` to generate a CSV file of the data in the plot. This file can be loaded afterwards using the :func:`load_graph_data <ooragan.load_graph_data>` function. To customize the plot itself there are a few arguments we can use directly. For further customization, see `Customizing Plots`_.
 
 Analysing PPMS Data
 -------------------
 
-
+.. note::
+  
+  This section is a work in progress. Please refer to :class:`PPMSAnalysis <ooragan.PPMSAnalysis>` for help with PPMS data analysis.
 
 Customizing Plots
 -----------------
 
+Plot generated in OORAGAN are using the `GraphingLib <https://graphinglib.org/>`_ library and every plotting method returns a `GraphingLib Figure <https://www.graphinglib.org/latest/generated/graphinglib.Figure.html#graphinglib.Figure>`_ object. This object can be used to further customize the plot by using methods implemented for Figure objects. Here is an example of a customization we can do:
 
+.. code::
+
+    fig = grapher.plot(
+        photon=True, y_lim=(8e3, 2e5), legend_loc="outside center right", save=True
+    )
+
+    for element in fig._elements:
+        element._line_width = 3
+        element._errorbars_line_width = 2
+        element._cap_thickness = 2
+    fig.set_visual_params(
+        use_latex=True,
+        font_family="serif",
+        font_size=18,
+        axes_face_color="#E6F9FF",
+        color_cycle=["#6666cc", "#df8020", "#bf4040", "#339966"],
+        axes_line_width=3,
+    )
+    fig.set_rc_params({"xtick.major.width": 2, "ytick.major.width": 2, "xtick.major.size": 5, "ytick.major.size": 5, "xtick.minor.width": 1.5, "ytick.minor.width": 1.5, "xtick.minor.size": 4, "ytick.minor.size": 4})
+    fig.set_grid(which_x="major", color="white", line_width=3)
+    fig.show()
+    
+.. image:: images/custom_plot.png
+  :scale: 45%
+
+.. warning:: To obtain this exact result, matplotlib **must** have access to an installation of LaTeX on your computer.
