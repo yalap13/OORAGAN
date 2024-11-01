@@ -190,9 +190,9 @@ class ResonatorFitter:
         f_r : float, optional
             Resonance frequency, adds to fit parameters. Default is ``None``.
         couploss : int, optional
-            Coupling loss of resonator, adds to fit parameters. The default is ``1e6``.
+            Coupling loss of resonator, adds to fit parameters. The default is ``1e-6``.
         intloss : int, optional
-            Internal loss of resonator, adds to fit parameters. The default is ``1e6``.
+            Internal loss of resonator, adds to fit parameters. The default is ``1e-6``.
         bg : resonator.base.BackgroundModel, optional
             Background model from the resonator library.
             The default is ``background.MagnitudePhaseDelay()``.

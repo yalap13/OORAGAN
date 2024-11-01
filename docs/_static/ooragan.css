@@ -24,6 +24,7 @@ html[data-theme=light] {
     --pst-color-inline-code: rgb(38, 140, 115);
     --pst-color-target: rgb(195, 239, 228);
     --pst-color-primary-highlight: rgb(0, 0, 0) !important;
+    --pst-font-family-heading: 'IBM Plex Sans' !important;
 }
 
 html[data-theme=dark] .sd-shadow-sm {

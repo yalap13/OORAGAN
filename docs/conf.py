@@ -52,7 +52,7 @@ html_theme_options = {
 }
 html_context = {"default_mode": "light"}
 html_show_sourcelink = False
-html_sidebars = {"installation": []}
+html_sidebars = {"examples": []}
 
 # -- Options for the Sphinx extensions ---------------------------------------
 

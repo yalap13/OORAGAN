@@ -4,7 +4,7 @@
 Overview
 ========
 
-Object Oriented Resonator Advanced Graphing and ANalysis (OORAGAN) is a library developped by me and other members of the Josephson Photonics and QIQSS research groups of the Université de Sherbrooke to fully process data from resonator measurements.
+Object Oriented Resonator Advanced Graphing and ANalysis (OORAGAN) is a library developped by members of the Josephson Photonics and QIQSS research groups of the Université de Sherbrooke to fully process data from resonator measurements.
 
 .. note:: 
    
@@ -15,9 +15,15 @@ Object Oriented Resonator Advanced Graphing and ANalysis (OORAGAN) is a library 
 Installation
 ------------
 
-OORAGAN can be installed using pip with the following command : ::
+OORAGAN can be installed using **pip** with the following command : ::
 
    pip install git+https://github.com/yalap13/OORAGAN.git
+
+For Anaconda environments, open a **conda terminal** and make sure **pip** and **git** are installed in your environment : ::
+
+   conda install pip git
+
+Then install OORAGAN using the command for **pip**.
 
 .. toctree::
    :maxdepth: 2
