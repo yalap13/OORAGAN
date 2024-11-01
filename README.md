@@ -11,7 +11,9 @@ This library has been made to work with file formats **specific to the measureme
 
 Thanks to François Cyrenne-Bergeron for the name idea.
 
-## Table of contents
+
+
+<!-- ## Table of contents
 
 * **[Installation](#installation)**
 * **[Simple example](#simple-example)**
@@ -33,7 +35,7 @@ Thanks to François Cyrenne-Bergeron for the name idea.
       * [``ResonatorFitterGrapher.plot_Fshift_vs_power``](#resonatorfittergrapherplot_fshift_vs_power)
       * [``ResonatorFitterGrapher.plot_Fr_vs_power``](#resonatorfittergrapherplot_fr_vs_power)
       * [``ResonatorFitterGrapher.plot_internal_loss_vs_power``](#resonatorfittergrapherplot_internal_loss_vs_power)
-    * [``load_graph_data``](#load_graph_data)
+    * [``load_graph_data``](#load_graph_data) -->
 
 ## Installation
 
@@ -44,7 +46,11 @@ pip install git+https://github.com/yalap13/OORAGAN.git
 
 **Note** : If you are using anaconda or any other package manager, you can generally just replace the ``pip install`` with the command for installing packages for your package manager.
 
-## Simple example
+## Documentation
+
+Documentation is now available online at [ooragan.readthedocs.io](https://ooragan.readthedocs.io/latest/). Please refer to this page for the up to date documentation.
+
+<!-- ## Simple example
 
 Here is a simple use case :
 ```python
@@ -1273,4 +1279,4 @@ Loads the data saved in csv files by the Grapher objects and returns it as a dic
       <td>N/A</td>
     </tr>
   </tbody>
-</table>
+</table> -->
