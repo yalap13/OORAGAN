@@ -17,6 +17,9 @@ docs/_build
 !ooragan_opengraph.svg
 !ooragan/*.py
 !unit_testing/*.py
+!unit_testing/**/*.dat
+!unit_testing/**/*.csv
+!unit_testing/**/*.txt
 !unit_testing/Fit results
 !docs/conf.py
 !docs/requirements.txt
