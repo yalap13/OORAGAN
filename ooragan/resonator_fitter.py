@@ -7,7 +7,8 @@ from resonator import background, shunt, reflection, base
 from numpy.typing import ArrayLike, NDArray
 from typing import Optional, Literal
 from lmfit import Parameter
-from graphinglib import MultiFigure
+from graphinglib import MultiFigure, FitFromFunction, Scatter, Figure
+from scipy.constants import k, hbar
 
 from .dataset import Dataset
 from .util import choice, convert_complex_to_magphase, is_interactive, plot_triptych
@@ -434,7 +435,6 @@ class ResonatorFitter:
         """
 
         if fit_method == "shunt":
-
             if trim_indices:
                 result = shunt.LinearShuntFitter(
                     frequency=freq[trim_indices[0] : -trim_indices[1]],
@@ -448,7 +448,6 @@ class ResonatorFitter:
                 )
 
         elif fit_method == "reflection":
-
             if trim_indices:
                 result = reflection.LinearReflectionFitter(
                     frequency=freq[trim_indices[0] : -trim_indices[1]],
@@ -574,3 +573,31 @@ class ResonatorFitter:
             triptych.show()
 
         return triptych
+
+    def fit_Q_TLS(self, save: bool = True) -> None:
+        if self._fit_results != {}:
+            for file, loss in self.L_i.items():
+                print(self.photon_number[file])
+                f = np.mean(self.f_r[file])
+
+                def delta_tls(p, nc, Fd):
+                    return Fd * np.tanh(hbar * f / (2 * k * 0.01)) / np.sqrt(1 + p / nc)
+
+                curve = Scatter(self.photon_number[file], loss)
+                fit = FitFromFunction(delta_tls, curve)
+                fig = Figure(
+                    "photon number", "loss", log_scale_x=True, log_scale_y=True
+                )
+                fig.add_elements(curve, fit)
+                if save:
+                    if not os.path.exists(
+                        os.path.join(self._savepath, "Qtls_fit_plots")
+                    ):
+                        os.mkdir(os.path.join(self._savepath, "Qtls_fit_plots"))
+                    fig.save(
+                        self._savepath + "/Qtls_fit_plots/{:.6f}GHz.svg".format(f / 1e9)
+                    )
+                else:
+                    fig.show()
+        else:
+            raise RuntimeError("Data has not yet been fitted. Fit data first.")
