@@ -1,10 +1,10 @@
 .venv
 .vscode
 .ropeproject
-poetry.lock
 *.py
 *.ipynb
 __pycache__
+__pyproject.toml
 .pytest_cache
 TODO.md
 *.csv

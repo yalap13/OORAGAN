@@ -163,7 +163,7 @@ class ResonatorFitter:
         self,
         file_index: int | list[int] = [],
         power: float | list[float] = [],
-        f_r: float = None,
+        f_r: Optional[float] = None,
         couploss: float = 1e-6,
         intloss: float = 1e-6,
         bg: base.BackgroundModel = background.MagnitudePhaseDelay(),
@@ -407,7 +407,7 @@ class ResonatorFitter:
         params: Optional[Parameter] = None,
         fit_method: str = "shunt",
         bg: base.BackgroundModel = background.MagnitudePhaseDelay(),
-        trim_indices: tuple = None,
+        trim_indices: Optional[tuple] = None,
     ) -> tuple[base.ResonatorFitter, ArrayLike]:
         """
         Wrapper around resonator library.
@@ -434,7 +434,6 @@ class ResonatorFitter:
         """
 
         if fit_method == "shunt":
-
             if trim_indices:
                 result = shunt.LinearShuntFitter(
                     frequency=freq[trim_indices[0] : -trim_indices[1]],
@@ -448,7 +447,6 @@ class ResonatorFitter:
                 )
 
         elif fit_method == "reflection":
-
             if trim_indices:
                 result = reflection.LinearReflectionFitter(
                     frequency=freq[trim_indices[0] : -trim_indices[1]],
@@ -540,7 +538,7 @@ class ResonatorFitter:
     def _plot_fit(
         self,
         result: base.ResonatorFitter,
-        trimmed_data: Optional[dict] = None,
+        trimmed_data: dict,
         save: bool = False,
         savepath: str = "",
         show: bool = False,
