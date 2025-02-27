@@ -1,23 +1,33 @@
 [project]
 name = "ooragan"
 version = "0.1.0"
+description = ""
+readme = "README.md"
+authors = [{ name = "Yannick Lapointe", email = "yannicklapointe77@gmail.com" }]
 requires-python = ">=3.10,<3.13"
 dependencies = [
     "easygui>=0.98.3",
     "graphinglib",
     "h5py>=3.13.0",
+    "ipython>=8.32.0",
     "loess>=2.1.2",
+    "pandas>=2.2.3",
     "resonator",
     "seaborn>=0.13.2",
     "tabulate>=0.9.0",
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [tool.uv.sources]
-graphinglib = { git = "http://github.com/graphinglib/graphinglib.git" }
+graphinglib = { git = "https://github.com/graphinglib/graphinglib.git" }
 resonator = { git = "https://github.com/danielflanigan/resonator.git" }
 
 [dependency-groups]
 dev = [
+    "colorcet>=3.1.0",
     "ipykernel>=6.29.5",
     "numpydoc>=1.8.0",
     "pydata-sphinx-theme>=0.16.1",
@@ -25,4 +35,5 @@ dev = [
     "sphinx-copybutton>=0.5.2",
     "sphinx-design>=0.6.1",
     "sphinx-favicon>=1.0.1",
+    "sphinxext-opengraph>=0.9.1",
 ]

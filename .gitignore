@@ -5,6 +5,7 @@
 *.ipynb
 __pycache__
 __pyproject.toml
+_pyproject.toml
 .pytest_cache
 TODO.md
 *.csv
