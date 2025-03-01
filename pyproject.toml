@@ -7,12 +7,12 @@ authors = [{ name = "Yannick Lapointe", email = "yannicklapointe77@gmail.com" }]
 requires-python = ">=3.10,<3.13"
 dependencies = [
     "easygui>=0.98.3",
-    "graphinglib",
+    "graphinglib @ git+https://github.com/graphinglib/graphinglib.git",
     "h5py>=3.13.0",
     "ipython>=8.32.0",
     "loess>=2.1.2",
     "pandas>=2.2.3",
-    "resonator",
+    "resonator @ git+https://github.com/danielflanigan/resonator.git",
     "seaborn>=0.13.2",
     "tabulate>=0.9.0",
 ]
@@ -20,10 +20,6 @@ dependencies = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.uv.sources]
-graphinglib = { git = "https://github.com/graphinglib/graphinglib.git" }
-resonator = { git = "https://github.com/danielflanigan/resonator.git" }
 
 [dependency-groups]
 dev = [
@@ -37,3 +33,6 @@ dev = [
     "sphinx-favicon>=1.0.1",
     "sphinxext-opengraph>=0.9.1",
 ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
