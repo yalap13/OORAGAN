@@ -1,13 +1,15 @@
 import os
 import sys
 import lmfit
+from matplotlib.pyplot import title
 import numpy as np
 
 from resonator import background, shunt, reflection, base
 from numpy.typing import ArrayLike, NDArray
 from typing import Optional, Literal
 from lmfit import Parameter
-from graphinglib import MultiFigure
+from graphinglib import MultiFigure, FitFromFunction, Scatter, Figure, Vlines
+from scipy.constants import k, hbar
 
 from .dataset import Dataset
 from .util import choice, convert_complex_to_magphase, is_interactive, plot_triptych
@@ -572,3 +574,63 @@ class ResonatorFitter:
             triptych.show()
 
         return triptych
+
+    def fit_Q_TLS(self, temperature: float = 0.01, save: bool = True) -> None:
+        r"""
+        Fits the :math:`Q_i` as a function of photon number curve to the model
+
+        .. math::
+
+            \frac{1}{Q_i}=F\delta^0_{TLS}\frac{\tanh\left(\frac{\hbar\omega}{2k_B T}\right)}{\sqrt{1+\frac{\langle n \rangle}{n_c}}}+\delta_0
+
+        .. warning:: This method is still experimental.
+
+        Parameters
+        ----------
+        temperature : float, optional
+            Temperature at which the measurement was performed, in Kelvin.
+            Defaults to 0.01 K (10 mK).
+        save : bool, optional
+            If `True` saves the fit images, else shows the images.
+            Defaults to `True`.
+        """
+        if self._fit_results != {}:
+            for file, loss in self.L_i.items():
+                f = np.mean(self.f_r[file])
+
+                def delta_tls(p, nc, Fd, delta0):
+                    return (
+                        Fd
+                        * np.tanh(hbar * f / (2 * k * temperature))
+                        / np.sqrt(1 + p / nc)
+                        + delta0
+                    )
+
+                try:
+                    curve = Scatter(self.photon_number[file], loss)
+                    fit = FitFromFunction(delta_tls, curve)
+                    fig = Figure(
+                        "photon number",
+                        "loss",
+                        log_scale_x=True,
+                        log_scale_y=True,
+                        title=r"$n_c$={}, $F\delta^0$={}, $\delta_0$={}".format(
+                            *fit.parameters
+                        ),
+                    )
+                    fig.add_elements(curve, fit)
+                    if save:
+                        if not os.path.exists(
+                            os.path.join(self._savepath, "Qtls_fit_plots")
+                        ):
+                            os.mkdir(os.path.join(self._savepath, "Qtls_fit_plots"))
+                        fig.save(
+                            self._savepath
+                            + "/Qtls_fit_plots/{:.6f}GHz.svg".format(f / 1e9)
+                        )
+                    else:
+                        fig.show()
+                except RuntimeError:
+                    continue
+        else:
+            raise RuntimeError("Data has not yet been fitted. Fit data first.")
