@@ -401,6 +401,106 @@ class ResonatorFitter:
             if data_temp["f_r"] != []:
                 self._fit_results[files[i]] = data_temp
 
+    def fit_for_parameter(
+        self,
+        parameter: Literal["voltage_bias", "index"],
+        threshold: float = 0.5,
+        savepic: bool = False,
+        write: bool = False,
+    ) -> None:
+        """
+        Fitting for parameter different from the VNA power.
+        """
+        if savepic and not os.path.exists(os.path.join(self._savepath, "fit_images")):
+            os.mkdir(os.path.join(self._savepath, "fit_images"))
+        if write and not os.path.exists(os.path.join(self._savepath, "fit_results")):
+            os.mkdir(os.path.join(self._savepath, "fit_results"))
+
+        params = lmfit.Parameters()
+        params.add(name="internal_loss", value=1e-6)
+        params.add(name="coupling_loss", value=1e-6)
+        params.add(name="resonance_frequency", min=1e9, max=1e10)
+
+        data = self.dataset._data_container.data
+
+        for i, file in enumerate(self.dataset._data_container.files):
+            if self.dataset._data_container.__dict__[parameter][file] is not None:
+                data_temp = {
+                    "Q_c": [],
+                    "Q_c_err": [],
+                    "Q_i": [],
+                    "Q_i_err": [],
+                    "Q_t": [],
+                    "Q_t_err": [],
+                    "L_c": [],
+                    "L_c_err": [],
+                    "L_i": [],
+                    "L_i_err": [],
+                    "L_t": [],
+                    "L_t_err": [],
+                    "f_r": [],
+                    "f_r_err": [],
+                    "photon_number": [],
+                    parameter: [],
+                }
+                for j, v in enumerate(
+                    self.dataset._data_container.__dict__[parameter][file]
+                ):
+                    frequency = data[file][j][0, :]
+                    s21_complex = data[file][j][1, :] + 1j * data[file][j][2, :]
+                    mag, phase = convert_complex_to_magphase(
+                        data[file][j][1, :], data[file][j][2, :]
+                    )
+                    for t in np.arange(0, len(frequency) // 2, 10):
+                        # Trim data, unwrap and S21 complex creation
+                        if t == 0:
+                            freq_cut = frequency
+                            s21_complex_cut = s21_complex
+                        else:
+                            freq_cut = frequency[t:-t]
+                            s21_complex_cut = s21_complex[t:-t]
+
+                        try:
+                            result, photon = self._resonator_fitter(
+                                s21_complex_cut,
+                                freq_cut,
+                                power=self.dataset._data_container.power[file],
+                                bg=background.MagnitudePhaseDelay(),
+                                fit_method="shunt",
+                            )
+                        except:
+                            continue
+
+                        # Filter out bad fits
+                        if self._test_fit(
+                            result.result, verbose=False, threshold=threshold
+                        ):
+                            data_temp["Q_c"].append(result.coupling_quality_factor)
+                            data_temp["Q_c_err"].append(
+                                result.coupling_quality_factor_error
+                            )
+                            data_temp["Q_i"].append(result.internal_quality_factor)
+                            data_temp["Q_i_err"].append(
+                                result.internal_quality_factor_error
+                            )
+                            data_temp["Q_t"].append(result.total_quality_factor)
+                            data_temp["Q_t_err"].append(
+                                result.total_quality_factor_error
+                            )
+                            data_temp["L_c"].append(result.coupling_loss)
+                            data_temp["L_c_err"].append(result.coupling_loss_error)
+                            data_temp["L_i"].append(result.internal_loss)
+                            data_temp["L_i_err"].append(result.internal_loss_error)
+                            data_temp["L_t"].append(result.total_loss)
+                            data_temp["L_t_err"].append(result.total_loss_error)
+                            data_temp["f_r"].append(result.f_r)
+                            data_temp["f_r_err"].append(result.f_r_error)
+                            data_temp["photon_number"].append(photon)
+                            data_temp[parameter].append(v)
+                            break
+            if data_temp["f_r"] != []:
+                self._fit_results[self.dataset._data_container.files[i]] = data_temp
+
     def _resonator_fitter(
         self,
         data: NDArray,
