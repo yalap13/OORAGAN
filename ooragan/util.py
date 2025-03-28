@@ -6,7 +6,6 @@ import pandas as pd
 
 from numpy.typing import NDArray, ArrayLike
 from resonator import base
-from IPython import get_ipython
 from typing import Optional, Literal
 from graphinglib import MultiFigure
 
@@ -150,19 +149,6 @@ def convert_complex_to_magphase(
     mag = 20 * np.log10(np.sqrt(real**2 + imag**2))
 
     return mag, phase
-
-
-def is_interactive() -> bool:
-    try:
-        shell = get_ipython().__class__.__name__
-        if shell == "ZMQInteractiveShell":
-            return True  # Jupyter notebook or qtconsole
-        elif shell == "TerminalInteractiveShell":
-            return False  # Terminal running IPython
-        else:
-            return False  # Other type (?)
-    except NameError:
-        return False  # Probably standard Python interpreter
 
 
 def load_graph_data(path: str) -> dict[str, NDArray]:

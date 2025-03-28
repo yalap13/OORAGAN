@@ -12,6 +12,7 @@ dependencies = [
     "ipython>=8.32.0",
     "loess>=2.1.2",
     "pandas>=2.2.3",
+    "progress>=1.6",
     "resonator @ git+https://github.com/danielflanigan/resonator.git",
     "seaborn>=0.13.2",
     "tabulate>=0.9.0",
@@ -24,7 +25,6 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "colorcet>=3.1.0",
-    "ipykernel>=6.29.5",
     "numpydoc>=1.8.0",
     "pydata-sphinx-theme>=0.16.1",
     "sphinx>=8.1.3",

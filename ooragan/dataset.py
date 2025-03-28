@@ -329,6 +329,38 @@ class Dataset:
             return self._data_container.frequency_range[self.files]
         return self._data_container.frequency_range
 
+    @property
+    def voltage_bias(self) -> dict | ArrayLike:
+        """
+        Voltage bias on sample.
+
+        .. warning:: Available only for Dataset created from hdf5 files.
+        """
+        if isinstance(self._data_container, HDF5Data):
+            if len(self._data_container.files) == 1:
+                return self._data_container.voltage_bias[self.files]
+            return self._data_container.voltage_bias
+        else:
+            raise AttributeError(
+                "Attribute 'voltage_bias' not defined for Dataset from txt files"
+            )
+
+    @property
+    def index(self) -> dict | ArrayLike:
+        """
+        Abstract index
+
+        .. warning:: Available only for Dataset created from hdf5 files.
+        """
+        if isinstance(self._data_container, HDF5Data):
+            if len(self._data_container.files) == 1:
+                return self._data_container.index[self.files]
+            return self._data_container.index
+        else:
+            raise AttributeError(
+                "Attribute 'index' not defined for Dataset from txt files"
+            )
+
     def __str__(self) -> None:
         return self._data_container.__str__()
 
@@ -534,6 +566,18 @@ class HDF5Data:
         }
         self.power = self._calculate_power(attenuation_cryostat)
         self.frequency_range = self._get_freq_range()
+        self.voltage_bias = {
+            key: info[key]["vna_info"]["Voltage Bias"]
+            if "Voltage Bias" in info[key]["vna_info"]
+            else None
+            for key in self.files
+        }
+        self.index = {
+            key: info[key]["vna_info"]["Index"]
+            if "Index" in info[key]["vna_info"]
+            else None
+            for key in self.files
+        }
 
     def __str__(self) -> str:
         """
