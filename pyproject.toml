@@ -25,7 +25,6 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "colorcet>=3.1.0",
-    "ipykernel>=6.29.5",
     "numpydoc>=1.8.0",
     "pydata-sphinx-theme>=0.16.1",
     "sphinx>=8.1.3",

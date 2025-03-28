@@ -1,5 +1,4 @@
 import os
-import sys
 import lmfit
 import numpy as np
 
@@ -12,10 +11,7 @@ from scipy.constants import k, hbar
 from progress.bar import IncrementalBar
 
 from .dataset import Dataset
-from .util import choice, convert_complex_to_magphase, is_interactive, plot_triptych
-
-if is_interactive():
-    from IPython.display import display, clear_output
+from .util import choice, convert_complex_to_magphase, plot_triptych
 
 
 class ResonatorFitter:
