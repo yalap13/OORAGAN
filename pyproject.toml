@@ -12,6 +12,7 @@ dependencies = [
     "ipython>=8.32.0",
     "loess>=2.1.2",
     "pandas>=2.2.3",
+    "progress>=1.6",
     "resonator @ git+https://github.com/danielflanigan/resonator.git",
     "seaborn>=0.13.2",
     "tabulate>=0.9.0",

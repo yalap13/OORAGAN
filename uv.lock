@@ -776,6 +776,7 @@ dependencies = [
     { name = "ipython" },
     { name = "loess" },
     { name = "pandas" },
+    { name = "progress" },
     { name = "resonator" },
     { name = "seaborn" },
     { name = "tabulate" },
@@ -803,6 +804,7 @@ requires-dist = [
     { name = "ipython", specifier = ">=8.32.0" },
     { name = "loess", specifier = ">=2.1.2" },
     { name = "pandas", specifier = ">=2.2.3" },
+    { name = "progress", specifier = ">=1.6" },
     { name = "resonator", git = "https://github.com/danielflanigan/resonator.git" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "tabulate", specifier = ">=0.9.0" },
@@ -956,6 +958,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/24/0d/3f9f24f6ccc039547
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1e/00/6b6b084717523a3bba465c42b7309849c9ee580d64f2baccf972bc3d462d/plotbin-3.1.7-py3-none-any.whl", hash = "sha256:3f95758fdf178572051ba7de0e30f3a2b7e4702f1d3c3a4bfc87a5cb232a0539", size = 13121 },
 ]
+
+[[package]]
+name = "progress"
+version = "1.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/68/d8412d1e0d70edf9791cbac5426dc859f4649afc22f2abbeb0d947cf70fd/progress-1.6.tar.gz", hash = "sha256:c9c86e98b5c03fa1fe11e3b67c1feda4788b8d0fe7336c2ff7d5644ccfba34cd", size = 7842 }
 
 [[package]]
 name = "prompt-toolkit"
