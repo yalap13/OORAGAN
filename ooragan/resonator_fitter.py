@@ -20,6 +20,11 @@ class ResonatorFitter:
 
     .. seealso:: This object is a wrapper of the `resonator <https://github.com/danielflanigan/resonator/>`_ library.
 
+    .. note::
+
+        Once the data has been fitted using :py:meth:`fit <ResonatorFitter.fit>` method, the fit result figures (triptychs)
+        are saved in the ``_fit_figures`` dictionnary of the `ResonatorFitter` instance.
+
     Parameters
     ----------
     dataset : Dataset
@@ -35,6 +40,7 @@ class ResonatorFitter:
             self.dataset.convert_magphase_to_complex()
         self._fit_results = {}
         self._savepath = savepath if savepath is not None else os.getcwd()
+        self._fit_figures = {}
 
     @property
     def Q_c(self) -> dict:
@@ -228,9 +234,14 @@ class ResonatorFitter:
         The fit itself is performed by the lmfit library.
         The `fit` method uses an auxilary method `_test_fit` to verify the maximum error tolerance
         on the fit results is respected. If not, the data is trimmed by a specified amount on both
-        sides and the fit is tried again.
+        sides and the fits is tried again.
 
         .. seealso:: See the `lmfit library <https://lmfit.github.io/lmfit-py/>`_.
+
+        .. note::
+
+            Once the data has been fitted using :py:meth:`fit <ResonatorFitter.fit>` method, the fit result figures (triptychs)
+            are saved in the ``_fit_figures`` dictionnary of the `ResonatorFitter` instance.
         """
         if savepic and not os.path.exists(os.path.join(self._savepath, "fit_images")):
             os.mkdir(os.path.join(self._savepath, "fit_images"))
@@ -343,7 +354,7 @@ class ResonatorFitter:
                     failed.append(p)
                 else:
                     a = str(np.mean(frequency / 1e9))[:5].replace(".", "_")
-                    self._plot_fit(
+                    triptych = self._plot_fit(
                         result,
                         save=savepic,
                         savepath=os.path.join(self._savepath, "fit_images"),
@@ -371,6 +382,7 @@ class ResonatorFitter:
                 print(f"\033[31mFailed for power values {failed}\033[00m")
             if data_temp["f_r"] != []:
                 self._fit_results[files[i]] = data_temp
+                self._fit_figures[files[i]] = triptych
 
     def fit_for_parameter(
         self,
