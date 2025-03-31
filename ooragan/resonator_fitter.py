@@ -296,6 +296,7 @@ class ResonatorFitter:
                 "photon_number": [],
                 "input_power": [],
             }
+            figures_temp = []
             for j, p in enumerate(file_power_points):
                 bar.next()
                 frequency = data[i][j][0, :]
@@ -369,6 +370,7 @@ class ResonatorFitter:
                             "freq": frequency,
                         },
                     )
+                    figures_temp.append(triptych)
                     if write:
                         a = str(np.mean(frequency / 1e9))[:5].replace(".", "_")
                         self._write_fit(
@@ -382,7 +384,7 @@ class ResonatorFitter:
                 print(f"\033[31mFailed for power values {failed}\033[00m")
             if data_temp["f_r"] != []:
                 self._fit_results[files[i]] = data_temp
-                self._fit_figures[files[i]] = triptych
+                self._fit_figures[files[i]] = figures_temp
 
     def fit_for_parameter(
         self,
