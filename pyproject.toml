@@ -35,5 +35,8 @@ dev = [
     "sphinxext-opengraph>=0.9.1",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/ooragan", "src/ooragan/old"]
+
 [tool.hatch.metadata]
 allow-direct-references = true

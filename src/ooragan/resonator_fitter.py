@@ -11,7 +11,7 @@ from scipy.constants import k, hbar
 from scipy.optimize import curve_fit
 from progress.bar import Bar
 
-from .dataset import Dataset
+from .old.dataset import Dataset
 from .util import choice, convert_complex_to_magphase, plot_triptych
 
 
@@ -454,7 +454,7 @@ class ResonatorFitter:
                     mag, phase = convert_complex_to_magphase(
                         data[file][j][1, :], data[file][j][2, :]
                     )
-                    for t in np.arange(0, len(frequency) // 2, 10):
+                    for t in np.arange(0, len(frequency) // 2, 2):
                         # Trim data, unwrap and S21 complex creation
                         if t == 0:
                             freq_cut = frequency
@@ -719,14 +719,17 @@ class ResonatorFitter:
                     return (
                         Fd
                         * np.tanh(hbar * f / (2 * k * temperature))
-                        / (1 + p / nc)**beta
+                        / (1 + p / nc) ** beta
                         + delta0
                     )
 
                 try:
                     curve = Scatter(self.photon_number[file], loss)
                     param, _ = curve_fit(delta_tls, self.photon_number[file], loss)
-                    range = np.logspace(np.log10(np.min(self.photon_number[file])), np.log10(np.max(self.photon_number[file])))
+                    range = np.logspace(
+                        np.log10(np.min(self.photon_number[file])),
+                        np.log10(np.max(self.photon_number[file])),
+                    )
                     print(range)
                     fit = Curve(range, delta_tls(range, *param), color="k")
                     fig = Figure(
