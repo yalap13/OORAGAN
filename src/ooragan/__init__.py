@@ -19,7 +19,7 @@ from .util import (
     load_graph_data,
 )
 
-from .file_loading import File
+from .file_loading import Dataset
 from .resonator_attribution import Resonator, ResonatorAttribution
 from .resonator_fitter import ResonatorFitter
 from .graphing import grapher
