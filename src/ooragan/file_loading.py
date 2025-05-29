@@ -14,6 +14,8 @@ def _walk_hdf(file_or_group: h5py.File | h5py.Group) -> dict:
                 out[key] = np.asarray(file_or_group[key])
             case h5py.Group:
                 out[key] = _walk_hdf(file_or_group[key])
+            case _:
+                raise TypeError("Invalid type")
     return out
 
 

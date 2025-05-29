@@ -24,3 +24,4 @@ from .resonator_attribution import Resonator, ResonatorAttribution
 from .resonator_fitter import ResonatorFitter
 from .graphing import grapher
 from .ppms_analysis import PPMSAnalysis
+from .parameters import *
