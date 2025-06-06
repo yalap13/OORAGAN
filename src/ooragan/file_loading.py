@@ -4,6 +4,8 @@ import numpy as np
 from glob import glob
 from pathlib import Path
 
+from .parameters import Parameter
+
 
 def _walk_hdf(file_or_group: h5py.File | h5py.Group) -> dict:
     """Walks an HDF file hierarchy and converts it into dictionary."""
@@ -82,3 +84,12 @@ class Dataset:
             self._files = _load_files_from_path(path)
         else:
             self._files = [_File(path)]
+
+    def _create_parameters(self) -> None:
+        parameter_list = Parameter.__subclasses__()
+        for file in self._files:
+            pass
+
+    @property
+    def parameters(self):
+        pass
