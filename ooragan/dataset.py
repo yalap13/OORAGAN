@@ -578,6 +578,12 @@ class HDF5Data:
             else None
             for key in self.files
         }
+        self.mag_field = {
+            key: info[key]["vna_info"]["Magnet"]
+            if "Magnet" in info[key]["vna_info"]
+            else None
+            for key in self.files
+        }
 
     def __str__(self) -> str:
         """
