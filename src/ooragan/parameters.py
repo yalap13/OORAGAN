@@ -1,56 +1,41 @@
-from typing import Self
+from typing import Optional
+from numpy.typing import ArrayLike
+from numpy import empty
 
 
 class Parameter:
     """
     Analogous to the parameters used by MeaVis. The name should be the same as
     the one defined for the MeaVis parameters.
+
+    Parameters
+    ----------
+    range : ArrayLike
+        Range of values for this parameter.
+    name : str
+        Name of the parameter. For parameters existing in MeaVis, should be the
+        same name.
+    description : str, optional
+        Description of the parameter.
+    unit : str, optional
+        Unit of the parameter.
     """
 
-    def __init__(self, range, name):
+    def __init__(
+        self,
+        range: ArrayLike,
+        name: str,
+        description: Optional[str] = None,
+        unit: Optional[str] = None,
+    ):
         self.range = range
-        self._meavis_name = name
-
-    def _get_existing_parameters(self) -> list[str]:
-        subclasses = Self.__subclasses__()
-
-        def get_parameter_key(t: type) -> str:
-            return getattr(t.__name__, "_key")
-
-        parameters = map(get_parameter_key, subclasses)
+        self.name = name
+        self.description = description
+        self.unit = unit
 
 
-class VNABandwidth(Parameter):
-    def __init__(self, range):
-        super(VNABandwidth, self).__init__(range, "VNA Bandwidth")
-        self._key = "vna_bandwidth"
+class NullParameter(Parameter):
+    """Empty parameter place holder"""
 
-
-class VNAPower(Parameter):
-    def __init__(self, range):
-        super(VNAPower, self).__init__(range, "VNA Power")
-        self._key = "vna_power"
-
-
-class VNAAverage(Parameter):
-    def __init__(self, range):
-        super(VNAAverage, self).__init__(range, "VNA Average")
-        self._key = "vna_average"
-
-
-class MagneticField(Parameter):
-    def __init__(self, range):
-        super(MagneticField, self).__init__(range, "Magnet")
-        self._key = "magnetic_field"
-
-
-class Index(Parameter):
-    def __init__(self, range):
-        super(Index, self).__init__(range, "Index")
-        self._key = "index"
-
-
-class DigitalAttenuation(Parameter):
-    def __init__(self, range):
-        super(DigitalAttenuation, self).__init__(range, "Digital Attenuator")
-        self._key = "dig_attenuation"
+    def __init__(self):
+        super(NullParameter, self).__init__(empty(0), "null")

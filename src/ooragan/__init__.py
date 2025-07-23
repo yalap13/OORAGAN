@@ -19,9 +19,9 @@ from .util import (
     load_graph_data,
 )
 
-from .file_loading import Dataset
+from .file_loading import Dataset, _File
 from .resonator_attribution import Resonator, ResonatorAttribution
 from .resonator_fitter import ResonatorFitter
 from .graphing import grapher
 from .ppms_analysis import PPMSAnalysis
-from .parameters import *
+from .parameters import Parameter, NullParameter

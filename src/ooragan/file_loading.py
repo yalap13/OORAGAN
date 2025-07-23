@@ -3,21 +3,41 @@ import h5py
 import numpy as np
 from glob import glob
 from pathlib import Path
+from typing import Any, Self
 
-from .parameters import Parameter
+from numpy.typing import NDArray
+
+from .parameters import NullParameter, Parameter
 
 
-def _walk_hdf(file_or_group: h5py.File | h5py.Group) -> dict:
+KNOWN_PARAMETERS = [
+    "VNA",
+    "VNA Average",
+    "VNA Power",
+    "VNA Bandwidth",
+    "Variable Attenuator",
+    "VNA Frequency",
+    "s21_real",
+    "s21_imag",
+    "s21_mag",
+    "s21_phase",
+    "Index",
+    "Magnet",
+]
+
+
+def _walk_hdf(file_or_group: Any) -> dict[str, NDArray]:
     """Walks an HDF file hierarchy and converts it into dictionary."""
     out = {}
     for key in file_or_group.keys():
-        match type(file_or_group[key]):
-            case h5py.Dataset:
-                out[key] = np.asarray(file_or_group[key])
-            case h5py.Group:
-                out[key] = _walk_hdf(file_or_group[key])
-            case _:
-                raise TypeError("Invalid type")
+        if key in KNOWN_PARAMETERS:
+            match type(file_or_group[key]):
+                case h5py.Dataset:
+                    out[key] = np.asarray(file_or_group[key])
+                case h5py.Group:
+                    out[key] = _walk_hdf(file_or_group[key])
+                case _:
+                    raise TypeError("Invalid type")
     return out
 
 
@@ -45,6 +65,47 @@ class _File:
     def __init__(self, path: str) -> None:
         self.path = path
         self._file_dict = _read_hdf(path)
+        self.infos = self._file_dict["attributes"]
+
+        # Declare all possible parameters
+        self.vna_average = NullParameter()
+        self.vna_bandwidth = NullParameter()
+        self.vna_frequency = NullParameter()
+        self.vna_power = NullParameter()
+        self.digital_attenuation = NullParameter()
+        self.magnetic_field = NullParameter()
+        self.index = NullParameter()
+        self.voltage_bias = NullParameter()
+
+        self._populate_params()
+
+    def _populate_params(self) -> None:
+        for key, value in self._file_dict["datasets"].items():
+            if isinstance(value, dict):
+                if len(value.keys()) == 1:
+                    attribute = key.lower().replace(" ", "_")
+                    parameter = Parameter(value[key], key)
+                    self.with_param(attribute, parameter)
+                elif key == "VNA":
+                    self.with_param(
+                        "vna_frequency",
+                        Parameter(value["VNA Frequency"], "VNA Frequency"),
+                    )
+            else:
+                attribute = key.lower().replace(" ", "_")
+                self.with_param(attribute, Parameter(value, key))
+
+    def with_param(self, attribute: str, parameter: Parameter) -> Self:
+        self.__dict__.update({attribute: parameter})
+        return self
+
+    def __getattribute__(self, name: str) -> Any:
+        value = super().__getattribute__(name)
+        if not name.startswith("__") and isinstance(value, NullParameter):
+            print(
+                f"UserWarning: The attribute {name} is not defined for this file! Will return a NullParameter."
+            )
+        return value
 
 
 def _load_files_from_path(path: str) -> list[_File]:
@@ -85,11 +146,7 @@ class Dataset:
         else:
             self._files = [_File(path)]
 
-    def _create_parameters(self) -> None:
-        parameter_list = Parameter.__subclasses__()
-        for file in self._files:
-            pass
-
-    @property
-    def parameters(self):
-        pass
+        # Files will be callable with "Dataset.f{}" where "{}" is replaced by
+        # the file's index.
+        for i, file in enumerate(self._files):
+            self.__dict__.update({f"f{i}": file})
