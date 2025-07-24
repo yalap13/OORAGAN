@@ -1,5 +1,6 @@
 import os
 import h5py
+import re
 import numpy as np
 from glob import glob
 from pathlib import Path
@@ -80,6 +81,9 @@ class _File:
         self._populate_params()
 
     def _populate_params(self) -> None:
+        """
+        Replaces the NullParameters for Parameters when they exist in the file
+        """
         for key, value in self._file_dict["datasets"].items():
             if isinstance(value, dict):
                 if len(value.keys()) == 1:
@@ -96,6 +100,16 @@ class _File:
                 self.with_param(attribute, Parameter(value, key))
 
     def with_param(self, attribute: str, parameter: Parameter) -> Self:
+        """
+        Adds a Parameter to a file.
+
+        Parameters
+        ----------
+        attribute : str
+            Attribute name. The Parameter will be called using the `_File.attribute` syntax.
+        parameter : Parameter
+            The parameter to add.
+        """
         self.__dict__.update({attribute: parameter})
         return self
 
@@ -138,6 +152,8 @@ class Dataset:
         Total attenuation present on the cryostat. Must be a negative number.
     """
 
+    FILES: dict[str, _File] = {}
+
     def __init__(self, path: str, attenuation_cryostat: float) -> None:
         if attenuation_cryostat > 0:
             raise ValueError("Attenuation must be negative")
@@ -146,7 +162,10 @@ class Dataset:
         else:
             self._files = [_File(path)]
 
-        # Files will be callable with "Dataset.f{}" where "{}" is replaced by
-        # the file's index.
         for i, file in enumerate(self._files):
-            self.__dict__.update({f"f{i}": file})
+            self.FILES.update({str(i): file})
+
+    def __getattribute__(self, name: str) -> Any:
+        if not name.startswith("__") and re.fullmatch(r"f\d+", name):
+            return self.FILES[name.removeprefix("f")]
+        return super().__getattribute__(name)
