@@ -9,7 +9,14 @@ from typing import Any, Self
 from numpy.typing import NDArray
 
 from .parameters import NullParameter, Parameter
+from .util import convert_complex_to_magphase, convert_magphase_to_complex
 
+# TODO:
+# - Make it possible to add other parameters than the KNOWN_PARAMETERS
+# - Fetch the description and unit of parameters from the dataset's attributes
+#   in the hdf5 file
+# - Ultimately, change the way the data is loaded for fitting so that it is
+#   possible to fit the data for any parameter
 
 KNOWN_PARAMETERS = [
     "VNA",
@@ -68,7 +75,7 @@ class _File:
         self._file_dict = _read_hdf(path)
         self.infos = self._file_dict["attributes"]
 
-        # Declare all possible parameters
+        # Declare all possible parameters and s21_* parameters.
         self.vna_average = NullParameter()
         self.vna_bandwidth = NullParameter()
         self.vna_frequency = NullParameter()
@@ -77,6 +84,10 @@ class _File:
         self.magnetic_field = NullParameter()
         self.index = NullParameter()
         self.voltage_bias = NullParameter()
+        self.s21_mag = NullParameter()
+        self.s21_phase = NullParameter()
+        self.s21_real = NullParameter()
+        self.s21_imag = NullParameter()
 
         self._populate_params()
 
@@ -95,6 +106,32 @@ class _File:
                         "vna_frequency",
                         Parameter(value["VNA Frequency"], "VNA Frequency"),
                     )
+                    if "s21_real" in value.keys():
+                        self.with_param(
+                            "s21_real", Parameter(value["s21_real"], "s21_real")
+                        )
+                        self.with_param(
+                            "s21_imag", Parameter(value["s21_imag"], "s21_imag")
+                        )
+                        mag, phase = convert_complex_to_magphase(
+                            value["s21_real"], value["s21_imag"]
+                        )
+                        self.with_param("s21_mag", Parameter(mag, "s21_mag"))
+                        self.with_param("s21_phase", Parameter(phase, "s21_phase"))
+                    elif "s21_mag" in value.keys():
+                        self.with_param(
+                            "s21_mag", Parameter(value["s21_mag"], "s21_mag")
+                        )
+                        self.with_param(
+                            "s21_phase", Parameter(value["s21_phase"], "s21_phase")
+                        )
+                        real, imag = convert_magphase_to_complex(
+                            value["s21_mag"], value["s21_phase"]
+                        )
+                        self.with_param("s21_real", Parameter(real, "s21_real"))
+                        self.with_param("s21_imag", Parameter(imag, "s21_imag"))
+                    else:
+                        raise NotImplementedError()
             else:
                 attribute = key.lower().replace(" ", "_")
                 self.with_param(attribute, Parameter(value, key))

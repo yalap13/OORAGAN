@@ -84,7 +84,7 @@ def strtime(s: str) -> float:
 
 def convert_magphase_to_complex(
     mag: NDArray, phase: NDArray, deg: bool = True, dBm: bool = True
-) -> NDArray:
+) -> tuple[NDArray, NDArray]:
     r"""
     Converts magnitude and phase data into real and imaginary.
 
@@ -121,7 +121,7 @@ def convert_magphase_to_complex(
 
 def convert_complex_to_magphase(
     real: NDArray, imag: NDArray, deg: bool = True
-) -> NDArray:
+) -> tuple[NDArray, NDArray]:
     r"""
     Converts real and imaginary data into magnitude (dBm) and phase.
 
