@@ -1,6 +1,6 @@
 from typing import Optional
-from numpy.typing import ArrayLike
-from numpy import empty
+from numpy.typing import NDArray
+from numpy import empty, float64
 
 
 class Parameter:
@@ -10,7 +10,7 @@ class Parameter:
 
     Parameters
     ----------
-    range : ArrayLike
+    range : NDArray of float64
         Range of values for this parameter.
     name : str
         Name of the parameter. For parameters existing in MeaVis, should be the
@@ -23,7 +23,7 @@ class Parameter:
 
     def __init__(
         self,
-        range: ArrayLike,
+        range: NDArray[float64],
         name: str,
         description: Optional[str] = None,
         unit: Optional[str] = None,

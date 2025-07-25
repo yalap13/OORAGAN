@@ -4,7 +4,7 @@ import re
 import numpy as np
 from glob import glob
 from pathlib import Path
-from typing import Any, Self
+from typing import Any, Self, Optional
 
 from numpy.typing import NDArray
 
@@ -60,9 +60,14 @@ def _read_hdf(path: str) -> dict:
     return out
 
 
-class _File:
+class File:
     """
     Defines a loaded HDF file and implements methods to get data from the file.
+
+    Note
+    ----
+    The ``File`` objects are created automatically when creating a
+    :class:`Dataset` from a path. **They are generally not be used directly.**
 
     Parameters
     ----------
@@ -138,13 +143,14 @@ class _File:
 
     def with_param(self, attribute: str, parameter: Parameter) -> Self:
         """
-        Adds a Parameter to a file.
+        Adds a :class:`Parameter` to a file.
 
         Parameters
         ----------
         attribute : str
-            Attribute name. The Parameter will be called using the `_File.attribute` syntax.
-        parameter : Parameter
+            Attribute name. The Parameter will be called using the
+            ``File.attribute`` syntax.
+        parameter : :class:`Parameter`
             The parameter to add.
         """
         self.__dict__.update({attribute: parameter})
@@ -159,12 +165,12 @@ class _File:
         return value
 
 
-def _load_files_from_path(path: str) -> list[_File]:
+def _load_files_from_path(path: str) -> list[File]:
     """Loads multiple files from a directory, walking through it."""
     files = []
     for paths, _, _ in os.walk(path):
         for file in glob(os.path.join(paths, "*.hdf5")):
-            file_obj = _File(file)
+            file_obj = File(file)
             files.append(file_obj)
     if not files:
         raise RuntimeError("No HDF5 files were found in this directory")
@@ -186,21 +192,55 @@ class Dataset:
     path : str
         Path of the folder for multiple data files or for a single data file.
     attenuation_cryostat : float
-        Total attenuation present on the cryostat. Must be a negative number.
+        Total attenuation present in the cryostat. Must be a negative number.
+    additional_params : list of str, optional
+        List of additional parameter names to extract from the files.
+
+        .. note::
+
+            If left to ``None`` only those parameters will be extracted:
+
+            - VNA
+            - VNA Average
+            - VNA Power
+            - VNA Bandwidth
+            - VNA Frequency
+            - Variable Attenuator
+            - s21_real
+            - s21_imag
+            - s21_mag
+            - s21_phase
+            - Index
+            - Magnet
+
+    Attributes
+    ----------
+    f<i> : :class:`File`
+        *Dynamically created* attributes allowing to retrieve specific files
+        with the syntax ``myDataset.f0`` for the 0th file.
+    files : dict
+        Dictionary of the contained files with the keys being of the format
+        ``"f<i>"`` where `<i>` represents the integer index of the file
+        starting with 0.
     """
 
-    FILES: dict[str, _File] = {}
+    files: dict[str, File] = {}
 
-    def __init__(self, path: str, attenuation_cryostat: float) -> None:
+    def __init__(
+        self,
+        path: str,
+        attenuation_cryostat: float,
+        additional_params: Optional[list[str]] = None,
+    ) -> None:
         if attenuation_cryostat > 0:
             raise ValueError("Attenuation must be negative")
         if Path(path).suffix == "":
-            self._files = _load_files_from_path(path)
+            self._files_list = _load_files_from_path(path)
         else:
-            self._files = [_File(path)]
+            self._files_list = [File(path)]
 
-        for i, file in enumerate(self._files):
-            self.FILES.update({str(i): file})
+        for i, file in enumerate(self._files_list):
+            self.files.update({str(i): file})
 
     def __getattribute__(self, name: str) -> Any:
         if not name.startswith("__") and re.fullmatch(r"f\d+", name):
