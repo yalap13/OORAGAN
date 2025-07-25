@@ -12,7 +12,6 @@ from .parameters import NullParameter, Parameter
 from .util import convert_complex_to_magphase, convert_magphase_to_complex
 
 # TODO:
-# - Make it possible to add other parameters than the KNOWN_PARAMETERS
 # - Fetch the description and unit of parameters from the dataset's attributes
 #   in the hdf5 file
 # - Ultimately, change the way the data is loaded for fitting so that it is
@@ -34,28 +33,31 @@ KNOWN_PARAMETERS = [
 ]
 
 
-def _walk_hdf(file_or_group: Any) -> dict[str, NDArray]:
+def _walk_hdf(
+    file_or_group: Any,
+    additional_params: list[str],
+) -> dict[str, NDArray]:
     """Walks an HDF file hierarchy and converts it into dictionary."""
     out = {}
     for key in file_or_group.keys():
-        if key in KNOWN_PARAMETERS:
+        if key in KNOWN_PARAMETERS or key in additional_params:
             match type(file_or_group[key]):
                 case h5py.Dataset:
                     out[key] = np.asarray(file_or_group[key])
                 case h5py.Group:
-                    out[key] = _walk_hdf(file_or_group[key])
+                    out[key] = _walk_hdf(file_or_group[key], additional_params)
                 case _:
                     raise TypeError("Invalid type")
     return out
 
 
-def _read_hdf(path: str) -> dict:
+def _read_hdf(path: str, additional_params: list[str]) -> dict:
     """Reads an HDF file from its path."""
     out = {"attributes": {}, "datasets": {}}
     file = h5py.File(path, "r")
     for atr in file.attrs.keys():
         out["attributes"][atr] = file.attrs[atr]
-    out["datasets"] = _walk_hdf(file)
+    out["datasets"] = _walk_hdf(file, additional_params)
     file.close()
     return out
 
@@ -73,11 +75,35 @@ class File:
     ----------
     path : str
         Path to the HDF file.
+    additional_params : list of str, optional
+        list of additional parameter names to extract from the files.
+
+        .. note::
+
+            If left to ``None`` only those parameters will be extracted:
+
+            - VNA
+            - VNA Average
+            - VNA Power
+            - VNA Bandwidth
+            - VNA Frequency
+            - Variable Attenuator
+            - s21_real
+            - s21_imag
+            - s21_mag
+            - s21_phase
+            - Index
+            - Magnet
     """
 
-    def __init__(self, path: str) -> None:
+    def __init__(
+        self, path: str, additional_params: Optional[list[str]] = None
+    ) -> None:
         self.path = path
-        self._file_dict = _read_hdf(path)
+        self._additional_params = (
+            additional_params if additional_params is not None else []
+        )
+        self._file_dict = _read_hdf(path, self._additional_params)
         self.infos = self._file_dict["attributes"]
 
         # Declare all possible parameters and s21_* parameters.
@@ -165,12 +191,15 @@ class File:
         return value
 
 
-def _load_files_from_path(path: str) -> list[File]:
+def _load_files_from_path(
+    path: str,
+    additional_params: list[str],
+) -> list[File]:
     """Loads multiple files from a directory, walking through it."""
     files = []
     for paths, _, _ in os.walk(path):
         for file in glob(os.path.join(paths, "*.hdf5")):
-            file_obj = File(file)
+            file_obj = File(file, additional_params)
             files.append(file_obj)
     if not files:
         raise RuntimeError("No HDF5 files were found in this directory")
@@ -194,7 +223,7 @@ class Dataset:
     attenuation_cryostat : float
         Total attenuation present in the cryostat. Must be a negative number.
     additional_params : list of str, optional
-        List of additional parameter names to extract from the files.
+        list of additional parameter names to extract from the files.
 
         .. note::
 
@@ -235,9 +264,12 @@ class Dataset:
         if attenuation_cryostat > 0:
             raise ValueError("Attenuation must be negative")
         if Path(path).suffix == "":
-            self._files_list = _load_files_from_path(path)
+            additional_params = (
+                additional_params if additional_params is not None else []
+            )
+            self._files_list = _load_files_from_path(path, additional_params)
         else:
-            self._files_list = [File(path)]
+            self._files_list = [File(path, additional_params)]
 
         for i, file in enumerate(self._files_list):
             self.files.update({str(i): file})
