@@ -8,11 +8,12 @@
 
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.abspath("sphinxext"))
 
 project = "OORAGAN"
-copyright = "2024, Yannick Lapointe and Gabriel Ouellet"
+copyright = f"2024-{time.strftime('%Y')}, Yannick Lapointe and Gabriel Ouellet"
 author = "Yannick Lapointe and Gabriel Ouellet"
 
 # -- General configuration ---------------------------------------------------

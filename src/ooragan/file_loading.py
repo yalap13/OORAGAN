@@ -12,8 +12,6 @@ from .parameters import NullParameter, Parameter
 from .util import convert_complex_to_magphase, convert_magphase_to_complex
 
 # TODO:
-# - Fetch the description and unit of parameters from the dataset's attributes
-#   in the hdf5 file
 # - Ultimately, change the way the data is loaded for fitting so that it is
 #   possible to fit the data for any parameter
 
@@ -37,13 +35,23 @@ def _walk_hdf(
     file_or_group: Any,
     additional_params: list[str],
 ) -> dict[str, NDArray]:
-    """Walks an HDF file hierarchy and converts it into dictionary."""
+    """Walks an HDF file hierarchy and converts it into a dictionary."""
     out = {}
     for key in file_or_group.keys():
         if key in KNOWN_PARAMETERS or key in additional_params:
             match type(file_or_group[key]):
                 case h5py.Dataset:
-                    out[key] = np.asarray(file_or_group[key])
+                    out[key] = {
+                        "values": np.asarray(file_or_group[key]),
+                        "description": None,
+                        "unit": None,
+                    }
+                    if "Description" in file_or_group[key].attrs.keys():
+                        out[key]["description"] = file_or_group[key].attrs[
+                            "Description"
+                        ]
+                    if "Unit" in file_or_group[key].attrs.keys():
+                        out[key]["unit"] = file_or_group[key].attrs["Unit"]
                 case h5py.Group:
                     out[key] = _walk_hdf(file_or_group[key], additional_params)
                 case _:
@@ -127,45 +135,74 @@ class File:
         Replaces the NullParameters for Parameters when they exist in the file
         """
         for key, value in self._file_dict["datasets"].items():
-            if isinstance(value, dict):
-                if len(value.keys()) == 1:
-                    attribute = key.lower().replace(" ", "_")
-                    parameter = Parameter(value[key], key)
-                    self.with_param(attribute, parameter)
-                elif key == "VNA":
-                    self.with_param(
-                        "vna_frequency",
-                        Parameter(value["VNA Frequency"], "VNA Frequency"),
-                    )
-                    if "s21_real" in value.keys():
-                        self.with_param(
-                            "s21_real", Parameter(value["s21_real"], "s21_real")
-                        )
-                        self.with_param(
-                            "s21_imag", Parameter(value["s21_imag"], "s21_imag")
-                        )
-                        mag, phase = convert_complex_to_magphase(
-                            value["s21_real"], value["s21_imag"]
-                        )
-                        self.with_param("s21_mag", Parameter(mag, "s21_mag"))
-                        self.with_param("s21_phase", Parameter(phase, "s21_phase"))
-                    elif "s21_mag" in value.keys():
-                        self.with_param(
-                            "s21_mag", Parameter(value["s21_mag"], "s21_mag")
-                        )
-                        self.with_param(
-                            "s21_phase", Parameter(value["s21_phase"], "s21_phase")
-                        )
-                        real, imag = convert_magphase_to_complex(
-                            value["s21_mag"], value["s21_phase"]
-                        )
-                        self.with_param("s21_real", Parameter(real, "s21_real"))
-                        self.with_param("s21_imag", Parameter(imag, "s21_imag"))
-                    else:
-                        raise NotImplementedError()
-            else:
+            if len(value.keys()) == 1 and list(value.keys()) == [key]:
                 attribute = key.lower().replace(" ", "_")
-                self.with_param(attribute, Parameter(value, key))
+                parameter = Parameter(
+                    value[key]["values"],
+                    key,
+                    value[key]["description"],
+                    value[key]["unit"],
+                )
+                self.with_param(attribute, parameter)
+            elif key == "VNA":
+                self.with_param(
+                    "vna_frequency",
+                    Parameter(
+                        value["VNA Frequency"]["values"],
+                        "VNA Frequency",
+                        value["VNA Frequency"]["description"],
+                        value["VNA Frequency"]["unit"],
+                    ),
+                )
+                if "s21_real" in value.keys():
+                    self.with_param(
+                        "s21_real",
+                        Parameter(
+                            value["s21_real"]["values"],
+                            "s21_real",
+                        ),
+                    )
+                    self.with_param(
+                        "s21_imag",
+                        Parameter(
+                            value["s21_imag"]["values"],
+                            "s21_imag",
+                        ),
+                    )
+                    mag, phase = convert_complex_to_magphase(
+                        value["s21_real"]["values"], value["s21_imag"]["values"]
+                    )
+                    self.with_param(
+                        "s21_mag",
+                        Parameter(mag, "s21_mag", unit="dB"),
+                    )
+                    self.with_param(
+                        "s21_phase", Parameter(phase, "s21_phase", unit="deg")
+                    )
+                elif "s21_mag" in value.keys():
+                    self.with_param(
+                        "s21_mag",
+                        Parameter(
+                            value["s21_mag"]["values"],
+                            "s21_mag",
+                            unit=value["s21_mag"]["unit"],
+                        ),
+                    )
+                    self.with_param(
+                        "s21_phase",
+                        Parameter(
+                            value["s21_phase"]["values"],
+                            "s21_phase",
+                            unit=value["s21_phase"]["unit"],
+                        ),
+                    )
+                    real, imag = convert_magphase_to_complex(
+                        value["s21_mag"]["values"], value["s21_phase"]["values"]
+                    )
+                    self.with_param("s21_real", Parameter(real, "s21_real"))
+                    self.with_param("s21_imag", Parameter(imag, "s21_imag"))
+                else:
+                    raise NotImplementedError()
 
     def with_param(self, attribute: str, parameter: Parameter) -> Self:
         """
@@ -189,6 +226,23 @@ class File:
                 f"UserWarning: The attribute {name} is not defined for this file! Will return a NullParameter."
             )
         return value
+
+    def list_params(self) -> list[str]:
+        """
+        Lists available parameter names.
+        """
+        out = []
+        for _, value in self.__dict__.items():
+            if isinstance(value, Parameter) and not isinstance(value, NullParameter):
+                out.append(value.name)
+        return out
+
+    def __str__(self) -> str:
+        out = f"\npath : {self.path}\nparameters : {self.list_params()}"
+        return out
+
+    def __repr__(self) -> str:
+        return f"ooragan.File({self.path}, {self.list_params()}, {self.infos})"
 
 
 def _load_files_from_path(
@@ -220,7 +274,7 @@ class Dataset:
     ----------
     path : str
         Path of the folder for multiple data files or for a single data file.
-    attenuation_cryostat : float
+    cryostat_attenuation : float
         Total attenuation present in the cryostat. Must be a negative number.
     additional_params : list of str, optional
         list of additional parameter names to extract from the files.
@@ -258,23 +312,33 @@ class Dataset:
     def __init__(
         self,
         path: str,
-        attenuation_cryostat: float,
+        cryostat_attenuation: float,
         additional_params: Optional[list[str]] = None,
     ) -> None:
-        if attenuation_cryostat > 0:
+        if cryostat_attenuation > 0:
             raise ValueError("Attenuation must be negative")
+        self.cryostat_attenuation = cryostat_attenuation
         if Path(path).suffix == "":
             additional_params = (
                 additional_params if additional_params is not None else []
             )
-            self._files_list = _load_files_from_path(path, additional_params)
+            files_list = _load_files_from_path(path, additional_params)
         else:
-            self._files_list = [File(path, additional_params)]
+            files_list = [File(path, additional_params)]
 
-        for i, file in enumerate(self._files_list):
+        for i, file in enumerate(files_list):
             self.files.update({str(i): file})
 
     def __getattribute__(self, name: str) -> Any:
         if not name.startswith("__") and re.fullmatch(r"f\d+", name):
-            return self.FILES[name.removeprefix("f")]
+            return self.files[name.removeprefix("f")]
         return super().__getattribute__(name)
+
+    def __str__(self) -> str:
+        out = "Files :"
+        for i, file in self.files.items():
+            out += file.__str__()
+        return out
+
+    def __repr__(self) -> str:
+        return f"ooragan.Dataset({self.files}, {self.cryostat_attenuation})"

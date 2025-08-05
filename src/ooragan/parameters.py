@@ -33,6 +33,9 @@ class Parameter:
         self.description = description
         self.unit = unit
 
+    def __repr__(self) -> str:
+        return f"ooragan.Parameter({self.name}, {self.range.shape}, {self.description}, {self.unit})"
+
 
 class NullParameter(Parameter):
     """Empty parameter place holder"""
