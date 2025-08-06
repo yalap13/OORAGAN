@@ -11,10 +11,6 @@ from numpy.typing import NDArray
 from .parameters import NullParameter, Parameter
 from .util import convert_complex_to_magphase, convert_magphase_to_complex
 
-# TODO:
-# - Ultimately, change the way the data is loaded for fitting so that it is
-#   possible to fit the data for any parameter
-
 KNOWN_PARAMETERS = [
     "VNA",
     "VNA Average",
@@ -129,6 +125,9 @@ class File:
         self.s21_imag = NullParameter()
 
         self._populate_params()
+
+        # Get the shape from one of the data arrays
+        self.shape = tuple(self.s21_real.range.shape)
 
     def _populate_params(self) -> None:
         """
