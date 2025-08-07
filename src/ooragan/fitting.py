@@ -1,12 +1,13 @@
-from copy import deepcopy
 import os
 import lmfit
-from typing import Optional, Literal
-from numpy import float64, ndarray, ndindex, arange
+from typing import Optional, Literal, Any
+from numpy import float64, floating, ndarray, ndindex, arange, mean
 from resonator import background, base, shunt, reflection
 from numpy.typing import ArrayLike, NDArray
+from graphinglib import MultiFigure
 
 from .file_loading import Dataset, File
+from .util import plot_triptych, choice
 
 
 class Fitter:
@@ -47,6 +48,7 @@ class Fitter:
         self._savepath = savepath if savepath is not None else os.getcwd()
 
     def _assert_all_files_same_shape(self) -> bool:
+        """Utilitary method to check all files have the same data shape."""
         if len(self._files) == 1:
             return True
         else:
@@ -55,8 +57,8 @@ class Fitter:
 
     def _test_fit(
         self,
-        result: base.ResonatorFitter,
-        threshold: float64,
+        result: Any,
+        threshold: Any,
         verbose: bool = False,
     ) -> bool:
         """
@@ -123,6 +125,22 @@ class Fitter:
             photon = 0
         return result, photon
 
+    def _file_naming_util(
+        self,
+        file: File,
+        idx: tuple,
+        frequency: floating,
+    ) -> str:
+        """Utilitary to generate file name given the files parameters."""
+        out = f"{frequency:.3f}GHz_"
+        for param in file.list_params():
+            if not param.startswith("s21_") or not param == "VNA Frequency":
+                attr = param.lower().replace(" ", "_")
+                value = file.__dict__[attr].range[idx]
+                unit = file.__dict__[attr].unit
+                out += f"{attr}{value}{unit}_"
+        return out
+
     def fit(
         self,
         files: list[int] = [],
@@ -150,14 +168,18 @@ class Fitter:
 
         # Verify the shape of the threshold matches the shape of the files' data
         if isinstance(threshold, ndarray):
-            for file in files:
-                dim = self._files[str(file)].shape[:-1]
+            if self._assert_all_files_same_shape():
+                dim = self._files["0"].shape[:-1]
                 if dim != threshold.shape:
                     raise ValueError(
-                        "Shape of array-like threshold must match data shape, "
-                        + f"in this case {dim}"
+                        "Shape of array-like threshold must match data "
+                        + f"shape, in this case {dim}"
                     )
-
+            else:
+                raise ValueError(
+                    "All files must be of the same shape to provide a threshold"
+                    + "array"
+                )
         for file in files:
             file_obj = self._files[str(file)]
             frequency = file_obj.vna_frequency.range
@@ -173,37 +195,63 @@ class Fitter:
                     else:
                         complex_trim = complex[ti:-ti]
                         frequency_trim = frequency[ti:-ti]
-                    try:
-                        result, photon = self._resonator_fitter(
-                            complex_trim,
-                            frequency_trim,
-                            ti,
-                            power=input_power,
-                            background=background,
-                            fit_method=fit_method,
-                        )
-                    except:
-                        continue
-                    # if self._test_fit(
-                    #     result.result, verbose=False, threshold=threshold[idx]
-                    # ):
-                    #     pass
+                    fitter, photon = self._resonator_fitter(
+                        complex_trim,
+                        frequency_trim,
+                        ti,
+                        power=input_power,
+                        background=background,
+                        fit_method=fit_method,
+                    )
+                    if self._test_fit(
+                        fitter.result,
+                        verbose=False,
+                        threshold=threshold[idx]
+                        if isinstance(threshold, ndarray)
+                        else threshold,
+                    ):
+                        self._fit_results.update({str(file): fitter})
+                        if save_fig:
+                            _ = self._plot_fit(
+                                fitter,
+                                complex_trim,
+                                frequency_trim,
+                                name=self._file_naming_util(
+                                    self._files[str(file)], idx, mean(frequency)
+                                ),
+                                savepath=os.path.join(
+                                    self._savepath, "results", "fit_images"
+                                ),
+                                nodialog=overwrite_warn,
+                            )
+                        break
 
-        # Iterate over files, either all, or only selected ones
-        #   Iterate over all dimensions of the data except the last one
-        #   using the numpy.ndindex method to get the indices
-        #       For each dimension, fetch the complex data and the associated
-        #       input power value (and the threshold value if its an array)
-        #       Fit the data using the selected method
-        #       Check the fit using the _check_fit method
-        #       If the fit satisfies the threshold,
-        #           Update the _fit_results dict with the
-        #           resonator.base.ResonatorFitter object containing the results
-        #       If it does not satisfy the threshold,
-        #           Keep track of the failed fit attempts
-
-    # Implement __getattribute__ to be able to fetch the fit results per file
-    # and inside the corresponding resonator.base.ResonatorFitter object
+    def _plot_fit(
+        self,
+        result: base.ResonatorFitter,
+        complex_data: NDArray,
+        frequency: NDArray,
+        name: str = "",
+        savepath: str = "",
+        nodialog: bool = False,
+    ) -> MultiFigure:
+        """
+        Utilitary function to plot the fit result as a triptych (resonator.see.triptych).
+        """
+        triptych = plot_triptych(
+            frequency,
+            complex_data,
+            fit_result=result,
+            three_ticks=True,
+        )
+        filename = os.path.join(savepath, name + ".svg")
+        if os.path.exists(filename) and not nodialog:
+            overwrite = choice()
+            if overwrite:
+                triptych.save(filename)
+        else:
+            triptych.save(filename)
+        return triptych
 
     # def __getattribute__(self, name: str, /) -> Any:
     #     pass

@@ -13,7 +13,10 @@ from graphinglib import MultiFigure
 FREQ_UNIT_CONVERSION = {"GHz": 1e9, "MHz": 1e6, "kHz": 1e3}
 
 
-def choice(title: Optional[str] = None, msg: Optional[str] = None) -> bool:
+def choice(
+    title: Optional[str] = None,
+    msg: Optional[str] = None,
+) -> bool | None:
     """
     Function that opens a choice box for the user to choose between yes or no.
     Returns True if yes, False if no.
@@ -170,10 +173,7 @@ def load_graph_data(path: str) -> dict[str, NDArray]:
 
 def plot_triptych(
     freq: ArrayLike,
-    mag: ArrayLike,
-    phase: ArrayLike,
-    real: ArrayLike,
-    imag: ArrayLike,
+    complex_data: ArrayLike,
     fit_result: Optional[base.ResonatorFitter] = None,
     freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
     title: Optional[str] = None,
@@ -188,14 +188,8 @@ def plot_triptych(
     ----------
     freq : ArrayLike
         Frequency array.
-    mag : ArrayLike
-        Magnitude array.
-    phase : ArrayLike
-        Phase array.
-    real : ArrayLike
-        Real values array.
-    imag : ArrayLike
-        Imaginary values array.
+    complex : ArrayLike
+        Complex data array.
     fit_result : ResonatorFitter, optional
         Fit result from the resonator library. Defaults to ``None``.
     freq_unit : {"GHz", "MHz", "kHz"}, optional
@@ -211,6 +205,9 @@ def plot_triptych(
         for more info.
     """
     freq = np.asarray(freq) / FREQ_UNIT_CONVERSION[freq_unit]
+    real = np.real(complex_data)
+    imag = np.imag(complex_data)
+    mag, phase = convert_complex_to_magphase(real, imag)
     fig_mag_vs_freq = gl.Figure(
         f"Frequency ({freq_unit})", "Magnitude (dBm)", figure_style=figure_style
     )

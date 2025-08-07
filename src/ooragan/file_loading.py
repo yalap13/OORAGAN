@@ -143,6 +143,12 @@ class File:
                     value[key]["unit"],
                 )
                 self.with_param(attribute, parameter)
+            elif list(value.keys()) == ["values", "description", "unit"]:
+                attribute = key.lower().replace(" ", "_")
+                parameter = Parameter(
+                    value["values"], key, value["description"], value["unit"]
+                )
+                self.with_param(attribute, parameter)
             elif key == "VNA":
                 self.with_param(
                     "vna_frequency",
@@ -202,6 +208,8 @@ class File:
                     self.with_param("s21_imag", Parameter(imag, "s21_imag"))
                 else:
                     raise NotImplementedError()
+            else:
+                raise NotImplementedError()
 
     def with_param(self, attribute: str, parameter: Parameter) -> Self:
         """
