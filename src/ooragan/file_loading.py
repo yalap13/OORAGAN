@@ -27,6 +27,22 @@ KNOWN_PARAMETERS = [
 ]
 
 
+def _broadcast_along_axis(array: NDArray, shape: tuple, axis: int) -> NDArray:
+    """Broadcasts a 1D array along a given axis to match the target shape."""
+    if array.shape == shape:
+        return array
+    if array.ndim != 1:
+        raise ValueError("Input array muxt be 1-dimensional")
+    if not (0 <= axis < len(shape)):
+        raise ValueError("Axis out of bounds for target shape")
+    if shape[axis] != array.shape[0]:
+        raise ValueError(f"Size mismatch: shape[{axis}] != len(array)")
+    reshaped = array.reshape(
+        [shape[axis] if i == axis else 1 for i in range(len(shape))]
+    )
+    return np.broadcast_to(reshaped, shape)
+
+
 def _walk_hdf(
     file_or_group: Any,
     additional_params: list[str],
@@ -57,23 +73,34 @@ def _walk_hdf(
 
 def _read_hdf(path: str, additional_params: list[str]) -> dict:
     """Reads an HDF file from its path."""
-    out = {"attributes": {}, "datasets": {}}
+    out = {"attributes": {}, "datasets": {}, "dimensions": []}
     file = h5py.File(path, "r")
     for atr in file.attrs.keys():
         out["attributes"][atr] = file.attrs[atr]
     out["datasets"] = _walk_hdf(file, additional_params)
+    vna_group = file["VNA"]
+    assert isinstance(vna_group, h5py.Group)
+    if "s21_real" in list(vna_group.keys()):
+        data = vna_group["s21_real"]
+        assert isinstance(data, h5py.Dataset)
+        dims = [dim.keys()[0] for dim in data.dims]
+    else:
+        data = vna_group["s21_mag"]
+        assert isinstance(data, h5py.Dataset)
+        dims = [dim.keys()[0] for dim in data.dims]
+    out["dimensions"] = dims
     file.close()
     return out
 
 
 class File:
     """
-    Defines a loaded HDF file and implements methods to get data from the file.
+    Defines a loaded HDF file.
 
     Note
     ----
     The ``File`` objects are created automatically when creating a
-    :class:`Dataset` from a path. **They are generally not be used directly.**
+    :class:`Dataset` from a path.
 
     Parameters
     ----------
@@ -128,6 +155,8 @@ class File:
 
         # Get the shape from one of the data arrays
         self.shape = tuple(self.s21_real.range.shape)
+        self._dimensions = self._file_dict["dimensions"]
+        self._reshape_params()
 
     def _populate_params(self) -> None:
         """
@@ -210,6 +239,18 @@ class File:
                     raise NotImplementedError()
             else:
                 raise NotImplementedError()
+
+    def _reshape_params(self) -> None:
+        """Reshapes all parameters to match data shape."""
+        for p in self.list_params():
+            if p != "VNA Frequency" and not p.startswith("s21_"):
+                param = self.__dict__[p.lower().replace(" ", "_")]
+                if param.range.shape == self.shape[:-1]:
+                    continue
+                else:
+                    param.range = _broadcast_along_axis(
+                        param.range, self.shape[:-1], self._dimensions.index(p)
+                    )
 
     def with_param(self, attribute: str, parameter: Parameter) -> Self:
         """
@@ -338,7 +379,10 @@ class Dataset:
 
     def __getattribute__(self, name: str) -> Any:
         if not name.startswith("__") and re.fullmatch(r"f\d+", name):
-            return self.files[name.removeprefix("f")]
+            try:
+                return self.files[name.removeprefix("f")]
+            except KeyError:
+                raise IndexError(f"No file with index {name.removeprefix('f')}")
         return super().__getattribute__(name)
 
     def __str__(self) -> str:

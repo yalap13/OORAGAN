@@ -31,7 +31,7 @@ class Fitter:
     """
 
     _files: dict[str, File] = {}
-    _fit_results: dict[str, base.ResonatorFitter | None] = {}
+    _fit_results: dict[str, list[base.ResonatorFitter]] = {}
 
     def __init__(
         self,
@@ -40,11 +40,11 @@ class Fitter:
     ) -> None:
         if isinstance(data, File):
             self._files.update({"0": data})
-            self._fit_results.update({"0": None})
+            self._fit_results.update({"0": []})
         else:
             self._files.update(data.files)
             for key in data.files.keys():
-                self._fit_results.update({key: None})
+                self._fit_results.update({key: []})
         self._savepath = savepath if savepath is not None else os.getcwd()
 
     def _assert_all_files_same_shape(self) -> bool:
@@ -87,7 +87,6 @@ class Fitter:
         self,
         data: NDArray,
         freq: NDArray,
-        trim_index: int,
         power: Optional[float] = None,
         params: Optional[lmfit.Parameter] = None,
         fit_method: Literal["shunt", "reflection", "kerr_shunt"] = "shunt",
@@ -98,22 +97,22 @@ class Fitter:
         """
         if fit_method == "shunt":
             result = shunt.LinearShuntFitter(
-                frequency=freq[trim_index:-trim_index],
-                data=data[trim_index:-trim_index],
+                frequency=freq,
+                data=data,
                 params=params,
                 background_model=background,
             )
         elif fit_method == "reflection":
             result = reflection.LinearReflectionFitter(
-                frequency=freq[trim_index:-trim_index],
-                data=data[trim_index:-trim_index],
+                frequency=freq,
+                data=data,
                 params=params,
                 background_model=background,
             )
         elif fit_method == "kerr_shunt":
             result = shunt.KerrShuntFitter(
-                frequency=freq[trim_index:-trim_index],
-                data=data[trim_index:-trim_index],
+                frequency=freq,
+                data=data,
                 params=params,
                 background_model=background,
             )
@@ -198,7 +197,6 @@ class Fitter:
                     fitter, photon = self._resonator_fitter(
                         complex_trim,
                         frequency_trim,
-                        ti,
                         power=input_power,
                         background=background,
                         fit_method=fit_method,
@@ -210,7 +208,7 @@ class Fitter:
                         if isinstance(threshold, ndarray)
                         else threshold,
                     ):
-                        self._fit_results.update({str(file): fitter})
+                        self._fit_results[str(file)].append(fitter)
                         if save_fig:
                             _ = self._plot_fit(
                                 fitter,
