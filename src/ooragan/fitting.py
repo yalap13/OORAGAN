@@ -10,6 +10,37 @@ from .file_loading import Dataset, File
 from .util import plot_triptych, choice
 
 
+class FitResult:
+    """
+    Fit results container for a single file.
+
+    Parameters
+    ----------
+    results : list of resonator.base.ResonatorFitter
+        List of ResonatorFitter objects from the :class:`Fitter`.
+
+    Attributes
+    ----------
+
+    """
+
+    def __init__(self, results: list[base.ResonatorFitter]) -> None:
+        if all(isinstance(fitter, base.ResonatorFitter) for fitter in results):
+            self._results = results
+        else:
+            raise TypeError(
+                "Must provide a list of only resonator.base.ResonatorFitter instances"
+            )
+
+    def __getattribute__(self, name: str) -> Any:
+        if not name.startswith("__") and name in dir(base.ResonatorFitter):
+            return self._get_res(name)
+        return super().__getattribute__(name)
+
+    def _get_res(self, name: str) -> NDArray:
+        return ndarray([])
+
+
 class Fitter:
     """
     Fitting object. Takes the raw data as input and acts as a container for the
@@ -250,6 +281,3 @@ class Fitter:
         else:
             triptych.save(filename)
         return triptych
-
-    # def __getattribute__(self, name: str, /) -> Any:
-    #     pass
