@@ -106,6 +106,8 @@ class File:
     ----------
     path : str
         Path to the HDF file.
+    cryostat_attenuation : float
+        Total attenuation present in the cryostat. Must be a negative number.
     additional_params : list of str, optional
         list of additional parameter names to extract from the files.
 
@@ -128,12 +130,18 @@ class File:
     """
 
     def __init__(
-        self, path: str, additional_params: Optional[list[str]] = None
+        self,
+        path: str,
+        cryostat_attenuation: float,
+        additional_params: Optional[list[str]] = None,
     ) -> None:
         self.path = path
         self._additional_params = (
             additional_params if additional_params is not None else []
         )
+        if cryostat_attenuation > 0:
+            raise ValueError("Attenuation must be negative")
+        self.cryostat_attenuation = cryostat_attenuation
         self._file_dict = _read_hdf(path, self._additional_params)
         self.infos = self._file_dict["attributes"]
 
@@ -142,7 +150,7 @@ class File:
         self.vna_bandwidth = NullParameter()
         self.vna_frequency = NullParameter()
         self.vna_power = NullParameter()
-        self.digital_attenuation = NullParameter()
+        self.variable_attenuator = NullParameter()
         self.magnetic_field = NullParameter()
         self.index = NullParameter()
         self.voltage_bias = NullParameter()
@@ -295,13 +303,14 @@ class File:
 
 def _load_files_from_path(
     path: str,
+    cryostat_attenuation: float,
     additional_params: list[str],
 ) -> list[File]:
     """Loads multiple files from a directory, walking through it."""
     files = []
     for paths, _, _ in os.walk(path):
         for file in glob(os.path.join(paths, "*.hdf5")):
-            file_obj = File(file, additional_params)
+            file_obj = File(file, cryostat_attenuation, additional_params)
             files.append(file_obj)
     if not files:
         raise RuntimeError("No HDF5 files were found in this directory")
@@ -365,14 +374,15 @@ class Dataset:
     ) -> None:
         if cryostat_attenuation > 0:
             raise ValueError("Attenuation must be negative")
-        self.cryostat_attenuation = cryostat_attenuation
         if Path(path).suffix == "":
             additional_params = (
                 additional_params if additional_params is not None else []
             )
-            files_list = _load_files_from_path(path, additional_params)
+            files_list = _load_files_from_path(
+                path, cryostat_attenuation, additional_params
+            )
         else:
-            files_list = [File(path, additional_params)]
+            files_list = [File(path, cryostat_attenuation, additional_params)]
 
         for i, file in enumerate(files_list):
             self.files.update({str(i): file})
@@ -387,7 +397,7 @@ class Dataset:
 
     def __str__(self) -> str:
         out = "Files :"
-        for i, file in self.files.items():
+        for _, file in self.files.items():
             out += file.__str__()
         return out
 

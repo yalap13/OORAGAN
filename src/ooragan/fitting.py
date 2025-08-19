@@ -1,11 +1,13 @@
 import os
+import re
 import lmfit
 from typing import Optional, Literal, Any
-from numpy import float64, floating, ndarray, ndindex, arange, mean
+from numpy import float64, floating, ndarray, ndindex, arange, mean, array
 from resonator import background, base, shunt, reflection
 from numpy.typing import ArrayLike, NDArray
 from graphinglib import MultiFigure
 
+from .parameters import NullParameter
 from .file_loading import Dataset, File
 from .util import plot_triptych, choice
 
@@ -24,21 +26,58 @@ class FitResult:
 
     """
 
-    def __init__(self, results: list[base.ResonatorFitter]) -> None:
+    def __init__(
+        self, results: list[base.ResonatorFitter], photon_nbr: list[float]
+    ) -> None:
         if all(isinstance(fitter, base.ResonatorFitter) for fitter in results):
             self._results = results
         else:
             raise TypeError(
                 "Must provide a list of only resonator.base.ResonatorFitter instances"
             )
+        self._photon_number = photon_nbr
+
+    @property
+    def photon_number(self):
+        """
+        Returns a numpy.array of the computed photon numbers.
+        """
+        return array(self._photon_number)
 
     def __getattribute__(self, name: str) -> Any:
-        if not name.startswith("__") and name in dir(base.ResonatorFitter):
+        if (
+            not name.startswith("__")
+            and name in dir(base.ResonatorFitter)
+            and not name == "photon_number"
+        ):
             return self._get_res(name)
         return super().__getattribute__(name)
 
     def _get_res(self, name: str) -> NDArray:
-        return ndarray([])
+        """
+        Gets the requested value from each ResonatorFitter and returns them into a
+        numpy.array.
+        """
+        out = []
+        for fitter in self._results:
+            out.append(fitter.__getattribute__(name))
+        return array(out)
+
+    def append(
+        self, results: list[base.ResonatorFitter], photon_nbr: list[float]
+    ) -> None:
+        """
+        Append new results to existing FitResult instance.
+        """
+        if all(isinstance(fitter, base.ResonatorFitter) for fitter in results):
+            for res in results:
+                self._results.append(res)
+        else:
+            raise TypeError(
+                "Must provide a list of only resonator.base.ResonatorFitter instances"
+            )
+        for pn in photon_nbr:
+            self._photon_number.append(pn)
 
 
 class Fitter:
@@ -62,7 +101,7 @@ class Fitter:
     """
 
     _files: dict[str, File] = {}
-    _fit_results: dict[str, list[base.ResonatorFitter]] = {}
+    _fit_results: dict[str, FitResult] = {}
 
     def __init__(
         self,
@@ -71,11 +110,8 @@ class Fitter:
     ) -> None:
         if isinstance(data, File):
             self._files.update({"0": data})
-            self._fit_results.update({"0": []})
         else:
             self._files.update(data.files)
-            for key in data.files.keys():
-                self._fit_results.update({key: []})
         self._savepath = savepath if savepath is not None else os.getcwd()
 
     def _assert_all_files_same_shape(self) -> bool:
@@ -164,7 +200,7 @@ class Fitter:
         """Utilitary to generate file name given the files parameters."""
         out = f"{frequency:.3f}GHz_"
         for param in file.list_params():
-            if not param.startswith("s21_") or not param == "VNA Frequency":
+            if not param.startswith("s21_") and not param == "VNA Frequency":
                 attr = param.lower().replace(" ", "_")
                 value = file.__dict__[attr].range[idx]
                 unit = file.__dict__[attr].unit
@@ -213,11 +249,17 @@ class Fitter:
         for file in files:
             file_obj = self._files[str(file)]
             frequency = file_obj.vna_frequency.range
+            temp = []
+            temp_photon = []
             for idx in ndindex(file_obj.shape[:-1]):
                 real = file_obj.s21_real.range[idx]
                 imag = file_obj.s21_imag.range[idx]
                 complex = real + 1j * imag
-                input_power = file_obj.vna_power.range[idx]
+                input_power = (
+                    file_obj.vna_power.range[idx] + file_obj.cryostat_attenuation
+                )
+                if not isinstance(file_obj.variable_attenuator, NullParameter):
+                    input_power -= file_obj.variable_attenuator.range[idx]
                 for ti in arange(trim_start, len(frequency) // 2, trim_jump):
                     if ti == 0:
                         complex_trim = complex
@@ -239,7 +281,8 @@ class Fitter:
                         if isinstance(threshold, ndarray)
                         else threshold,
                     ):
-                        self._fit_results[str(file)].append(fitter)
+                        temp.append(fitter)
+                        temp_photon.append(photon)
                         if save_fig:
                             _ = self._plot_fit(
                                 fitter,
@@ -254,6 +297,11 @@ class Fitter:
                                 nodialog=overwrite_warn,
                             )
                         break
+
+            if str(file) in self._fit_results.keys():
+                self._fit_results[str(file)].append(temp, temp_photon)
+            else:
+                self._fit_results.update({str(file): FitResult(temp, temp_photon)})
 
     def _plot_fit(
         self,
@@ -281,3 +329,11 @@ class Fitter:
         else:
             triptych.save(filename)
         return triptych
+
+    def __getattribute__(self, name: str) -> Any:
+        if not name.startswith("__") and re.fullmatch(r"f\d+", name):
+            try:
+                return self._fit_results[name.removeprefix("f")]
+            except KeyError:
+                raise IndexError(f"No fit result with index {name.removeprefix('f')}")
+        return super().__getattribute__(name)
