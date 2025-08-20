@@ -9,7 +9,7 @@ from graphinglib import Figure
 from copy import deepcopy
 
 from .dataset import Dataset
-from .util import FREQ_UNIT_CONVERSION, plot_triptych
+from ooragan.util import FREQ_UNIT_CONVERSION, plot_triptych
 from .resonator_fitter import ResonatorFitter
 
 
@@ -549,7 +549,7 @@ class ResonatorFitterGrapher:
                 curve.add_errorbars(y_error=Qi_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
+            label = f"{self._res_fitter.f_r[file][0] / FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
@@ -680,7 +680,7 @@ class ResonatorFitterGrapher:
                 curve.add_errorbars(y_error=Qc_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
+            label = f"{self._res_fitter.f_r[file][0] / FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
@@ -810,7 +810,7 @@ class ResonatorFitterGrapher:
                 curve.add_errorbars(y_error=Qt_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
+            label = f"{self._res_fitter.f_r[file][0] / FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
@@ -960,7 +960,7 @@ class ResonatorFitterGrapher:
                 curve.add_errorbars(y_error=fshift_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
+            label = f"{self._res_fitter.f_r[file][0] / FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
@@ -1093,7 +1093,7 @@ class ResonatorFitterGrapher:
                 curve.add_errorbars(y_error=fr_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
+            label = f"{self._res_fitter.f_r[file][0] / FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon
@@ -1223,7 +1223,7 @@ class ResonatorFitterGrapher:
                 curve.add_errorbars(y_error=Li_err)
                 figure.add_elements(curve)
         for file in files:
-            label = f"{self._res_fitter.f_r[file][0]/FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
+            label = f"{self._res_fitter.f_r[file][0] / FREQ_UNIT_CONVERSION[freq_unit]:.3f} {freq_unit}"
             power = (
                 self._res_fitter.photon_number[file]
                 if photon

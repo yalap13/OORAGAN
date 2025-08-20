@@ -1,23 +1,32 @@
+# Virtual environment
 .venv
+
+# IDE files
 .vscode
 .ropeproject
+
+# Not ideal, but allows to ignore test files in the project directory
 *.py
 *.ipynb
+
+# Python cache
 __pycache__
-__pyproject.toml
-_pyproject.toml
+
+# Test files
 .pytest_cache
-TODO.md
 *.csv
 *.dat
 *.txt
 *.svg
+
+# Docs generated files
 docs/generated
 docs/_build
 
+# Cherry picked exceptions
 !ooragan_logo.svg
 !ooragan_opengraph.svg
-!ooragan/*.py
+!src/**/*.py
 !unit_testing/*.py
 !unit_testing/**/*.dat
 !unit_testing/**/*.csv

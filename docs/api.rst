@@ -11,12 +11,15 @@ Objects
    :template: class
    :nosignatures:
 
+   Parameter
+   File
    Dataset
+   Fitter
+   FitResult
    PPMSAnalysis
    Resonator
    ResonatorAttribution
-   ResonatorFitter
-   
+
 Functions
 ---------
 
@@ -26,41 +29,4 @@ Functions
 
    convert_complex_to_magphase
    convert_magphase_to_complex
-   grapher
-   load_graph_data
    strtime
-   
-Internal Objects
-----------------
-
-.. warning:: 
-   
-   These objects are not directly created by the user, but once they are, their methods can be used.
-   These objetcs **are not included in the package's __init__ file** and **cannot be imported** from OORAGAN. 
-
-Dataset data containers
-^^^^^^^^^^^^^^^^^^^^^^^
-
-.. currentmodule:: ooragan.dataset
-
-.. autosummary::
-   :toctree: generated/
-   :template: class
-   :nosignatures:
-
-   AbstractData
-   HDF5Data
-   TXTData
-
-Grapher Objects
-^^^^^^^^^^^^^^^
-
-.. currentmodule:: ooragan.graphing
-   
-.. autosummary::
-   :toctree: generated/
-   :template: class
-   :nosignatures:
-
-   DatasetGrapher
-   ResonatorFitterGrapher

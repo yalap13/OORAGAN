@@ -12,8 +12,9 @@ from numpy.typing import NDArray, ArrayLike
 from datetime import datetime
 from copy import deepcopy
 from warnings import warn
+# from scipy.signal import find_peaks
 
-from .util import (
+from ..util import (
     strtime,
     convert_complex_to_magphase,
     convert_magphase_to_complex,
@@ -896,6 +897,31 @@ class HDF5Data:
                     arr[1, :], arr[2, :], deg=deg, dBm=dBm
                 )
         self.format = "complex"
+
+    # def crop_to_peak(self, span: float, prominence: float):
+    #     """
+    #     Crops wide span data to keep only the resonance peak with specified span
+    #     for fitting. Example use case: measurements with magnetic field.
+
+    #     Parameters
+    #     ----------
+    #     span : float
+    #         Span frequency to keep around the resonance peak.
+    #     prominence : float
+    #         Prominence of the peak.
+
+    #     Note
+    #     ----
+    #     This feature can be unstable, still under development.
+    #     """
+    #     self.convert_complex_to_magphase()
+    #     cropped_data = {}
+    #     for file in self.files:
+    #         cropped_data[file] = []
+    #         for set in self.data[file]:
+    #             indices, params = find_peaks(-set[1], prominence=prominence)
+    #             if len(indices[0]) > 1:
+    #                 continue
 
 
 class TXTData:
