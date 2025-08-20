@@ -8,8 +8,8 @@ from datetime import datetime
 from graphinglib import Figure
 from copy import deepcopy
 
-from .old.dataset import Dataset
-from .util import FREQ_UNIT_CONVERSION, plot_triptych
+from .dataset import Dataset
+from ooragan.util import FREQ_UNIT_CONVERSION, plot_triptych
 from .resonator_fitter import ResonatorFitter
 
 

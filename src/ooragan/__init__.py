@@ -21,8 +21,6 @@ from .util import (
 
 from .parameters import Parameter, NullParameter
 from .file_loading import Dataset, File
-from .fitting import Fitter
-from .graphing import grapher
+from .fitting import Fitter, FitResult
 from .resonator_attribution import Resonator, ResonatorAttribution
 from .ppms_analysis import PPMSAnalysis
-from .resonator_fitter import ResonatorFitter
