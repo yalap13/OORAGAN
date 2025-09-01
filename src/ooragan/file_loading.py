@@ -294,7 +294,8 @@ class File:
         return out
 
     def __str__(self) -> str:
-        out = f"\npath : {self.path}\nparameters : {self.list_params()}"
+        out = f"parameters : {self.list_params()},"
+        out += f" mean frequency = {np.mean(self.vna_frequency.range)}"
         return out
 
     def __repr__(self) -> str:
@@ -397,8 +398,8 @@ class Dataset:
 
     def __str__(self) -> str:
         out = "Files :"
-        for _, file in self.files.items():
-            out += file.__str__()
+        for idx, file in self.files.items():
+            out += "\n" + idx + ". " + file.__str__()
         return out
 
     def __repr__(self) -> str:

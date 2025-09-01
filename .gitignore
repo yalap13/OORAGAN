@@ -5,6 +5,9 @@
 .vscode
 .ropeproject
 
+# Apple DS_Store
+.DS_Store
+
 # Not ideal, but allows to ignore test files in the project directory
 *.py
 *.ipynb
