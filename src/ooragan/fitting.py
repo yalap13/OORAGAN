@@ -166,14 +166,13 @@ class Fitter:
         directory.
     """
 
-    _files: dict[str, File] = {}
-    _fit_results: dict[str, FitResult] = {}
-
     def __init__(
         self,
         data: Dataset | File,
         savepath: Optional[str] = None,
     ) -> None:
+        self._files: dict[str, File] = {}
+        self._fit_results: dict[str, FitResult] = {}
         if isinstance(data, File):
             self._files.update({"0": data})
         else:
@@ -361,6 +360,7 @@ class Fitter:
                     "All files must be of the same shape to provide a threshold"
                     + "array"
                 )
+        fail_count = 0
         for file in files:
             file_obj = self._files[str(file)]
             frequency = file_obj.vna_frequency.range
@@ -373,8 +373,9 @@ class Fitter:
                 input_power = (
                     file_obj.vna_power.range[idx] + file_obj.cryostat_attenuation
                 )
-                if not isinstance(file_obj.variable_attenuator, NullParameter):
+                if "Variable Attenuator" in file_obj.list_params():
                     input_power -= file_obj.variable_attenuator.range[idx]
+                succeeded = False
                 for ti in arange(trim_start, len(frequency) // 2, trim_jump):
                     if ti == 0:
                         complex_trim = complex
@@ -382,13 +383,16 @@ class Fitter:
                     else:
                         complex_trim = complex[ti:-ti]
                         frequency_trim = frequency[ti:-ti]
-                    fitter, photon = self._resonator_fitter(
-                        complex_trim,
-                        frequency_trim,
-                        power=input_power,
-                        background=background,
-                        fit_method=fit_method,
-                    )
+                    try:
+                        fitter, photon = self._resonator_fitter(
+                            complex_trim,
+                            frequency_trim,
+                            power=input_power,
+                            background=background,
+                            fit_method=fit_method,
+                        )
+                    except ValueError:
+                        continue
                     if self._test_fit(
                         fitter.result,
                         verbose=False,
@@ -396,6 +400,7 @@ class Fitter:
                         if isinstance(threshold, ndarray)
                         else threshold,
                     ):
+                        succeeded = True
                         temp.append(fitter)
                         temp_photon.append(photon)
                         if save_fig:
@@ -412,11 +417,14 @@ class Fitter:
                                 nodialog=overwrite_warn,
                             )
                         break
+                if not succeeded:
+                    fail_count += 1
 
             if str(file) in self._fit_results.keys():
                 self._fit_results[str(file)].append(temp, temp_photon)
             else:
                 self._fit_results.update({str(file): FitResult(temp, temp_photon)})
+        print("{} fit failures".format(fail_count))
 
     def _plot_fit(
         self,

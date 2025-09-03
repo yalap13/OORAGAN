@@ -151,7 +151,7 @@ class File:
         self.vna_frequency = NullParameter()
         self.vna_power = NullParameter()
         self.variable_attenuator = NullParameter()
-        self.magnetic_field = NullParameter()
+        self.magnet = NullParameter()
         self.index = NullParameter()
         self.voltage_bias = NullParameter()
         self.s21_mag = NullParameter()
@@ -365,14 +365,13 @@ class Dataset:
         starting with 0.
     """
 
-    files: dict[str, File] = {}
-
     def __init__(
         self,
         path: str,
         cryostat_attenuation: float,
         additional_params: Optional[list[str]] = None,
     ) -> None:
+        self.files: dict[str, File] = {}
         if cryostat_attenuation > 0:
             raise ValueError("Attenuation must be negative")
         if Path(path).suffix == "":
