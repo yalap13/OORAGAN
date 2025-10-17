@@ -367,25 +367,38 @@ class Dataset:
 
     def __init__(
         self,
-        path: str,
-        cryostat_attenuation: float,
+        path: Optional[str] = None,
+        cryostat_attenuation: Optional[float] = None,
+        files: Optional[list[File]] = None,
         additional_params: Optional[list[str]] = None,
     ) -> None:
         self.files: dict[str, File] = {}
-        if cryostat_attenuation > 0:
-            raise ValueError("Attenuation must be negative")
-        if Path(path).suffix == "":
-            additional_params = (
-                additional_params if additional_params is not None else []
-            )
-            files_list = _load_files_from_path(
-                path, cryostat_attenuation, additional_params
-            )
-        else:
-            files_list = [File(path, cryostat_attenuation, additional_params)]
+        if path is not None:
+            if cryostat_attenuation is None:
+                raise ValueError("Cryostat attenuation must be specified with a path")
+            if cryostat_attenuation > 0:
+                raise ValueError("Attenuation must be negative")
+            if Path(path).suffix == "":
+                additional_params = (
+                    additional_params if additional_params is not None else []
+                )
+                files_list = _load_files_from_path(
+                    path, cryostat_attenuation, additional_params
+                )
+            else:
+                files_list = [File(path, cryostat_attenuation, additional_params)]
 
-        for i, file in enumerate(files_list):
-            self.files.update({str(i): file})
+            for i, file in enumerate(files_list):
+                self.files.update({str(i): file})
+        else:
+            if files is None:
+                raise ValueError("A list of files must be specified if no path is given")
+            att = files[0].cryostat_attenuation
+            for file in files:
+                if file.cryostat_attenuation != att:
+                    raise ValueError("All attenuation must be equal to create a Dataset from files")
+            for i, file in enumerate(files):
+                self.files.update({str(i): file})
 
     def __getattribute__(self, name: str) -> Any:
         if not name.startswith("__") and re.fullmatch(r"f\d+", name):
