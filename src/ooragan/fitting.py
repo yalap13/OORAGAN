@@ -414,7 +414,7 @@ class Fitter:
                                 savepath=os.path.join(
                                     self._savepath, "results", "fit_images"
                                 ),
-                                nodialog=overwrite_warn,
+                                nodialog=not overwrite_warn,
                             )
                         break
                 if not succeeded:

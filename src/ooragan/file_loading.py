@@ -310,7 +310,9 @@ def _load_files_from_path(
     """Loads multiple files from a directory, walking through it."""
     files = []
     for paths, _, _ in os.walk(path):
-        for file in glob(os.path.join(paths, "*.hdf5")):
+        glob_out = glob(os.path.join(paths, "*.hdf5"))
+        glob_out.sort()
+        for file in glob_out:
             file_obj = File(file, cryostat_attenuation, additional_params)
             files.append(file_obj)
     if not files:
