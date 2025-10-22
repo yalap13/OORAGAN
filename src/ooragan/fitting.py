@@ -362,6 +362,8 @@ class Fitter:
                 )
         fail_count = 0
         for file in files:
+            if str(file) in self._fit_results.keys():
+                continue
             file_obj = self._files[str(file)]
             frequency = file_obj.vna_frequency.range
             temp = []
