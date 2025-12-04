@@ -133,7 +133,10 @@ class FitResult:
         """
         out = []
         for fitter in self._results:
-            out.append(fitter.__getattribute__(name))
+            try:
+                out.append(fitter.__getattribute__(name))
+            except AttributeError:
+                out.append(fitter.__getattr__(name))
         return array(out)
 
     def append(
