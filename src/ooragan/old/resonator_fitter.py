@@ -11,8 +11,8 @@ from scipy.constants import k, hbar
 from scipy.optimize import curve_fit
 from progress.bar import Bar
 
-from .old.dataset import Dataset
-from .util import choice, convert_complex_to_magphase, plot_triptych
+from .dataset import Dataset
+from ooragan.util import choice, convert_complex_to_magphase, plot_triptych
 
 
 class ResonatorFitter:
@@ -358,23 +358,23 @@ class ResonatorFitter:
                 if not succeeded:
                     failed.append(p)
                 else:
-                    a = str(np.mean(frequency / 1e9))[:5].replace(".", "_")
-                    triptych = self._plot_fit(
-                        result,
-                        save=savepic,
-                        savepath=os.path.join(self._savepath, "fit_images"),
-                        show=showpic,
-                        name=f"{a}GHz_{p}_dBm",
-                        nodialog=nodialog,
-                        trimmed_data={
-                            "real": np.real(s21_complex),
-                            "imag": np.imag(s21_complex),
-                            "phase": phase,
-                            "mag": mag,
-                            "freq": frequency,
-                        },
-                    )
-                    figures_temp.append(triptych)
+                    # a = str(np.mean(frequency / 1e9))[:5].replace(".", "_")
+                    # triptych = self._plot_fit(
+                    #     result,
+                    #     save=savepic,
+                    #     savepath=os.path.join(self._savepath, "fit_images"),
+                    #     show=showpic,
+                    #     name=f"{a}GHz_{p}_dBm",
+                    #     nodialog=nodialog,
+                    #     trimmed_data={
+                    #         "real": np.real(s21_complex),
+                    #         "imag": np.imag(s21_complex),
+                    #         "phase": phase,
+                    #         "mag": mag,
+                    #         "freq": frequency,
+                    #     },
+                    # )
+                    # figures_temp.append(triptych)
                     if write:
                         a = str(np.mean(frequency / 1e9))[:5].replace(".", "_")
                         self._write_fit(

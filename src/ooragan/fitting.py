@@ -112,6 +112,20 @@ class FitResult:
         """
         return self._get_res("omega_r_error")
 
+    @property
+    def internal_loss(self) -> NDArray:
+        """
+        The internal loss.
+        """
+        return self._get_res("internal_loss")
+
+    @property
+    def internal_loss_error(self) -> NDArray:
+        """
+        The internal loss error.
+        """
+        return self._get_res("internal_loss_error")
+
     def _get_res(self, name: str) -> NDArray:
         """
         Gets the requested value from each ResonatorFitter and returns them into a
@@ -455,7 +469,7 @@ class Fitter:
             triptych.save(filename)
         return triptych
 
-    def __getattribute__(self, name: str) -> Any:
+    def __getattribute__(self, name: str) -> FitResult | Any:
         if not name.startswith("__") and re.fullmatch(r"f\d+", name):
             try:
                 return self._fit_results[name.removeprefix("f")]
