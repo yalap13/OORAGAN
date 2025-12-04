@@ -532,7 +532,12 @@ class HDF5Data:
             for key in self.files
         }
         self.vna_bandwidth = {
-            key: info[key]["vna_info"]["VNA Bandwidth"].flatten() for key in self.files
+            key: (
+                info[key]["vna_info"]["VNA Bandwidth"].flatten()
+                if "VNA Bandwidth" in info[key]["vna_info"]
+                else 0
+            )
+            for key in self.files
         }
         self.vna_power = {
             key: info[key]["vna_info"]["VNA Power"].flatten() for key in self.files
