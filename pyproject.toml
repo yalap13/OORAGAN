@@ -4,18 +4,18 @@ version = "0.1.0"
 description = ""
 readme = "README.md"
 authors = [{ name = "Yannick Lapointe", email = "yannicklapointe77@gmail.com" }]
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.12,<3.15"
 dependencies = [
-    "easygui>=0.98.3",
-    "graphinglib @ git+https://github.com/graphinglib/graphinglib.git",
-    "h5py>=3.13.0",
-    "ipython>=8.32.0",
-    "loess>=2.1.2",
-    "pandas>=2.2.3",
-    "progress>=1.6",
-    "resonator @ git+https://github.com/danielflanigan/resonator.git",
-    "seaborn>=0.13.2",
-    "tabulate>=0.9.0",
+  "easygui>=0.98.3",
+  "graphinglib",
+  "h5py>=3.13.0",
+  "ipython>=8.32.0",
+  "loess>=2.1.2",
+  "pandas>=2.2.3",
+  "progress>=1.6",
+  "resonator @ git+https://github.com/danielflanigan/resonator.git",
+  "seaborn>=0.13.2",
+  "tabulate>=0.9.0",
 ]
 
 [build-system]
@@ -24,15 +24,15 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "colorcet>=3.1.0",
-    "ipykernel>=6.29.5",
-    "numpydoc>=1.8.0",
-    "pydata-sphinx-theme>=0.16.1",
-    "sphinx>=8.1.3",
-    "sphinx-copybutton>=0.5.2",
-    "sphinx-design>=0.6.1",
-    "sphinx-favicon>=1.0.1",
-    "sphinxext-opengraph>=0.9.1",
+  "colorcet>=3.1.0",
+  "ipykernel>=6.29.5",
+  "numpydoc>=1.8.0",
+  "pydata-sphinx-theme>=0.16.1",
+  "sphinx>=8.1.3",
+  "sphinx-copybutton>=0.5.2",
+  "sphinx-design>=0.6.1",
+  "sphinx-favicon>=1.0.1",
+  "sphinxext-opengraph>=0.9.1",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -40,3 +40,6 @@ packages = ["src/ooragan", "src/ooragan/old"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+[tool.uv.sources]
+graphinglib = { git = "https://github.com/graphinglib/graphinglib.git" }
