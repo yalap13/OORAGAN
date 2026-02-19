@@ -11,7 +11,7 @@ from .util import convert_complex_to_magphase
 FREQ_UNIT_CONVERSION = {"GHz": 1e9, "MHz": 1e6, "kHz": 1e3}
 
 
-def plot_triptych(
+def triptych(
     freq: ArrayLike,
     complex_data: ArrayLike,
     fit_result: Optional[base.ResonatorFitter] = None,

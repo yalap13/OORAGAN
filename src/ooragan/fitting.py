@@ -5,11 +5,11 @@ from typing import Optional, Literal, Any
 from numpy import float64, floating, ndarray, ndindex, arange, mean, array
 from resonator import background, base, shunt, reflection
 from numpy.typing import ArrayLike, NDArray
-from graphinglib import MultiFigure
+from graphinglib import SmartFigure
 
 from .parameters import NullParameter
 from .file_loading import Dataset, File
-from .plotting import plot_triptych
+from .plotting import triptych
 from .util import choice
 
 
@@ -454,11 +454,11 @@ class Fitter:
         name: str = "",
         savepath: str = "",
         nodialog: bool = False,
-    ) -> MultiFigure:
+    ) -> SmartFigure:
         """
         Utilitary function to plot the fit result as a triptych (resonator.see.triptych).
         """
-        triptych = plot_triptych(
+        fig = triptych(
             frequency,
             complex_data,
             fit_result=result,
@@ -468,10 +468,10 @@ class Fitter:
         if os.path.exists(filename) and not nodialog:
             overwrite = choice()
             if overwrite:
-                triptych.save(filename)
+                fig.save(filename)
         else:
-            triptych.save(filename)
-        return triptych
+            fig.save(filename)
+        return fig
 
     def __getattribute__(self, name: str) -> FitResult | Any:
         if not name.startswith("__") and re.fullmatch(r"f\d+", name):
