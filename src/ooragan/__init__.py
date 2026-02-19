@@ -24,3 +24,4 @@ from .file_loading import Dataset, File
 from .fitting import Fitter, FitResult
 from .resonator_attribution import Resonator, ResonatorAttribution
 from .ppms_analysis import PPMSAnalysis
+from .plotting import plot_triptych

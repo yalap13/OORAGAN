@@ -9,7 +9,8 @@ from graphinglib import MultiFigure
 
 from .parameters import NullParameter
 from .file_loading import Dataset, File
-from .util import plot_triptych, choice
+from .plotting import plot_triptych
+from .util import choice
 
 
 class FitResult:
