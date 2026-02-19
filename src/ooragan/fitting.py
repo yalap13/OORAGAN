@@ -1,13 +1,12 @@
 import os
 import re
 import lmfit
-from typing import Optional, Literal, Any
+from typing import Optional, Literal, Any, overload
 from numpy import float64, floating, ndarray, ndindex, arange, mean, array
 from resonator import background, base, shunt, reflection
 from numpy.typing import ArrayLike, NDArray
 from graphinglib import SmartFigure
 
-from .parameters import NullParameter
 from .file_loading import Dataset, File
 from .plotting import triptych
 from .util import choice
@@ -480,3 +479,64 @@ class Fitter:
             except KeyError:
                 raise IndexError(f"No fit result with index {name.removeprefix('f')}")
         return super().__getattribute__(name)
+
+    @overload
+    def __getitem__(self, index: int) -> FitResult: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[FitResult]: ...
+
+    def __getitem__(self, index: int | slice) -> FitResult | list[FitResult]:
+        """
+        Returns the FitResult(s) with the given index (or indices).
+
+        Parameters
+        ----------
+        index : int or slice
+            The index or indices (as a slice) of FitResults to get from this Fitter.
+            If the start or stop of the slice are left empty, will return all FitResults
+            with indices inside the given bounds. This means for returning all FitResults,
+            use slice ``[:]``.
+
+        Returns
+        -------
+        FitResults | list[FitResults]
+            If a single index is specified, a single FitResult is returned. A list otherwise.
+        """
+        total_files = len(self._files.keys())
+        if isinstance(index, int):
+            if not -total_files <= index <= total_files - 1:
+                raise IndexError(
+                    "index {} out of bounds for number of files {}".format(
+                        index, total_files
+                    )
+                )
+            try:
+                if index < 0:
+                    index = total_files + index
+                return self._fit_results[str(index)]
+            except KeyError:
+                raise IndexError("no results for file with index {}".format(index))
+        if isinstance(index, slice):
+            if index.start and not -total_files <= index.start <= total_files - 1:
+                raise IndexError(
+                    "index [{}, {}] out of bounds for number of files {}".format(
+                        index.start, index.stop, total_files
+                    )
+                )
+            if index.stop and not -total_files <= index.stop <= total_files - 1:
+                raise IndexError(
+                    "index [{}, {}] out of bounds for number of files {}".format(
+                        index.start, index.stop, total_files
+                    )
+                )
+            idx_list = list(range(*index.indices(total_files)))
+            if index.start is None or index.stop is None:
+                idx_list = set(idx_list).intersection(
+                    map(int, list(self._fit_results.keys()))
+                )
+            try:
+                return [self._fit_results[str(i)] for i in idx_list]
+            except KeyError as e:
+                raise IndexError("no results for file with index {}".format(e.args[0]))
+        raise TypeError("indices must be int or slice, not {}".format(type(index)))
