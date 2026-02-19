@@ -10,9 +10,10 @@ from graphinglib import SmartFigure
 from .file_loading import Dataset, File
 from .plotting import triptych
 from .util import choice
+from .typing import _FitResult
 
 
-class FitResult:
+class FitResult(_FitResult):
     """
     Fit results container for a single file.
 

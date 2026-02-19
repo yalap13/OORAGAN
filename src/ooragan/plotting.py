@@ -1,11 +1,12 @@
 from numpy.typing import ArrayLike
-from typing import Optional, Literal
+from typing import Optional, Literal, Iterable
 from resonator import base
-from graphinglib import SmartFigure
+from graphinglib import SmartFigure, Curve
 import graphinglib as gl
 import numpy as np
 
 from .util import convert_complex_to_magphase
+from .typing import _FitResult
 
 
 FREQ_UNIT_CONVERSION = {"GHz": 1e9, "MHz": 1e6, "kHz": 1e3}
@@ -14,7 +15,7 @@ FREQ_UNIT_CONVERSION = {"GHz": 1e9, "MHz": 1e6, "kHz": 1e3}
 def triptych(
     freq: ArrayLike,
     complex_data: ArrayLike,
-    fit_result: Optional[base.ResonatorFitter] = None,
+    resonator_fitter: Optional[base.ResonatorFitter] = None,
     freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
     title: Optional[str] = None,
     three_ticks: bool = False,
@@ -30,7 +31,7 @@ def triptych(
         Frequency array.
     complex : ArrayLike
         Complex data array.
-    fit_result : ResonatorFitter, optional
+    resonator_fitter : ResonatorFitter, optional
         Fit result from the resonator library. Defaults to ``None``.
     freq_unit : {"GHz", "MHz", "kHz"}, optional
         Unit in which the frequency is given. Defaults to ``"GHz"``.
@@ -82,28 +83,28 @@ def triptych(
         title=title,
     )
 
-    if fit_result is not None:
-        fit = fit_result.evaluate_fit(fit_result.frequency)
-        fr = fit_result.evaluate_fit(fit_result.resonance_frequency)
+    if resonator_fitter is not None:
+        fit = resonator_fitter.evaluate_fit(resonator_fitter.frequency)
+        fr = resonator_fitter.evaluate_fit(resonator_fitter.resonance_frequency)
         mag_fit = gl.Curve(
-            fit_result.frequency / FREQ_UNIT_CONVERSION[freq_unit],
+            resonator_fitter.frequency / FREQ_UNIT_CONVERSION[freq_unit],
             20 * np.log10(np.abs(fit)),
             color="k",
             line_width=1,
         )
         mag_point = gl.Scatter(
-            fit_result.resonance_frequency / FREQ_UNIT_CONVERSION[freq_unit],
+            resonator_fitter.resonance_frequency / FREQ_UNIT_CONVERSION[freq_unit],
             20 * np.log10(np.abs(fr)),
             face_color="k",
         )
         phase_fit = gl.Curve(
-            fit_result.frequency / FREQ_UNIT_CONVERSION[freq_unit],
+            resonator_fitter.frequency / FREQ_UNIT_CONVERSION[freq_unit],
             np.degrees(np.angle(fit)),
             color="k",
             line_width=1,
         )
         phase_point = gl.Scatter(
-            fit_result.resonance_frequency / FREQ_UNIT_CONVERSION[freq_unit],
+            resonator_fitter.resonance_frequency / FREQ_UNIT_CONVERSION[freq_unit],
             np.degrees(np.angle(fr)),
             face_color="k",
         )
@@ -117,12 +118,45 @@ def triptych(
 
     if three_ticks:
         triptych[0, 0].set_ticks(x_ticks=[np.min(freq), np.mean(freq), np.max(freq)])
-        # triptych[0, 0][1, 0].set_ticks(
-        #     x_ticks=[np.min(freq), np.mean(freq), np.max(freq)]
-        # )
         triptych[0, 1].set_ticks(
             x_ticks=[np.min(real), 0, np.max(real)],
             y_ticks=[np.min(imag), 0, np.max(imag)],
         )
 
     return triptych
+
+
+def _as_function_of_photon_nbr(
+    elements: Iterable[Curve],
+    y_label: str,
+    figure_style: str,
+    title: Optional[str],
+) -> SmartFigure:
+    fig = SmartFigure(
+        x_label=r"$\tilde n$",
+        y_label=y_label,
+        elements=elements,
+        figure_style=figure_style,
+        title=title,
+        log_scale_x=True,
+        log_scale_y=True,
+        legend_loc="outside center right",
+    )
+    return fig
+
+
+def quality_factors(
+    fit_results: _FitResult | list[_FitResult],
+    title: Optional[str] = None,
+    figure_style: str = "default",
+) -> SmartFigure:
+    if not isinstance(fit_results, list):
+        fit_results = [fit_results]
+    elements = []
+
+    # TODO: implement the curves
+
+    fig = _as_function_of_photon_nbr(
+        elements=elements, y_label="$Q_i, Q_c$", figure_style=figure_style, title=title
+    )
+    return fig
