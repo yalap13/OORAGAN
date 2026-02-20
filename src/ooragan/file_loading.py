@@ -97,10 +97,9 @@ class File:
     """
     Defines a loaded HDF file.
 
-    Note
-    ----
-    The ``File`` objects are created automatically when creating a
-    :class:`Dataset` from a path.
+    .. note::
+        The ``File`` objects are created automatically when creating a
+        :class:`Dataset` from a path.
 
     Parameters
     ----------
@@ -325,10 +324,9 @@ class Dataset:
     Data container. Contains data and information on measurements saved in HDF5
     files.
 
-    Note
-    ----
-    Supports only data from HDF5 files as of now. For txt files, use the old
-    Dataset class located in ooragan.old.Dataset.
+    .. attention::
+        Supports only data from HDF5 files as of now. For txt files, use the old
+        Dataset class located in ooragan.old.Dataset.
 
     Parameters
     ----------

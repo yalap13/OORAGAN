@@ -31,6 +31,7 @@ Plot results quickly using these plotting helper functions.
    triptych
    quality_factors
    losses
+   magnetic_field
 
 Utils
 -----

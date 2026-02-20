@@ -292,3 +292,48 @@ def losses(
         title=title,
     )
     return fig
+
+
+def magnetic_field(
+    fit_results: _FitResult,
+    show_frequency: bool = True,
+    fit_frequency: bool = False,
+    title: Optional[str] = None,
+    figure_style: str = "default",
+) -> SmartFigure:
+    r"""
+    Parameters
+    ----------
+    fit_results : FitResult or list of FitResult
+        Single or list of FitResult from a Fitter.
+    show_frequency : bool, optional
+        Wheter or not to show the frequency variation on the plot. Defaults to ``True``.
+    fit_frequency : bool, optional
+        Wheter or not to fit the frequency variation. Defaults to ``False``.
+    title : str, optional
+        Title of the figure. Defaults to ``None``.
+    figure_style : str, optional
+        GraphingLib figure style to apply to the plot. See
+        `here <https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase>`_
+        for more info.
+
+    Notes
+    -----
+    The frequency is fitted using the model
+
+    .. math:: \frac{\Delta f}{f_r} = -\frac{\pi}{48}\frac{e^2t^2}{\hbar k_B T_c}D\left(1+\theta_B^2\frac{w^2}{t^2}\right)B_\parallel^2
+
+    from C. Roy, S. Frasca and P. Scarlino, *Magnetic-field-resilient high-impedance high-kinetic-inductance superconducting
+    resonators*, Phys. Rev. Appl. **25**, 014069 (2026).
+    """
+    if not isinstance(fit_results, _FitResult):
+        raise TypeError("can only accept a single FitResult")
+    elements = []
+    if figure_style == "default":
+        figure_style = gl.get_default_style()
+
+    # TODO: Finish implementation
+
+    fig = SmartFigure()
+
+    return fig

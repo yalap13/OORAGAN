@@ -23,10 +23,15 @@ class FitResult(_FitResult):
         List of ResonatorFitter objects from the :class:`Fitter`.
     photon_nbr : list of float
         List of the computed photon numbers.
+    magnet_field : list of float, optional
+        List of magnetic field norm values.
     """
 
     def __init__(
-        self, results: list[base.ResonatorFitter], photon_nbr: list[float]
+        self,
+        results: list[base.ResonatorFitter],
+        photon_nbr: list[float],
+        magnet_field: Optional[list[float]] = None,
     ) -> None:
         if all(isinstance(fitter, base.ResonatorFitter) for fitter in results):
             self._results = results
@@ -35,6 +40,7 @@ class FitResult(_FitResult):
                 "Must provide a list of only resonator.base.ResonatorFitter instances"
             )
         self._photon_number = photon_nbr
+        self._magnet_field = magnet_field if magnet_field is not None else []
 
     @property
     def photon_nbr(self) -> NDArray:
@@ -42,6 +48,13 @@ class FitResult(_FitResult):
         The computed photon numbers.
         """
         return array(self._photon_number)
+
+    @property
+    def magnet_field(self) -> NDArray:
+        """
+        The magnetic field norm in Tesla.
+        """
+        return array(self._magnet_field)
 
     @property
     def Q_c(self) -> NDArray:
@@ -155,7 +168,10 @@ class FitResult(_FitResult):
         return array(out)
 
     def append(
-        self, results: list[base.ResonatorFitter], photon_nbr: list[float]
+        self,
+        results: list[base.ResonatorFitter],
+        photon_nbr: list[float],
+        magnet_field: Optional[list[float]] = None,
     ) -> None:
         """
         Append new results to existing FitResult instance.
@@ -166,6 +182,8 @@ class FitResult(_FitResult):
             List of ResonatorFitter objects from the :class:`Fitter`.
         photon_nbr : list of float
             List of the computed photon numbers.
+        magnet_field : list of float, optional
+            List of magnetic field norm values.
         """
         if all(isinstance(fitter, base.ResonatorFitter) for fitter in results):
             for res in results:
@@ -176,6 +194,9 @@ class FitResult(_FitResult):
             )
         for pn in photon_nbr:
             self._photon_number.append(pn)
+        if magnet_field:
+            for m in magnet_field:
+                self._magnet_field.append(m)
 
 
 class Fitter:
@@ -184,7 +205,6 @@ class Fitter:
     fit results.
 
     .. seealso::
-
         This object is a wrapper of `Daniel Flanigan's resonator
         library <https://github.com/danielflanigan/resonator>`_.
 
@@ -364,7 +384,6 @@ class Fitter:
         .. seealso:: See the `lmfit library <https://lmfit.github.io/lmfit-py/>`_.
 
         .. note::
-
             Once the data has been fitted using :py:meth:`fit <ResonatorFitter.fit>`
             method, the fit result figures (triptychs) are saved in the ``_fit_figures``
             dictionnary of the `ResonatorFitter` instance.
@@ -400,6 +419,7 @@ class Fitter:
             frequency = file_obj.vna_frequency.range
             temp = []
             temp_photon = []
+            temp_magnet = []
             for idx in ndindex(file_obj.shape[:-1]):
                 real = file_obj.s21_real.range[idx]
                 imag = file_obj.s21_imag.range[idx]
@@ -437,6 +457,8 @@ class Fitter:
                         succeeded = True
                         temp.append(fitter)
                         temp_photon.append(photon)
+                        if "Magnet" in file_obj.list_params():
+                            temp_magnet.append(file_obj.magnet.range[idx])
                         if save_fig:
                             _ = self._plot_fit(
                                 fitter,
@@ -455,9 +477,11 @@ class Fitter:
                     fail_count += 1
 
             if str(file) in self._fit_results.keys():
-                self._fit_results[str(file)].append(temp, temp_photon)
+                self._fit_results[str(file)].append(temp, temp_photon, temp_magnet)
             else:
-                self._fit_results.update({str(file): FitResult(temp, temp_photon)})
+                self._fit_results.update(
+                    {str(file): FitResult(temp, temp_photon, temp_magnet)}
+                )
         print("{} fit failures".format(fail_count))
 
     def _plot_fit(
