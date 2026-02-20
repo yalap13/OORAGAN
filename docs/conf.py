@@ -64,7 +64,7 @@ intersphinx_mapping = {
 }
 autodoc_type_aliases = {"ArrayLike": "ArrayLike", "NDArray": "NDArray"}
 autosummary_generate = True
-numpydoc_show_class_members = True
+numpydoc_show_class_members = False
 
 ogp_site_url = "https://ooragan.readthedocs.io/"
 ogp_image = "latest/_static/icons/ooragan_opengraph.png"
