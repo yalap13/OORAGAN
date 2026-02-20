@@ -30,6 +30,7 @@ extensions = [
     "sphinx_favicon",
     "sphinx_design",
     "sphinxext.opengraph",
+    "matplotlib.sphinxext.plot_directive",
 ]
 
 templates_path = ["_templates"]
@@ -65,6 +66,8 @@ intersphinx_mapping = {
 autodoc_type_aliases = {"ArrayLike": "ArrayLike", "NDArray": "NDArray"}
 autosummary_generate = True
 numpydoc_show_class_members = False
+
+plot_include_source = True
 
 ogp_site_url = "https://ooragan.readthedocs.io/"
 ogp_image = "latest/_static/icons/ooragan_opengraph.png"

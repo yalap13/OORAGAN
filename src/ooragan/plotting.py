@@ -33,6 +33,11 @@ def triptych(
         Complex data array.
     resonator_fitter : ResonatorFitter, optional
         Fit result from the resonator library. Defaults to ``None``.
+
+        .. note::
+
+           If a ``ResonatorFitter`` is provided, the fit and the resonance frequency obtained from the fit are displayed.
+
     freq_unit : {"GHz", "MHz", "kHz"}, optional
         Unit in which the frequency is given. Defaults to ``"GHz"``.
     title : str, optional
@@ -42,8 +47,36 @@ def triptych(
         frequency, the maximum and the frequency. Defaults to ``False``.
     figure_style : str, optional
         GraphingLib figure style to apply to the plot. See
-        [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
+        `here <https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase>`_
         for more info.
+
+
+    Examples
+    --------
+    .. plot::
+
+       import numpy as np
+       from ooragan import triptych
+
+       # Generate data from theoretical model
+       def S21(f, Q, Qc, f0):
+           return 1 - (Q / Qc) / (1 + 2j * Q * (f - f0) / f0)
+
+
+       Q = 85000
+       Qc = 100000
+       f0 = 6.5e9
+       tau = 0.0000001
+       a = 1
+       alpha = 0
+       phi = 0
+       frequency = np.linspace(6.4995e9, 6.5005e9, 5001)
+
+       fig = triptych(
+           frequency,
+           S21(frequency, Q, Qc, f0),
+       )
+       fig.show()
     """
     freq = np.asarray(freq) / FREQ_UNIT_CONVERSION[freq_unit]
     real = np.real(complex_data)
@@ -147,16 +180,115 @@ def _as_function_of_photon_nbr(
 
 def quality_factors(
     fit_results: _FitResult | list[_FitResult],
+    freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
     title: Optional[str] = None,
     figure_style: str = "default",
 ) -> SmartFigure:
-    if not isinstance(fit_results, list):
-        fit_results = [fit_results]
-    elements = []
+    r"""
+    Plots the quality factors :math:`Q_i` and :math:`Q_c` as a function of average photon number in the
+    resonator :math:`(\tilde n)`.
 
-    # TODO: implement the curves
+    Parameters
+    ----------
+    fit_results : FitResult or list of FitResult
+        Single or list of FitResult from a Fitter.
+    freq_unit : {"GHz", "MHz", "kHz"}, optional
+        Unit in which the frequency is given. Defaults to ``"GHz"``.
+    title : str, optional
+        Title of the figure. Defaults to ``None``.
+    figure_style : str, optional
+        GraphingLib figure style to apply to the plot. See
+        `here <https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase>`_
+        for more info.
+    """
+    if isinstance(fit_results, _FitResult):
+        fit_results = [fit_results]
+    elif isinstance(fit_results, list):
+        if not all(isinstance(i, _FitResult) for i in fit_results):
+            raise TypeError("can only accept a FitResult or a list of FitResults")
+    else:
+        raise TypeError("can only accept a FitResult or a list of FitResults")
+    elements = []
+    if figure_style == "default":
+        figure_style = gl.get_default_style()
+
+    for i, fr in enumerate(fit_results):
+        qi = Curve(
+            fr.photon_nbr,
+            fr.Q_i,
+            label="{:.3f} {}".format(
+                np.mean(fr.f_r) / FREQ_UNIT_CONVERSION[freq_unit], freq_unit
+            ),
+            color=gl.get_color(figure_style, i),
+        )
+        qc = Curve(
+            fr.photon_nbr, fr.Q_c, line_style="--", color=gl.get_color(figure_style, i)
+        )
+        elements.append(qi)
+        elements.append(qc)
 
     fig = _as_function_of_photon_nbr(
         elements=elements, y_label="$Q_i, Q_c$", figure_style=figure_style, title=title
+    )
+    return fig
+
+
+def losses(
+    fit_results: _FitResult | list[_FitResult],
+    freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
+    title: Optional[str] = None,
+    figure_style: str = "default",
+) -> SmartFigure:
+    r"""
+    Plots the losses :math:`\delta_i` and :math:`\delta_c` as a function of average photon number in the
+    resonator :math:`(\tilde n)`.
+
+    Parameters
+    ----------
+    fit_results : FitResult or list of FitResult
+        Single or list of FitResult from a Fitter.
+    freq_unit : {"GHz", "MHz", "kHz"}, optional
+        Unit in which the frequency is given. Defaults to ``"GHz"``.
+    title : str, optional
+        Title of the figure. Defaults to ``None``.
+    figure_style : str, optional
+        GraphingLib figure style to apply to the plot. See
+        `here <https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase>`_
+        for more info.
+    """
+    if isinstance(fit_results, _FitResult):
+        fit_results = [fit_results]
+    elif isinstance(fit_results, list):
+        if not all(isinstance(i, _FitResult) for i in fit_results):
+            raise TypeError("can only accept a FitResult or a list of FitResults")
+    else:
+        raise TypeError("can only accept a FitResult or a list of FitResults")
+    elements = []
+    if figure_style == "default":
+        figure_style = gl.get_default_style()
+
+    for i, fr in enumerate(fit_results):
+        di = Curve(
+            fr.photon_nbr,
+            fr.internal_loss,
+            label="{:.3f} {}".format(
+                np.mean(fr.f_r) / FREQ_UNIT_CONVERSION[freq_unit], freq_unit
+            ),
+            color=gl.get_color(figure_style, i),
+        )
+        dc = Curve(
+            fr.photon_nbr,
+            fr.coupling_loss,
+            line_style="--",
+            color=gl.get_color(figure_style, i),
+        )
+        elements.append(di)
+        elements.append(dc)
+
+    fig = _as_function_of_photon_nbr(
+        elements=elements,
+        y_label=r"$\delta_i, \delta_c$",
+        figure_style=figure_style,
+        title=title,
     )
     return fig

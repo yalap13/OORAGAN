@@ -20,8 +20,20 @@ Objects
    Resonator
    ResonatorAttribution
 
-Functions
----------
+Plotting functions
+------------------
+Plot results quickly using these plotting helper functions.
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+
+   triptych
+   quality_factors
+   losses
+
+Utils
+-----
 
 .. autosummary::
    :toctree: generated/

@@ -127,6 +127,20 @@ class FitResult(_FitResult):
         """
         return self._get_res("internal_loss_error")
 
+    @property
+    def coupling_loss(self) -> NDArray:
+        """
+        The coupling loss.
+        """
+        return self._get_res("coupling_loss")
+
+    @property
+    def coupling_loss_error(self) -> NDArray:
+        """
+        The coupling loss error.
+        """
+        return self._get_res("coupling_loss_error")
+
     def _get_res(self, name: str) -> NDArray:
         """
         Gets the requested value from each ResonatorFitter and returns them into a
