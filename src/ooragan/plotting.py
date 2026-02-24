@@ -324,16 +324,19 @@ def magnetic_field(
     figure_style: str = "default",
 ) -> SmartFigure:
     r"""
+    Plots the internal quality factor (:math:`Q_i`) as a function of the parallel magnetic field (:math:`B_\parallel`).
+    Also can plot and fit the frequency shift induced by the magnetic field.
+
     Parameters
     ----------
     fit_result : FitResult or list of FitResult
         Single or list of FitResult from a Fitter.
     two_way_sweep : bool, optional
-        Wheter or not the data was taken while the field was going up **and** down. Defaults to ``True``.
+        Whether or not the data was taken while the field was going up **and** down. Defaults to ``True``.
     show_frequency : bool, optional
-        Wheter or not to show the frequency variation on the plot. Defaults to ``True``.
+        Whether or not to show the frequency variation on the plot. Defaults to ``True``.
     fit_frequency : bool, optional
-        Wheter or not to fit the frequency variation. Defaults to ``False``.
+        Whether or not to fit the frequency variation. Defaults to ``False``.
     title : str, optional
         Title of the figure. Defaults to ``None``.
     figure_style : str, optional
