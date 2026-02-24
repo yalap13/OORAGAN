@@ -10,9 +10,6 @@ from typing import Optional, Literal
 from graphinglib import MultiFigure
 
 
-FREQ_UNIT_CONVERSION = {"GHz": 1e9, "MHz": 1e6, "kHz": 1e3}
-
-
 def choice(
     title: Optional[str] = None,
     msg: Optional[str] = None,
@@ -169,107 +166,6 @@ def load_graph_data(path: str) -> dict[str, NDArray]:
     for label in df.columns.get_level_values(0).unique():
         loaded_data[label] = np.array(df[label]).T
     return loaded_data
-
-
-def plot_triptych(
-    freq: ArrayLike,
-    complex_data: ArrayLike,
-    fit_result: Optional[base.ResonatorFitter] = None,
-    freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
-    title: Optional[str] = None,
-    three_ticks: bool = False,
-    figure_style: str = "default",
-) -> MultiFigure:
-    """
-    Plots the magnitude vs frequency, the phase vs frequency and the complex data in a
-    single figure.
-
-    Parameters
-    ----------
-    freq : ArrayLike
-        Frequency array.
-    complex : ArrayLike
-        Complex data array.
-    fit_result : ResonatorFitter, optional
-        Fit result from the resonator library. Defaults to ``None``.
-    freq_unit : {"GHz", "MHz", "kHz"}, optional
-        Unit in which the frequency is given. Defaults to ``"GHz"``.
-    title : str, optional
-        Title of the figure. Defaults to ``None``.
-    three_ticks : bool, optional
-        If ``True``, only three ticks will be displayed on the x axis: the minimum
-        frequency, the maximum and the frequency. Defaults to ``False``.
-    figure_style : str, optional
-        GraphingLib figure style to apply to the plot. See
-        [here](https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase)
-        for more info.
-    """
-    freq = np.asarray(freq) / FREQ_UNIT_CONVERSION[freq_unit]
-    real = np.real(complex_data)
-    imag = np.imag(complex_data)
-    mag, phase = convert_complex_to_magphase(real, imag)
-    fig_mag_vs_freq = gl.Figure(
-        f"Frequency ({freq_unit})", "Magnitude (dBm)", figure_style=figure_style
-    )
-    mag_vs_freq = gl.Scatter(freq, mag, marker_style=".")
-    fig_mag_vs_freq.add_elements(mag_vs_freq)
-    fig_phase_vs_freq = gl.Figure(
-        f"Frequency ({freq_unit})", "Phase (deg)", figure_style=figure_style
-    )
-    phase_vs_freq = gl.Scatter(freq, phase, marker_style=".")
-    fig_phase_vs_freq.add_elements(phase_vs_freq)
-    fig_complex = gl.Figure(
-        "real", "imag", figure_style=figure_style, aspect_ratio="equal"
-    )
-    complex = gl.Scatter(real, imag, marker_style=".", label="Data")
-    hline = gl.Hlines([0], line_styles=":", line_widths=1, colors="silver")
-    vline = gl.Vlines([0], line_styles=":", line_widths=1, colors="silver")
-    fig_complex.add_elements(hline, vline, complex)
-
-    if fit_result is not None:
-        fit = fit_result.evaluate_fit(fit_result.frequency)
-        fr = fit_result.evaluate_fit(fit_result.resonance_frequency)
-        mag_fit = gl.Curve(
-            fit_result.frequency / FREQ_UNIT_CONVERSION[freq_unit],
-            20 * np.log10(np.abs(fit)),
-            color="k",
-            line_width=1,
-        )
-        mag_point = gl.Scatter(
-            fit_result.resonance_frequency / FREQ_UNIT_CONVERSION[freq_unit],
-            20 * np.log10(np.abs(fr)),
-            face_color="k",
-        )
-        phase_fit = gl.Curve(
-            fit_result.frequency / FREQ_UNIT_CONVERSION[freq_unit],
-            np.degrees(np.angle(fit)),
-            color="k",
-            line_width=1,
-        )
-        phase_point = gl.Scatter(
-            fit_result.resonance_frequency / FREQ_UNIT_CONVERSION[freq_unit],
-            np.degrees(np.angle(fr)),
-            face_color="k",
-        )
-        complex_fit = gl.Curve(
-            fit.real, fit.imag, color="k", line_width=1, label="Best fit"
-        )
-        complex_point = gl.Scatter(fr.real, fr.imag, face_color="k", label="Resonance")
-        fig_mag_vs_freq.add_elements(mag_fit, mag_point)
-        fig_phase_vs_freq.add_elements(phase_fit, phase_point)
-        fig_complex.add_elements(complex_fit, complex_point)
-
-    if three_ticks:
-        fig_mag_vs_freq.set_ticks(xticks=[np.min(freq), np.mean(freq), np.max(freq)])
-        fig_phase_vs_freq.set_ticks(xticks=[np.min(freq), np.mean(freq), np.max(freq)])
-        fig_complex.set_ticks(xticks=[np.min(real), 0, np.max(real)])
-    triptych = gl.MultiFigure(
-        2, 2, (10, 6), title=title, reference_labels=False, figure_style=figure_style
-    )
-    triptych.add_figure(fig_mag_vs_freq, 0, 0, 1, 1)
-    triptych.add_figure(fig_phase_vs_freq, 1, 0, 1, 1)
-    triptych.add_figure(fig_complex, 0, 1, 2, 1)
-    return triptych
 
 
 def level_phase(phase: ArrayLike, deg: bool = False) -> ArrayLike:

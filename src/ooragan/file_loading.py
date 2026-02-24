@@ -4,7 +4,7 @@ import re
 import numpy as np
 from glob import glob
 from pathlib import Path
-from typing import Any, Self, Optional
+from typing import Any, Self, Optional, overload
 
 from numpy.typing import NDArray
 
@@ -97,10 +97,9 @@ class File:
     """
     Defines a loaded HDF file.
 
-    Note
-    ----
-    The ``File`` objects are created automatically when creating a
-    :class:`Dataset` from a path.
+    .. note::
+        The ``File`` objects are created automatically when creating a
+        :class:`Dataset` from a path.
 
     Parameters
     ----------
@@ -325,10 +324,9 @@ class Dataset:
     Data container. Contains data and information on measurements saved in HDF5
     files.
 
-    Note
-    ----
-    Supports only data from HDF5 files as of now. For txt files, use the old
-    Dataset class located in ooragan.old.Dataset.
+    .. attention::
+        Supports only data from HDF5 files as of now. For txt files, use the old
+        Dataset class located in ooragan.old.Dataset.
 
     Parameters
     ----------
@@ -394,11 +392,15 @@ class Dataset:
                 self.files.update({str(i): file})
         else:
             if files is None:
-                raise ValueError("A list of files must be specified if no path is given")
+                raise ValueError(
+                    "A list of files must be specified if no path is given"
+                )
             att = files[0].cryostat_attenuation
             for file in files:
                 if file.cryostat_attenuation != att:
-                    raise ValueError("All attenuation must be equal to create a Dataset from files")
+                    raise ValueError(
+                        "All attenuation must be equal to create a Dataset from files"
+                    )
             for i, file in enumerate(files):
                 self.files.update({str(i): file})
 
@@ -418,3 +420,54 @@ class Dataset:
 
     def __repr__(self) -> str:
         return f"ooragan.Dataset({self.files}, {self.cryostat_attenuation})"
+
+    @overload
+    def __getitem__(self, index: int) -> File: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[File]: ...
+
+    def __getitem__(self, index: int | slice) -> File | list[File]:
+        """
+        Returns the File(s) with the given index (or indices).
+
+        Parameters
+        ----------
+        index : int or slice
+            The index or indices (as a slice) of Files to get from this Dataset.
+            If the start or stop of the slice are left empty, will return all Files
+            with indices inside the given bounds. This means for returning all Files,
+            use slice ``[:]``.
+
+        Returns
+        -------
+        File | list[File]
+            If a single index is specified, a single File is returned. A list otherwise.
+        """
+        total_files = len(self.files.keys())
+        if isinstance(index, int):
+            if not -total_files <= index <= total_files - 1:
+                raise IndexError(
+                    "index {} out of bounds for number of files {}".format(
+                        index, total_files
+                    )
+                )
+            return self.files[str(index)]
+        if isinstance(index, slice):
+            if index.start and not -total_files <= index.start <= total_files - 1:
+                raise IndexError(
+                    "index [{}, {}] out of bounds for number of files {}".format(
+                        index.start, index.stop, total_files
+                    )
+                )
+            if index.stop and not -total_files <= index.stop <= total_files - 1:
+                raise IndexError(
+                    "index [{}, {}] out of bounds for number of files {}".format(
+                        index.start, index.stop, total_files
+                    )
+                )
+            idx_list = list(range(*index.indices(total_files)))
+            if index.start is None or index.stop is None:
+                idx_list = set(idx_list).intersection(map(int, list(self.files.keys())))
+            return [self.files[str(i)] for i in idx_list]
+        raise TypeError("indices must be int or slice, not {}".format(type(index)))

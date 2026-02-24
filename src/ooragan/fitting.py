@@ -1,18 +1,19 @@
 import os
 import re
 import lmfit
-from typing import Optional, Literal, Any
+from typing import Optional, Literal, Any, overload
 from numpy import float64, floating, ndarray, ndindex, arange, mean, array
 from resonator import background, base, shunt, reflection
 from numpy.typing import ArrayLike, NDArray
-from graphinglib import MultiFigure
+from graphinglib import SmartFigure
 
-from .parameters import NullParameter
 from .file_loading import Dataset, File
-from .util import plot_triptych, choice
+from .plotting import triptych
+from .util import choice
+from .typing import _FitResult
 
 
-class FitResult:
+class FitResult(_FitResult):
     """
     Fit results container for a single file.
 
@@ -22,10 +23,15 @@ class FitResult:
         List of ResonatorFitter objects from the :class:`Fitter`.
     photon_nbr : list of float
         List of the computed photon numbers.
+    magnet_field : list of float, optional
+        List of magnetic field norm values.
     """
 
     def __init__(
-        self, results: list[base.ResonatorFitter], photon_nbr: list[float]
+        self,
+        results: list[base.ResonatorFitter],
+        photon_nbr: list[float],
+        magnet_field: Optional[list[float]] = None,
     ) -> None:
         if all(isinstance(fitter, base.ResonatorFitter) for fitter in results):
             self._results = results
@@ -34,6 +40,7 @@ class FitResult:
                 "Must provide a list of only resonator.base.ResonatorFitter instances"
             )
         self._photon_number = photon_nbr
+        self._magnet_field = magnet_field if magnet_field is not None else []
 
     @property
     def photon_nbr(self) -> NDArray:
@@ -41,6 +48,13 @@ class FitResult:
         The computed photon numbers.
         """
         return array(self._photon_number)
+
+    @property
+    def magnet_field(self) -> NDArray:
+        """
+        The magnetic field norm in Tesla.
+        """
+        return array(self._magnet_field)
 
     @property
     def Q_c(self) -> NDArray:
@@ -126,6 +140,20 @@ class FitResult:
         """
         return self._get_res("internal_loss_error")
 
+    @property
+    def coupling_loss(self) -> NDArray:
+        """
+        The coupling loss.
+        """
+        return self._get_res("coupling_loss")
+
+    @property
+    def coupling_loss_error(self) -> NDArray:
+        """
+        The coupling loss error.
+        """
+        return self._get_res("coupling_loss_error")
+
     def _get_res(self, name: str) -> NDArray:
         """
         Gets the requested value from each ResonatorFitter and returns them into a
@@ -140,7 +168,10 @@ class FitResult:
         return array(out)
 
     def append(
-        self, results: list[base.ResonatorFitter], photon_nbr: list[float]
+        self,
+        results: list[base.ResonatorFitter],
+        photon_nbr: list[float],
+        magnet_field: Optional[list[float]] = None,
     ) -> None:
         """
         Append new results to existing FitResult instance.
@@ -151,6 +182,8 @@ class FitResult:
             List of ResonatorFitter objects from the :class:`Fitter`.
         photon_nbr : list of float
             List of the computed photon numbers.
+        magnet_field : list of float, optional
+            List of magnetic field norm values.
         """
         if all(isinstance(fitter, base.ResonatorFitter) for fitter in results):
             for res in results:
@@ -161,6 +194,9 @@ class FitResult:
             )
         for pn in photon_nbr:
             self._photon_number.append(pn)
+        if magnet_field:
+            for m in magnet_field:
+                self._magnet_field.append(m)
 
 
 class Fitter:
@@ -169,7 +205,6 @@ class Fitter:
     fit results.
 
     .. seealso::
-
         This object is a wrapper of `Daniel Flanigan's resonator
         library <https://github.com/danielflanigan/resonator>`_.
 
@@ -349,7 +384,6 @@ class Fitter:
         .. seealso:: See the `lmfit library <https://lmfit.github.io/lmfit-py/>`_.
 
         .. note::
-
             Once the data has been fitted using :py:meth:`fit <ResonatorFitter.fit>`
             method, the fit result figures (triptychs) are saved in the ``_fit_figures``
             dictionnary of the `ResonatorFitter` instance.
@@ -385,6 +419,7 @@ class Fitter:
             frequency = file_obj.vna_frequency.range
             temp = []
             temp_photon = []
+            temp_magnet = []
             for idx in ndindex(file_obj.shape[:-1]):
                 real = file_obj.s21_real.range[idx]
                 imag = file_obj.s21_imag.range[idx]
@@ -422,6 +457,8 @@ class Fitter:
                         succeeded = True
                         temp.append(fitter)
                         temp_photon.append(photon)
+                        if "Magnet" in file_obj.list_params():
+                            temp_magnet.append(file_obj.magnet.range[idx])
                         if save_fig:
                             _ = self._plot_fit(
                                 fitter,
@@ -440,9 +477,11 @@ class Fitter:
                     fail_count += 1
 
             if str(file) in self._fit_results.keys():
-                self._fit_results[str(file)].append(temp, temp_photon)
+                self._fit_results[str(file)].append(temp, temp_photon, temp_magnet)
             else:
-                self._fit_results.update({str(file): FitResult(temp, temp_photon)})
+                self._fit_results.update(
+                    {str(file): FitResult(temp, temp_photon, temp_magnet)}
+                )
         print("{} fit failures".format(fail_count))
 
     def _plot_fit(
@@ -453,11 +492,11 @@ class Fitter:
         name: str = "",
         savepath: str = "",
         nodialog: bool = False,
-    ) -> MultiFigure:
+    ) -> SmartFigure:
         """
         Utilitary function to plot the fit result as a triptych (resonator.see.triptych).
         """
-        triptych = plot_triptych(
+        fig = triptych(
             frequency,
             complex_data,
             fit_result=result,
@@ -467,10 +506,10 @@ class Fitter:
         if os.path.exists(filename) and not nodialog:
             overwrite = choice()
             if overwrite:
-                triptych.save(filename)
+                fig.save(filename)
         else:
-            triptych.save(filename)
-        return triptych
+            fig.save(filename)
+        return fig
 
     def __getattribute__(self, name: str) -> FitResult | Any:
         if not name.startswith("__") and re.fullmatch(r"f\d+", name):
@@ -479,3 +518,64 @@ class Fitter:
             except KeyError:
                 raise IndexError(f"No fit result with index {name.removeprefix('f')}")
         return super().__getattribute__(name)
+
+    @overload
+    def __getitem__(self, index: int) -> FitResult: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[FitResult]: ...
+
+    def __getitem__(self, index: int | slice) -> FitResult | list[FitResult]:
+        """
+        Returns the FitResult(s) with the given index (or indices).
+
+        Parameters
+        ----------
+        index : int or slice
+            The index or indices (as a slice) of FitResults to get from this Fitter.
+            If the start or stop of the slice are left empty, will return all FitResults
+            with indices inside the given bounds. This means for returning all FitResults,
+            use slice ``[:]``.
+
+        Returns
+        -------
+        FitResults | list[FitResults]
+            If a single index is specified, a single FitResult is returned. A list otherwise.
+        """
+        total_files = len(self._files.keys())
+        if isinstance(index, int):
+            if not -total_files <= index <= total_files - 1:
+                raise IndexError(
+                    "index {} out of bounds for number of files {}".format(
+                        index, total_files
+                    )
+                )
+            try:
+                if index < 0:
+                    index = total_files + index
+                return self._fit_results[str(index)]
+            except KeyError:
+                raise IndexError("no results for file with index {}".format(index))
+        if isinstance(index, slice):
+            if index.start and not -total_files <= index.start <= total_files - 1:
+                raise IndexError(
+                    "index [{}, {}] out of bounds for number of files {}".format(
+                        index.start, index.stop, total_files
+                    )
+                )
+            if index.stop and not -total_files <= index.stop <= total_files - 1:
+                raise IndexError(
+                    "index [{}, {}] out of bounds for number of files {}".format(
+                        index.start, index.stop, total_files
+                    )
+                )
+            idx_list = list(range(*index.indices(total_files)))
+            if index.start is None or index.stop is None:
+                idx_list = set(idx_list).intersection(
+                    map(int, list(self._fit_results.keys()))
+                )
+            try:
+                return [self._fit_results[str(i)] for i in idx_list]
+            except KeyError as e:
+                raise IndexError("no results for file with index {}".format(e.args[0]))
+        raise TypeError("indices must be int or slice, not {}".format(type(index)))

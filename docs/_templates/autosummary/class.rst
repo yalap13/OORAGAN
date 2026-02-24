@@ -6,26 +6,29 @@
 
     {% block methods %}
     {% if methods %}
-    .. Autosummary generates the pages but the table wont be generated.
-        .. autosummary::
-            :toctree: ./
-        {% for item in methods %}
-            {%- if not item in ['__init__'] %}
-                ~{{ name }}.{{ item }}
-            {%- endif %}
-        {%- endfor %}
+    .. rubric:: Methods
+
+    .. autosummary::
+        :toctree: ./
+    {% for item in methods %}
+    {%- if item not in ['__init__'] %}
+        ~{{ name }}.{{ item }}
+    {%- endif %}
+    {%- endfor %}
+    {%- if name in ['Dataset', 'Fitter'] %}
+        ~{{ name }}.__getitem__
+    {%- endif %}
     {% endif %}
     {% endblock %}
 
     {% block attributes %}
     {% if attributes %}
-    .. Autosummary generates the pages but the table wont be generated.
-        .. autosummary::
-            :toctree: ./
-        {% for item in attributes %}
-            {%- if not item.startswith('_') %}
-                ~{{ name }}.{{ item }}
-            {%- endif %}
-        {%- endfor %}
+    .. autosummary::
+        :toctree: ./
+    {% for item in attributes %}
+    {%- if not item.startswith('_') %}
+        ~{{ name }}.{{ item }}
+    {%- endif %}
+    {%- endfor %}
     {% endif %}
     {% endblock %}
