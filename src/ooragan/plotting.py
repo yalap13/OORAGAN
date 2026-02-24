@@ -1,9 +1,10 @@
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from typing import Optional, Literal, Iterable
 from resonator import base
 from graphinglib import SmartFigure, Curve
 import graphinglib as gl
 import numpy as np
+from scipy.constants import e, hbar, k
 
 from .util import convert_complex_to_magphase
 from .typing import _FitResult
@@ -294,8 +295,29 @@ def losses(
     return fig
 
 
+def _frequency_ratio(Bll: NDArray, thetaB: float) -> NDArray:
+    """
+    Fitting function for variation of resonant frequency as a function
+    of parallel magnetic field.
+    """
+    t = 100e-9
+    w = 25e-6
+    Tc = 12.5
+    D = 2e-5
+    return (
+        -np.pi
+        / 48
+        * (e**2 * t**2)
+        / (hbar * k * Tc)
+        * D
+        * (1 + thetaB**2 * w**2 / t**2)
+        * Bll**2
+    )
+
+
 def magnetic_field(
-    fit_results: _FitResult,
+    fit_result: _FitResult,
+    two_way_sweep: bool = True,
     show_frequency: bool = True,
     fit_frequency: bool = False,
     title: Optional[str] = None,
@@ -304,8 +326,10 @@ def magnetic_field(
     r"""
     Parameters
     ----------
-    fit_results : FitResult or list of FitResult
+    fit_result : FitResult or list of FitResult
         Single or list of FitResult from a Fitter.
+    two_way_sweep : bool, optional
+        Wheter or not the data was taken while the field was going up **and** down. Defaults to ``True``.
     show_frequency : bool, optional
         Wheter or not to show the frequency variation on the plot. Defaults to ``True``.
     fit_frequency : bool, optional
@@ -326,14 +350,69 @@ def magnetic_field(
     from C. Roy, S. Frasca and P. Scarlino, *Magnetic-field-resilient high-impedance high-kinetic-inductance superconducting
     resonators*, Phys. Rev. Appl. **25**, 014069 (2026).
     """
-    if not isinstance(fit_results, _FitResult):
+    if not isinstance(fit_result, _FitResult):
         raise TypeError("can only accept a single FitResult")
-    elements = []
     if figure_style == "default":
         figure_style = gl.get_default_style()
 
-    # TODO: Finish implementation
+    deltaf_over_f0 = (fit_result.f_r - fit_result.f_r[0]) / fit_result.f_r[0]
+    qi_curves = []
+    if two_way_sweep:
+        max_idx = np.where(fit_result.magnet_field == np.max(fit_result.magnet_field))[
+            0
+        ][0]
+        qi_to = Curve(
+            fit_result.magnet_field[: max_idx + 1],
+            fit_result.Q_i[: max_idx + 1],
+            color="tab:blue",
+            label=r"${}\to{}$T".format(
+                fit_result.magnet_field[0], fit_result.magnet_field[max_idx]
+            ),
+        )
+        qi_back = Curve(
+            fit_result.magnet_field[max_idx:],
+            fit_result.Q_i[max_idx:],
+            color="tab:blue",
+            line_style="--",
+            label=r"${}\to{}$T".format(
+                fit_result.magnet_field[max_idx], fit_result.magnet_field[-1]
+            ),
+        )
+        qi_curves.append(qi_to)
+        qi_curves.append(qi_back)
+        deltaf = Curve(
+            fit_result.magnet_field[: max_idx + 1],
+            deltaf_over_f0[: max_idx + 1] * 100,
+            color="firebrick",
+        )
+    else:
+        qi = Curve(fit_result.magnet_field, fit_result.Q_i, color="tab:blue")
+        qi_curves.append(qi)
+        deltaf = Curve(fit_result.magnet_field, deltaf_over_f0 * 100, color="firebrick")
+    fig = SmartFigure(
+        x_label=r"$B_\parallel$",
+        y_label="$Q_i$",
+        log_scale_y=True,
+        title=title,
+        figure_style=figure_style,
+        elements=qi_curves,
+    )
 
-    fig = SmartFigure()
+    if show_frequency:
+        fig.set_tick_params(
+            axis="y", which="both", label_color="tab:blue", color="tab:blue"
+        )
+        # TODO: Set color of the y_label
+        twin_y = fig.create_twin_axis(
+            is_y=True, label=r"$\Delta f / f_r$ (%)", elements=[deltaf]
+        )
+        twin_y.set_tick_params(which="both", color="firebrick", label_color="firebrick")
+        twin_y.set_visual_params(label_color="firebrick")
+
+    if show_frequency and fit_frequency:
+        fit = gl.FitFromFunction(
+            _frequency_ratio, deltaf, color="firebrick", line_style=":"
+        )
+        twin_y.add_elements(fit)
 
     return fig

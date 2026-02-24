@@ -12,6 +12,9 @@ class _FitResult(Protocol):
     def photon_nbr(self) -> NDArray: ...
 
     @property
+    def magnet_field(self) -> NDArray: ...
+
+    @property
     def Q_c(self) -> NDArray: ...
 
     @property
