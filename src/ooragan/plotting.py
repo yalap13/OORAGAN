@@ -181,6 +181,7 @@ def _as_function_of_photon_nbr(
 
 def quality_factors(
     fit_results: _FitResult | list[_FitResult],
+    show_Qc: bool = True,
     freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
     title: Optional[str] = None,
     figure_style: str = "default",
@@ -193,6 +194,8 @@ def quality_factors(
     ----------
     fit_results : FitResult or list of FitResult
         Single or list of FitResult from a Fitter.
+    show_Qc : bool, optional
+        Whether or not to show both the :math:`Q_i` and the :math:`Q_c`. Defaults to ``True``.
     freq_unit : {"GHz", "MHz", "kHz"}, optional
         Unit in which the frequency is given. Defaults to ``"GHz"``.
     title : str, optional
@@ -222,20 +225,26 @@ def quality_factors(
             ),
             color=gl.get_color(figure_style, i),
         )
-        qc = Curve(
-            fr.photon_nbr, fr.Q_c, line_style="--", color=gl.get_color(figure_style, i)
-        )
         elements.append(qi)
-        elements.append(qc)
+        if show_Qc:
+            qc = Curve(
+                fr.photon_nbr,
+                fr.Q_c,
+                line_style="--",
+                color=gl.get_color(figure_style, i),
+            )
+            elements.append(qc)
 
+    y_label = "$Q_i, Q_c$" if show_Qc else "$Q_i$"
     fig = _as_function_of_photon_nbr(
-        elements=elements, y_label="$Q_i, Q_c$", figure_style=figure_style, title=title
+        elements=elements, y_label=y_label, figure_style=figure_style, title=title
     )
     return fig
 
 
 def losses(
     fit_results: _FitResult | list[_FitResult],
+    show_deltac: bool = True,
     freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
     title: Optional[str] = None,
     figure_style: str = "default",
@@ -248,6 +257,8 @@ def losses(
     ----------
     fit_results : FitResult or list of FitResult
         Single or list of FitResult from a Fitter.
+    show_deltac : bool, optional
+        Whether or not to show both the :math:`\delta_i` and the :math:`\delta_c`. Defaults to ``True``.
     freq_unit : {"GHz", "MHz", "kHz"}, optional
         Unit in which the frequency is given. Defaults to ``"GHz"``.
     title : str, optional
@@ -277,18 +288,20 @@ def losses(
             ),
             color=gl.get_color(figure_style, i),
         )
-        dc = Curve(
-            fr.photon_nbr,
-            fr.coupling_loss,
-            line_style="--",
-            color=gl.get_color(figure_style, i),
-        )
         elements.append(di)
-        elements.append(dc)
+        if show_deltac:
+            dc = Curve(
+                fr.photon_nbr,
+                fr.coupling_loss,
+                line_style="--",
+                color=gl.get_color(figure_style, i),
+            )
+            elements.append(dc)
 
+    y_label = r"$\delta_i, \delta_c$" if show_deltac else r"$\delta_i$"
     fig = _as_function_of_photon_nbr(
         elements=elements,
-        y_label=r"$\delta_i, \delta_c$",
+        y_label=y_label,
         figure_style=figure_style,
         title=title,
     )
