@@ -418,7 +418,7 @@ def magnetic_field(
         fig.set_tick_params(
             axis="y", which="both", label_color="tab:blue", color="tab:blue"
         )
-        # TODO: Set color of the y_label
+        fig.set_visual_params(y_axis_label_color="tab:blue")
         twin_y = fig.create_twin_axis(
             is_y=True, label=r"$\Delta f / f_r$ (%)", elements=[deltaf]
         )
