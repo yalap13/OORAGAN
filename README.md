@@ -7,7 +7,7 @@ Object Oriented Resonator Advanced Graphing and ANalysis (OORAGAN) is a library 
 
 ## Note
 
-This library has been made to work with file formats **specific to the measurement setups used at the Université de Sherbrooke**. **Also**, the GitHub repository is a mirror of the development repository and no changes will be accepted on GitHub.
+This library has been made to work with file formats **specific to the measurement setups used at the Université de Sherbrooke**.
 
 Thanks to François Cyrenne-Bergeron for the name idea.
 
