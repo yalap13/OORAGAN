@@ -13,7 +13,7 @@ from .typing import _FitResult
 FREQ_UNIT_CONVERSION = {"GHz": 1e9, "MHz": 1e6, "kHz": 1e3}
 
 
-def triptych(
+def plot_triptych(
     freq: ArrayLike,
     complex_data: ArrayLike,
     resonator_fitter: Optional[base.ResonatorFitter] = None,
@@ -179,7 +179,7 @@ def _as_function_of_photon_nbr(
     return fig
 
 
-def quality_factors(
+def plot_quality_factors(
     fit_results: _FitResult | list[_FitResult],
     show_Qc: bool = True,
     freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
@@ -242,7 +242,7 @@ def quality_factors(
     return fig
 
 
-def losses(
+def plot_losses(
     fit_results: _FitResult | list[_FitResult],
     show_deltac: bool = True,
     freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
@@ -328,7 +328,7 @@ def _frequency_ratio(Bll: NDArray, thetaB: float) -> NDArray:
     )
 
 
-def magnetic_field(
+def plot_magnetic_field(
     fit_result: _FitResult,
     two_way_sweep: bool = True,
     show_frequency: bool = True,

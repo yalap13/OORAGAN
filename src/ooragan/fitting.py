@@ -9,7 +9,7 @@ from graphinglib import SmartFigure
 from warnings import warn
 
 from .file_loading import Dataset, File
-from .plotting import triptych
+from .plotting import plot_triptych
 from .util import choice
 from .typing import _FitResult
 
@@ -222,7 +222,7 @@ class Fitter:
     def __init__(
         self,
         data: Dataset | File,
-        savepath: Optional[str] = None,
+        savepath: Optional[os.PathLike] = None,
     ) -> None:
         self._files: dict[str, File] = {}
         self._fit_results: dict[str, FitResult] = {}
@@ -316,7 +316,7 @@ class Fitter:
         frequency: floating,
     ) -> str:
         """Utilitary to generate file name given the files parameters."""
-        out = f"{frequency:.3f}GHz_"
+        out = f"{frequency:.0f}GHz_"
         for param in file.list_params():
             if not param.startswith("s21_") and not param == "VNA Frequency":
                 attr = param.lower().replace(" ", "_")
@@ -497,7 +497,7 @@ class Fitter:
         """
         Utilitary function to plot the fit result as a triptych (resonator.see.triptych).
         """
-        fig = triptych(
+        fig = plot_triptych(
             frequency,
             complex_data,
             resonator_fitter=result,
