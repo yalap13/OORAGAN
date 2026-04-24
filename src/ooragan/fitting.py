@@ -6,6 +6,7 @@ from numpy import float64, floating, ndarray, ndindex, arange, mean, array
 from resonator import background, base, shunt, reflection
 from numpy.typing import ArrayLike, NDArray
 from graphinglib import SmartFigure
+from warnings import warn
 
 from .file_loading import Dataset, File
 from .plotting import triptych
@@ -499,7 +500,7 @@ class Fitter:
         fig = triptych(
             frequency,
             complex_data,
-            fit_result=result,
+            resonator_fitter=result,
             three_ticks=True,
         )
         filename = os.path.join(savepath, name + ".svg")
@@ -513,6 +514,7 @@ class Fitter:
 
     def __getattribute__(self, name: str) -> FitResult | Any:
         if not name.startswith("__") and re.fullmatch(r"f\d+", name):
+            warn("Use the indexing syntax instead", DeprecationWarning, stacklevel=2)
             try:
                 return self._fit_results[name.removeprefix("f")]
             except KeyError:
@@ -539,7 +541,7 @@ class Fitter:
 
         Returns
         -------
-        FitResults | list[FitResults]
+        FitResults or list of FitResults
             If a single index is specified, a single FitResult is returned. A list otherwise.
         """
         total_files = len(self._files.keys())

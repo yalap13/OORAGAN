@@ -5,6 +5,7 @@ import numpy as np
 from glob import glob
 from pathlib import Path
 from typing import Any, Self, Optional, overload
+from warnings import warn
 
 from numpy.typing import NDArray
 
@@ -330,11 +331,13 @@ class Dataset:
 
     Parameters
     ----------
-    path : str
+    path : str, optional
         Path of the folder for multiple data files or for a single data file.
-    cryostat_attenuation : float
+    cryostat_attenuation : float, optional
         Total attenuation present in the cryostat. Must be a negative number.
-    additional_params : list of str, optional
+    files : list of Files, optional
+        List of :class:`File` to build a dataset from.
+    additional_params : list of str, optional, optional
         list of additional parameter names to extract from the files.
 
         .. note::
@@ -356,13 +359,8 @@ class Dataset:
 
     Attributes
     ----------
-    f<i> : :class:`File`
-        *Dynamically created* attributes allowing to retrieve specific files
-        with the syntax ``myDataset.f0`` for the 0th file.
     files : dict
-        Dictionary of the contained files with the keys being of the format
-        ``"f<i>"`` where `<i>` represents the integer index of the file
-        starting with 0.
+        Dictionary of the contained files where the keys are the index of the file starting with 0.
     """
 
     def __init__(
@@ -378,6 +376,7 @@ class Dataset:
                 raise ValueError("Cryostat attenuation must be specified with a path")
             if cryostat_attenuation > 0:
                 raise ValueError("Attenuation must be negative")
+            self.cryostat_attenuation = cryostat_attenuation
             if Path(path).suffix == "":
                 additional_params = (
                     additional_params if additional_params is not None else []
@@ -401,11 +400,13 @@ class Dataset:
                     raise ValueError(
                         "All attenuation must be equal to create a Dataset from files"
                     )
+            self.cryostat_attenuation = att
             for i, file in enumerate(files):
                 self.files.update({str(i): file})
 
     def __getattribute__(self, name: str) -> Any:
         if not name.startswith("__") and re.fullmatch(r"f\d+", name):
+            warn("Use the indexing syntax instead", DeprecationWarning, stacklevel=2)
             try:
                 return self.files[name.removeprefix("f")]
             except KeyError:
@@ -441,7 +442,7 @@ class Dataset:
 
         Returns
         -------
-        File | list[File]
+        File or list of File
             If a single index is specified, a single File is returned. A list otherwise.
         """
         total_files = len(self.files.keys())
