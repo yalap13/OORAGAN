@@ -10,7 +10,7 @@ from warnings import warn
 from numpy.typing import NDArray
 
 from .parameters import NullParameter, Parameter
-from .util import convert_complex_to_magphase, convert_magphase_to_complex
+from .util import convert_complex_to_magphase, convert_magphase_to_complex, str_to_time
 
 KNOWN_PARAMETERS = [
     "VNA",
@@ -77,7 +77,10 @@ def _read_hdf(path: str, additional_params: list[str]) -> dict:
     out = {"attributes": {}, "datasets": {}, "dimensions": []}
     file = h5py.File(path, "r")
     for atr in file.attrs.keys():
-        out["attributes"][atr] = file.attrs[atr]
+        if atr in ["Ended", "Started"]:
+            out["attributes"][atr] = str_to_time(file.attrs[atr])
+        else:
+            out["attributes"][atr] = file.attrs[atr]
     out["datasets"] = _walk_hdf(file, additional_params)
     vna_group = file["VNA"]
     assert isinstance(vna_group, h5py.Group)
@@ -288,7 +291,7 @@ class File:
         Lists available parameter names.
         """
         out = []
-        for _, value in self.__dict__.items():
+        for value in self.__dict__.values():
             if isinstance(value, Parameter) and not isinstance(value, NullParameter):
                 out.append(value.name)
         return out

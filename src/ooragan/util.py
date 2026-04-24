@@ -1,14 +1,11 @@
-import time
 import easygui as eg
 import numpy as np
-import graphinglib as gl
 import pandas as pd
+import re
 
+from datetime import datetime
 from numpy.typing import NDArray, ArrayLike
-from resonator import base
-from typing import Optional, Literal
-from graphinglib import MultiFigure
-
+from typing import Optional
 
 def choice(
     title: Optional[str] = None,
@@ -28,58 +25,25 @@ def choice(
     return user_choice
 
 
-def strtime(s: str) -> float:
+def str_to_time(time_string: str) -> float:
     """
-    Converts the string from time.struct_time that MeaVis outputs in the hdf5 metadata to an
-    understandable format.
+    Converts the time format from the MeaVis' HDF5 files into a datetime timestamp.
 
     Parameters
     ----------
-    s : str
-        String containing time.struct_time
-
-    Returns
-    -------
-    Float representing the time since epoch.
-
+    time_string : str
+        Timestamp string from MeaVis.
     """
-    beg_year = s.find("tm_year")
-    end_year = s.find(",", beg_year)
-    year = int(s[beg_year + 8 : end_year])
-
-    beg_month = s.find("tm_mon")
-    end_month = s.find(",", beg_month)
-    month = int(s[beg_month + 7 : end_month])
-
-    beg_mday = s.find("tm_mday")
-    end_mday = s.find(",", beg_mday)
-    mday = int(s[beg_mday + 8 : end_mday])
-
-    beg_hour = s.find("tm_hour")
-    end_hour = s.find(",", beg_hour)
-    hour = int(s[beg_hour + 8 : end_hour])
-
-    beg_min = s.find("tm_min")
-    end_min = s.find(",", beg_min)
-    mins = int(s[beg_min + 7 : end_min])
-
-    beg_sec = s.find("tm_sec")
-    end_sec = s.find(",", beg_sec)
-    sec = int(s[beg_sec + 7 : end_sec])
-
-    beg_wday = s.find("tm_wday")
-    end_wday = s.find(",", beg_wday)
-    wday = int(s[beg_wday + 8 : end_wday])
-
-    beg_yday = s.find("tm_yday")
-    end_yday = s.find(",", beg_yday)
-    yday = int(s[beg_yday + 8 : end_yday])
-
-    beg_dst = s.find("tm_isdst")
-    end_dst = s.find(")", beg_dst)
-    dst = int(s[beg_dst + 9 : end_dst])
-
-    return time.mktime((year, month, mday, hour, mins, sec, wday, yday, dst))
+    fields = dict(re.findall(r"(tm_\w+)=(-?\d+)", time_string))
+    dt = datetime(
+        year=int(fields["tm_year"]),
+        month=int(fields["tm_mon"]),
+        day=int(fields["tm_mday"]),
+        hour=int(fields["tm_hour"]),
+        minute=int(fields["tm_min"]),
+        second=int(fields["tm_sec"]),
+    )
+    return dt.timestamp()
 
 
 def convert_magphase_to_complex(
