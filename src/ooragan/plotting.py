@@ -57,7 +57,7 @@ def plot_triptych(
     .. plot::
 
        import numpy as np
-       from ooragan import triptych
+       from ooragan import plot_triptych
 
        # Generate data from theoretical model
        def S21(f, Q, Qc, f0):
@@ -73,7 +73,7 @@ def plot_triptych(
        phi = 0
        frequency = np.linspace(6.4995e9, 6.5005e9, 5001)
 
-       fig = triptych(
+       fig = plot_triptych(
            frequency,
            S21(frequency, Q, Qc, f0),
        )

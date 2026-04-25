@@ -28,10 +28,10 @@ Plot results quickly using these plotting helper functions.
    :toctree: generated/
    :nosignatures:
 
-   triptych
-   quality_factors
-   losses
-   magnetic_field
+   plot_triptych
+   plot_quality_factors
+   plot_losses
+   plot_magnetic_field
 
 Utils
 -----
@@ -42,4 +42,4 @@ Utils
 
    convert_complex_to_magphase
    convert_magphase_to_complex
-   strtime
+   str_to_time
