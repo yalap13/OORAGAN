@@ -2,10 +2,11 @@ import os
 import re
 import lmfit
 from typing import Optional, Literal, Any, overload
-from numpy import float64, floating, ndarray, ndindex, arange, mean, array
+from numpy import float64, floating, ndarray, ndindex, arange, mean, array, tanh
 from resonator import background, base, shunt, reflection
 from numpy.typing import ArrayLike, NDArray
-from graphinglib import SmartFigure
+from graphinglib import SmartFigure, FitFromFunction, Curve
+from scipy.constants import hbar, k
 
 from .file_loading import Dataset, File
 from .plotting import triptych
@@ -579,3 +580,55 @@ class Fitter:
             except KeyError as e:
                 raise IndexError("no results for file with index {}".format(e.args[0]))
         raise TypeError("indices must be int or slice, not {}".format(type(index)))
+
+    def _qtls_model(
+        self,
+        n: NDArray,
+        Fdelta: float,
+        omega: float,
+        T: float,
+        nc: float,
+        beta: float,
+        delta_other: float,
+    ) -> NDArray:
+        """
+        Internal losses model delta_i = delta_TLS + delta_other.
+
+        S.Ganjam *et al.*, Nature Communications **15**, 3687 (2024).
+        """
+        return (
+            Fdelta * tanh(hbar * omega / (2 * k * T)) / (1 + n / nc) ** beta
+            + delta_other
+        )
+
+    def fit_qtls_model(self, files: list[int] = []) -> None:
+        r"""
+        Fits the internal losses :math:`\delta_i` to the theoretical model for TLS losses :math:`\delta_\mathrm{TLS}`
+        and other power-independent losses :math:`\delta_\mathrm{other}`.
+
+        .. attention:: This method cannot be called prior to calling :py:meth:`~ooragan.Fitter.fit`.
+
+        Parameters
+        ----------
+        files : list of int, optional
+            List of file indices to fit. Defaults to ``[]``, which fits all files.
+
+        Notes
+        -----
+        The fitting model is the following:
+
+        .. math:: \delta_i (\tilde n) = F \delta_\mathrm{TLS}^0 \frac{\mathrm{tanh}\left(\frac{\hbar\omega}{2k_B T}\right)}{\left(1+\frac{\tilde n}{n_c}\right)^\beta}+\delta_\mathrm{other}
+
+        S.Ganjam *et al.*, Nature Communications **15**, 3687 (2024).
+        """
+        if not files:
+            files = list(map(int, self._files.keys()))
+        for file in files:
+            if str(file) not in self._fit_results.keys():
+                raise RuntimeWarning(
+                    "Cannot fit for TLS losses before fitting raw data. Skipping."
+                )
+                continue
+            fit_result = self._fit_results[str(file)]
+            delta_i_curve = Curve(fit_result.photon_nbr, fit_result.internal_loss)
+            fit = FitFromFunction(self._qtls_model, delta_i_curve)
