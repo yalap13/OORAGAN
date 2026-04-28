@@ -618,6 +618,8 @@ class Fitter:
         The fitting model is the following:
 
         .. math:: \delta_i (\tilde n) = F \delta_\mathrm{TLS}^0 \frac{\mathrm{tanh}\left(\frac{\hbar\omega}{2k_B T}\right)}{\left(1+\frac{\tilde n}{n_c}\right)^\beta}+\delta_\mathrm{other}
+
+        S.Ganjam *et al.*, Nature Communications **15**, 3687 (2024).
         """
         if not files:
             files = list(map(int, self._files.keys()))
