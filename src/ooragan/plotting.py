@@ -1,7 +1,7 @@
 from numpy.typing import ArrayLike, NDArray
 from typing import Optional, Literal, Iterable
 from resonator import base
-from graphinglib import SmartFigure, Curve
+from graphinglib import SmartFigure, Curve, Inherit, INHERIT
 import graphinglib as gl
 import numpy as np
 from scipy.constants import e, hbar, k
@@ -20,7 +20,7 @@ def plot_triptych(
     freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
     title: Optional[str] = None,
     three_ticks: bool = False,
-    figure_style: str = "default",
+    figure_style: str | Inherit = INHERIT,
 ) -> SmartFigure:
     """
     Plots the magnitude vs frequency, the phase vs frequency and the complex data in a
@@ -46,7 +46,7 @@ def plot_triptych(
     three_ticks : bool, optional
         If ``True``, only three ticks will be displayed on the x axis: the minimum
         frequency, the maximum and the frequency. Defaults to ``False``.
-    figure_style : str, optional
+    figure_style : str or Inherit, optional
         GraphingLib figure style to apply to the plot. See
         `here <https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase>`_
         for more info.
@@ -163,7 +163,7 @@ def plot_triptych(
 def _as_function_of_photon_nbr(
     elements: Iterable[Curve],
     y_label: str,
-    figure_style: str,
+    figure_style: str | Inherit,
     title: Optional[str],
 ) -> SmartFigure:
     fig = SmartFigure(
@@ -184,7 +184,7 @@ def plot_quality_factors(
     show_Qc: bool = True,
     freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
     title: Optional[str] = None,
-    figure_style: str = "default",
+    figure_style: str | Inherit = INHERIT,
 ) -> SmartFigure:
     r"""
     Plots the quality factors :math:`Q_i` and :math:`Q_c` as a function of average photon number in the
@@ -200,7 +200,7 @@ def plot_quality_factors(
         Unit in which the frequency is given. Defaults to ``"GHz"``.
     title : str, optional
         Title of the figure. Defaults to ``None``.
-    figure_style : str, optional
+    figure_style : str or Inherit, optional
         GraphingLib figure style to apply to the plot. See
         `here <https://www.graphinglib.org/doc-1.5.0/handbook/figure_style_file.html#graphinglib-styles-showcase>`_
         for more info.
@@ -213,7 +213,7 @@ def plot_quality_factors(
     else:
         raise TypeError("can only accept a FitResult or a list of FitResults")
     elements = []
-    if figure_style == "default":
+    if not isinstance(figure_style, str):
         figure_style = gl.get_default_style()
 
     for i, fr in enumerate(fit_results):
@@ -247,7 +247,7 @@ def plot_losses(
     show_deltac: bool = True,
     freq_unit: Literal["GHz", "MHz", "kHz"] = "GHz",
     title: Optional[str] = None,
-    figure_style: str = "default",
+    figure_style: str | Inherit = INHERIT,
 ) -> SmartFigure:
     r"""
     Plots the losses :math:`\delta_i` and :math:`\delta_c` as a function of average photon number in the
@@ -276,7 +276,7 @@ def plot_losses(
     else:
         raise TypeError("can only accept a FitResult or a list of FitResults")
     elements = []
-    if figure_style == "default":
+    if not isinstance(figure_style, str):
         figure_style = gl.get_default_style()
 
     for i, fr in enumerate(fit_results):
@@ -334,7 +334,7 @@ def plot_magnetic_field(
     show_frequency: bool = True,
     fit_frequency: bool = False,
     title: Optional[str] = None,
-    figure_style: str = "default",
+    figure_style: str | Inherit = INHERIT,
 ) -> SmartFigure:
     r"""
     Plots the internal quality factor (:math:`Q_i`) as a function of the parallel magnetic field (:math:`B_\parallel`).
