@@ -430,8 +430,8 @@ wheels = [
 
 [[package]]
 name = "graphinglib"
-version = "1.7.0"
-source = { git = "https://github.com/graphinglib/graphinglib.git#2e9e2d9a852bf1eb7a4ca2dbedf5d28f1113a91b" }
+version = "1.6.1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
@@ -443,9 +443,9 @@ dependencies = [
     { name = "shapely" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/50/0c/dfb0d3c73e0e6cb2eab9e8096962bbccf099000cf4e7a64c51de322e3b1e/graphinglib-1.6.0.tar.gz", hash = "sha256:e1897a636f60c8019d175c6dd7f925f15bf5fd837f6f2de2100387f7309bb081", size = 1868889, upload-time = "2026-05-01T03:08:27.492Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/93/a5/f123707abe6e70463ca28089606241ca9d8e7da3ddaee1dbf009485e2f89/graphinglib-1.6.1.tar.gz", hash = "sha256:c7eeb06be72d477936c04576e7034872329dce17e8bf59370514b95f4e66280a", size = 1868815, upload-time = "2026-05-07T02:10:15.252Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/d9/78691395bbbf531fb0534f3c5ec9fc2f0dd2850a4f7597d2f6f6c65fd593/graphinglib-1.6.0-py3-none-any.whl", hash = "sha256:07e51268bee4eb5296fa008dd96f4006e3927b23759954d0ea4a0dd83b23978d", size = 124812, upload-time = "2026-05-01T03:08:26.14Z" },
+    { url = "https://files.pythonhosted.org/packages/ad/18/980146d34c543bee51763647c4da7a9afbf74b21b8d3db8a23a73295e953/graphinglib-1.6.1-py3-none-any.whl", hash = "sha256:b995722e748942244be21284443c60f067107d7d8c6454e36dd338c72e1d7c30", size = 124857, upload-time = "2026-05-07T02:10:13.782Z" },
 ]
 
 [[package]]
@@ -980,7 +980,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "easygui", specifier = ">=0.98.3" },
-    { name = "graphinglib", specifier = ">=1.6.0" },
+    { name = "graphinglib", specifier = ">=1.6.1" },
     { name = "h5py", specifier = ">=3.13.0" },
     { name = "ipython", specifier = ">=8.32.0" },
     { name = "loess", specifier = ">=2.1.2" },
@@ -1079,7 +1079,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess" },
+    { name = "ptyprocess", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [

@@ -7,7 +7,7 @@ authors = [{ name = "Yannick Lapointe", email = "yannicklapointe77@gmail.com" }]
 requires-python = ">=3.12,<3.15"
 dependencies = [
   "easygui>=0.98.3",
-  "graphinglib>=1.6.0",
+  "graphinglib>=1.6.1",
   "h5py>=3.13.0",
   "ipython>=8.32.0",
   "loess>=2.1.2",
