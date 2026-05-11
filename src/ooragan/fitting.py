@@ -602,7 +602,7 @@ class Fitter:
             + delta_other
         )
 
-    def fit_qtls_model(self, files: list[int] = []) -> None:
+    def fit_qtls_model(self, files: list[int] = []) -> list[FitFromFunction]:
         r"""
         Fits the internal losses :math:`\delta_i` to the theoretical model for TLS losses :math:`\delta_\mathrm{TLS}`
         and other power-independent losses :math:`\delta_\mathrm{other}`.
@@ -614,6 +614,11 @@ class Fitter:
         files : list of int, optional
             List of file indices to fit. Defaults to ``[]``, which fits all files.
 
+        Returns
+        -------
+        list of FitFromFunction
+            List of :class:`FitFromFunction <graphinglib.FitFromFunction>` instances. The fitted parameters can be extracted with the ``parameters`` attribute.
+
         Notes
         -----
         The fitting model is the following:
@@ -624,6 +629,7 @@ class Fitter:
         """
         if not files:
             files = list(map(int, self._files.keys()))
+        res = []
         for file in files:
             if str(file) not in self._fit_results.keys():
                 raise RuntimeWarning(
@@ -633,3 +639,5 @@ class Fitter:
             fit_result = self._fit_results[str(file)]
             delta_i_curve = Curve(fit_result.photon_nbr, fit_result.internal_loss)
             fit = FitFromFunction(self._qtls_model, delta_i_curve)
+            res.append(fit)
+        return res
