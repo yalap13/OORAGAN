@@ -8,10 +8,6 @@
 # Apple DS_Store
 .DS_Store
 
-# Not ideal, but allows to ignore test files in the project directory
-*.py
-*.ipynb
-
 # Python cache
 __pycache__
 
@@ -21,6 +17,7 @@ __pycache__
 *.dat
 *.txt
 *.svg
+analysis/
 
 # Docs generated files
 docs/generated
@@ -29,11 +26,8 @@ docs/_build
 # Cherry picked exceptions
 !ooragan_logo.svg
 !ooragan_opengraph.svg
-!src/**/*.py
-!unit_testing/*.py
 !unit_testing/**/*.dat
 !unit_testing/**/*.csv
 !unit_testing/**/*.txt
 !unit_testing/Fit results
-!docs/conf.py
 !docs/requirements.txt

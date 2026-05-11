@@ -15,7 +15,7 @@ from warnings import warn
 # from scipy.signal import find_peaks
 
 from ..util import (
-    strtime,
+    str_to_time,
     convert_complex_to_magphase,
     convert_magphase_to_complex,
     level_phase,
@@ -552,11 +552,11 @@ class HDF5Data:
         }
         self.cryostat_info = {key: info[key]["temps"] for key in self.files}
         self.start_time = {
-            key: strtime(info[key]["temps"]["Started"]) for key in self.files
+            key: str_to_time(info[key]["temps"]["Started"]) for key in self.files
         }
         self.end_time = {
             key: (
-                strtime(info[key]["temps"]["Ended"])
+                str_to_time(info[key]["temps"]["Ended"])
                 if "Ended" in info[key]["temps"]
                 else None
             )
