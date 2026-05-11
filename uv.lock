@@ -443,6 +443,10 @@ dependencies = [
     { name = "shapely" },
     { name = "typing-extensions" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/50/0c/dfb0d3c73e0e6cb2eab9e8096962bbccf099000cf4e7a64c51de322e3b1e/graphinglib-1.6.0.tar.gz", hash = "sha256:e1897a636f60c8019d175c6dd7f925f15bf5fd837f6f2de2100387f7309bb081", size = 1868889, upload-time = "2026-05-01T03:08:27.492Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/d9/78691395bbbf531fb0534f3c5ec9fc2f0dd2850a4f7597d2f6f6c65fd593/graphinglib-1.6.0-py3-none-any.whl", hash = "sha256:07e51268bee4eb5296fa008dd96f4006e3927b23759954d0ea4a0dd83b23978d", size = 124812, upload-time = "2026-05-01T03:08:26.14Z" },
+]
 
 [[package]]
 name = "h5py"
@@ -976,7 +980,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "easygui", specifier = ">=0.98.3" },
-    { name = "graphinglib", git = "https://github.com/graphinglib/graphinglib.git" },
+    { name = "graphinglib", specifier = ">=1.6.0" },
     { name = "h5py", specifier = ">=3.13.0" },
     { name = "ipython", specifier = ">=8.32.0" },
     { name = "loess", specifier = ">=2.1.2" },
