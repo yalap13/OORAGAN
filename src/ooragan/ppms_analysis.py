@@ -1,6 +1,6 @@
 """
 In order to make OORAGAN lighter, the QD_Data object and necessary functions have been
-directly borrowed from the pyHegel library developped by Christian Lupien at 
+directly borrowed from the pyHegel library developped by Christian Lupien at
 Université de Sherbrooke.
 """
 
@@ -21,7 +21,7 @@ from loess.loess_1d import loess_1d
 from scipy.constants import pi, hbar, k, e, h
 from numpy.typing import ArrayLike
 from typing import Optional, Literal
-from graphinglib import Figure
+from graphinglib import Figure, Inherit, INHERIT
 from seaborn import color_palette
 
 
@@ -540,7 +540,7 @@ class PPMSAnalysis:
 
     def find_Tc(
         self,
-        trim_index: Optional[tuple[int]] = None,
+        trim_index: Optional[tuple[int, int]] = None,
         method: str = "50",
         print_out: bool = True,
         save_to_file: bool = False,
@@ -603,7 +603,7 @@ class PPMSAnalysis:
                 b1.append(vals["bridge1"])
                 b2.append(vals["bridge2"])
                 b3.append(vals["bridge3"])
-                head.append(f"{int(np.mean(self.magnetic_field[sweep])/1e4)} T")
+                head.append(f"{int(np.mean(self.magnetic_field[sweep]) / 1e4)} T")
             print(tabulate([b1, b2, b3], headers=head))
         if save_to_file:
             if not os.path.exists(os.path.join(self._savepath, "ppms_analysis")):
@@ -685,7 +685,7 @@ class PPMSAnalysis:
             b1 = ["Bridge 1"]
             b2 = ["Bridge 2"]
             b3 = ["Bridge 3"]
-            head = (
+            head: list[str] = (
                 [f"Kinetic inductance ({units})"]
                 if units is not None
                 else ["Kinetic inductance (H)"]
@@ -694,7 +694,7 @@ class PPMSAnalysis:
                 b1.append(vals["bridge1"])
                 b2.append(vals["bridge2"])
                 b3.append(vals["bridge3"])
-                head.append(f"{int(np.mean(self.magnetic_field[sweep])/1e4)} T")
+                head.append(f"{int(np.mean(self.magnetic_field[sweep]) / 1e4)} T")
             print(tabulate([b1, b2, b3], headers=head))
         if save_to_file:
             if not os.path.exists(os.path.join(self._savepath, "ppms_analysis")):
@@ -723,13 +723,13 @@ class PPMSAnalysis:
         x_label: Optional[str] = None,
         y_label: Optional[str] = None,
         title: Optional[str] = None,
-        size: tuple | Literal["default"] = "default",
+        size: tuple[int | float, int | float] | Inherit = INHERIT,
         legend_loc: tuple | str = "best",
         legend_cols: int = 1,
         figure_style: str = "default",
         save: bool = False,
         image_type: str = "svg",
-    ) -> Figure:
+    ) -> list[Figure]:
         """
         Plots the resistance as a function of temperature as measured by the PPMS.
 
@@ -745,7 +745,7 @@ class PPMSAnalysis:
             if y_label is None
             else y_label
         )
-        figures = []
+        figures: list[Figure] = []
         for bridge in ["bridge1", "bridge2", "bridge3"]:
             resist = [val[bridge] for _, val in self.resistance.items()]
             stddev = [val[bridge] for _, val in self.std_dev.items()]
@@ -757,7 +757,7 @@ class PPMSAnalysis:
                 figure_style=figure_style,
             )
             for i, r in enumerate(resist):
-                t = self.temperature[f"Sweep {i+1}"]
+                t = self.temperature[f"Sweep {i + 1}"]
                 mag_field_mean = np.mean(self.magnetic_field["Sweep {}".format(i + 1)])
                 if np.round(mag_field_mean / 10, 1) == 0:
                     label = "0 T"
