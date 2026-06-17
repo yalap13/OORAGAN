@@ -398,14 +398,14 @@ class Fitter:
         -----
         In the **shunt** mode, the resonance is fitted using
 
-        .. math:: S_{21}(f) = 1-\frac{\frac{Q}{Q_c}}{1+2iQ\frac{f-f_0}{f_0}}
+        .. math:: S_{21}(f) = e^{-2i\pi f\tau}ae^{i\alpha}\left[1-\frac{\frac{Q}{Q_c}e^{i\phi}}{1+2iQ\frac{f-f_0}{f_0}}\right]
 
         In the **reflection** mode, the resonance is fitted using
 
-        .. math:: S_{21}(f) = -1+\frac{\frac{Q}{Q_c}}{1+2iQ\frac{f-f_0}{f_0}}
+        .. math:: S_{21}(f) = e^{-2i\pi f\tau}ae^{i\alpha}\left[-1+\frac{\frac{Q}{Q_c}e^{i\phi}}{1+2iQ\frac{f-f_0}{f_0}}\right]
 
         The fit itself is performed by the lmfit library.
-        The `fit` method uses an auxilary method `_test_fit` to verify the maximum error tolerance
+        The ``fit`` method uses an auxilary method ``_test_fit`` to verify the maximum error tolerance
         on the fit results is respected. If not, the data is trimmed by a specified amount on both
         sides and the fits is tried again.
 
