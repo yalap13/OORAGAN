@@ -8,6 +8,7 @@ from scipy.constants import e, hbar, k
 
 from .util import convert_complex_to_magphase
 from .typing import _FitResult
+from .file_loading import File
 
 
 FREQ_UNIT_CONVERSION = {"GHz": 1e9, "MHz": 1e6, "kHz": 1e3}
@@ -430,5 +431,24 @@ def plot_magnetic_field(
             _frequency_ratio, deltaf, color="firebrick", line_style=":"
         )
         twin_y.add_elements(fit)
+
+    return fig
+
+
+def plot_power_dep_maps(
+    fit_results: _FitResult | list[_FitResult],
+    files: File | list[File],
+    figure_style: str | Inherit = INHERIT,
+) -> SmartFigure:
+
+    # TODO: Implement
+
+    fig = SmartFigure(
+        num_rows=1,
+        num_cols=3,
+        size=(10.5, 5),
+        share_y=True,
+        width_ratios=(1, 1, 0.35),
+    )
 
     return fig
