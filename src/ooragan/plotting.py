@@ -5,12 +5,25 @@ from graphinglib import SmartFigure, Curve, Inherit, INHERIT
 import graphinglib as gl
 import numpy as np
 from scipy.constants import e, hbar, k
+from matplotlib import pyplot as plt
+from matplotlib import ticker, colors
 
 from .util import convert_complex_to_magphase
 from .typing import _FitResult
 
 
 FREQ_UNIT_CONVERSION = {"GHz": 1e9, "MHz": 1e6, "kHz": 1e3}
+
+deep_blue = "#000a1a"
+blue = "#0099ff"
+white = "#ffffff"
+orange = "#ff6600"
+deep_orange = "#662900"
+
+clist = list(map(colors.to_rgb, [deep_blue, white]))
+cmap = colors.LinearSegmentedColormap.from_list("cmap", clist)
+div_clist = list(map(colors.to_rgb, [deep_blue, blue, white, orange, deep_orange]))
+div_cmap = colors.LinearSegmentedColormap.from_list("div_cmap", div_clist)
 
 
 def plot_triptych(
@@ -223,7 +236,7 @@ def plot_quality_factors(
             label="{:.3f} {}".format(
                 np.mean(fr.f_r) / FREQ_UNIT_CONVERSION[freq_unit], freq_unit
             ),
-            color=gl.get_color(figure_style, i),
+            color=gl.get_color(figure_style, i % 7),
         )
         elements.append(qi)
         if show_Qc:
@@ -231,7 +244,7 @@ def plot_quality_factors(
                 fr.photon_nbr,
                 fr.Q_c,
                 line_style="--",
-                color=gl.get_color(figure_style, i),
+                color=gl.get_color(figure_style, i % 7),
             )
             elements.append(qc)
 
@@ -286,7 +299,7 @@ def plot_losses(
             label="{:.3f} {}".format(
                 np.mean(fr.f_r) / FREQ_UNIT_CONVERSION[freq_unit], freq_unit
             ),
-            color=gl.get_color(figure_style, i),
+            color=gl.get_color(figure_style, i % 7),
         )
         elements.append(di)
         if show_deltac:
@@ -294,7 +307,7 @@ def plot_losses(
                 fr.photon_nbr,
                 fr.coupling_loss,
                 line_style="--",
-                color=gl.get_color(figure_style, i),
+                color=gl.get_color(figure_style, i % 7),
             )
             elements.append(dc)
 
@@ -432,3 +445,126 @@ def plot_magnetic_field(
         twin_y.add_elements(fit)
 
     return fig
+
+
+def plot_power_dep_maps(
+    fit_result: _FitResult,
+    savepath: Optional[str] = None,
+    additional_rcparams: Optional[dict] = None,
+) -> None:
+    """
+    Plots the magnitude as function of frequency for all input powers as a 2D map. Also shows
+    the difference of the data with the fitted model for each input powers and the :math:`R^2`.
+    This is useful to get an overview of the quality of the fits.
+
+    Parameters
+    ----------
+    fit_result : FitResult
+        Fit result to plot.
+    savepath : str, optional
+        If specified, the figure will be saved at this path instead of being shown.
+    additional_rcparams : dict, optional
+        Additional rcParams for the figure.
+
+    Note
+    ----
+    Compared to the other plotting functions, this uses matplotlib directly which is why it does
+    not return the figure object.
+
+    Examples
+    --------
+
+    .. figure:: ../images/power_dep_maps.svg
+        :scale: 100%
+        :align: center
+        :class: margin-bottom
+
+    """
+    plt.rcParams.update(
+        {
+            "xtick.direction": "in",
+            "ytick.direction": "in",
+            "path.snap": True,
+        }
+    )
+    if additional_rcparams:
+        plt.rcParams.update(additional_rcparams)
+
+    magnitude = fit_result.source_file.s21_mag.range
+    normalized_mag = magnitude - magnitude[:, [0]]
+    Ny, Nx = normalized_mag.shape
+    power = (
+        fit_result.source_file.vna_power.range
+        - fit_result.source_file.variable_attenuator.range
+        + fit_result.source_file.cryostat_attenuation
+    )
+    freq = fit_result.source_file.vna_frequency.range
+    results = fit_result._results
+    fit_model = np.empty(magnitude.shape)
+    for i, res in enumerate(results):
+        fit_model[i, :] = 20 * np.log10(np.abs(res.evaluate_fit(freq)))
+    normalized_fit_model = fit_model - fit_model[:, [0]]
+    diff = normalized_mag - normalized_fit_model
+    mean = np.mean(normalized_mag, axis=1)
+    RSS = np.sum(diff**2, axis=1)
+    TSS = np.sum(np.square(normalized_mag - mean[:, None]), axis=1)
+    R_squared = np.ones((Ny,)) - RSS / TSS
+
+    fig, (ax1, ax2, ax3) = plt.subplots(
+        1,
+        3,
+        figsize=(10.5, 5),
+        sharey=True,
+        constrained_layout=True,
+        width_ratios=(1, 1, 0.35),
+    )
+
+    x_edges = np.linspace(freq[0] / 1e9, freq[-1] / 1e9, Nx + 1)
+    y_edges = np.linspace(power[0], power[-1], Ny + 1)
+    im = ax1.pcolormesh(
+        x_edges,
+        y_edges,
+        normalized_mag,
+        cmap=cmap,
+        shading="flat",
+        edgecolors="face",
+        lw=0.1,
+    )
+    ax1.set_aspect("auto")
+    cb = plt.colorbar(im, location="top")
+    cb.ax.set_xlabel("Normalized $|S_{21}|$ (dB)")
+
+    imdiff = ax2.pcolormesh(
+        x_edges,
+        y_edges,
+        diff,
+        cmap=div_cmap,
+        shading="flat",
+        edgecolors="face",
+        lw=0.1,
+        norm=colors.TwoSlopeNorm(vcenter=0, vmin=diff.min(), vmax=diff.max()),
+    )
+    ax2.set_aspect("auto")
+    cb2 = plt.colorbar(imdiff, location="top")
+    cb2.ax.set_xlabel(r"$|S_{21}^\mathrm{mes}|-|S_{21}^\mathrm{mod}|$ (dB)")
+
+    ax3.plot(
+        R_squared,
+        np.linspace(power[0], power[-1], Ny),
+        lw=2,
+        marker="o",
+        markersize=6,
+        c="firebrick",
+    )
+    ax3.set_xlabel("$R^2$")
+    fig.supxlabel("Frequency (GHz)", va="baseline", size="medium", x=0.45, y=0.01)
+    ax1.set_ylabel("Power (dBm)")
+    ax1.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.5f"))
+    ax2.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.5f"))
+
+    fig.suptitle(f"Fit resonator @ {np.mean(freq) / 1e9} GHz")
+
+    if savepath:
+        plt.savefig(savepath)
+    else:
+        plt.show()

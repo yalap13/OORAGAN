@@ -144,16 +144,29 @@ class FitResult(_FitResult):
         self,
         results: list[base.ResonatorFitter],
         photon_nbr: list[float],
+        source_file: File,
         magnet_field: Optional[list[float]] = None,
     ) -> None:
         if all(isinstance(fitter, base.ResonatorFitter) for fitter in results):
-            self._results = results
+            self._results_list = results
         else:
             raise TypeError(
                 "Must provide a list of only resonator.base.ResonatorFitter instances"
             )
         self._photon_number = photon_nbr
+        self._source_file = source_file
         self._magnet_field = magnet_field if magnet_field is not None else []
+
+    @property
+    def source_file(self) -> File:
+        """
+        The source File.
+        """
+        return self._source_file
+
+    @property
+    def _results(self) -> list[base.ResonatorFitter]:
+        return self._results_list
 
     @property
     def photon_nbr(self) -> NDArray:
@@ -273,7 +286,7 @@ class FitResult(_FitResult):
         numpy.array.
         """
         out = []
-        for fitter in self._results:
+        for fitter in self._results_list:
             try:
                 out.append(fitter.__getattribute__(name))
             except AttributeError:
@@ -300,7 +313,7 @@ class FitResult(_FitResult):
         """
         if all(isinstance(fitter, base.ResonatorFitter) for fitter in results):
             for res in results:
-                self._results.append(res)
+                self._results_list.append(res)
         else:
             raise TypeError(
                 "Must provide a list of only resonator.base.ResonatorFitter instances"
@@ -508,7 +521,11 @@ class Fitter:
                 self._fit_results[str(file)].append(temp, temp_photon, temp_magnet)
             else:
                 self._fit_results.update(
-                    {str(file): FitResult(temp, temp_photon, temp_magnet)}
+                    {
+                        str(file): FitResult(
+                            temp, temp_photon, self._files[str(file)], temp_magnet
+                        )
+                    }
                 )
         print("{} fit failures".format(fail_count))
 
