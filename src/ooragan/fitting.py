@@ -148,7 +148,7 @@ class FitResult(_FitResult):
         magnet_field: Optional[list[float]] = None,
     ) -> None:
         if all(isinstance(fitter, base.ResonatorFitter) for fitter in results):
-            self._results = results
+            self._results_list = results
         else:
             raise TypeError(
                 "Must provide a list of only resonator.base.ResonatorFitter instances"
@@ -163,6 +163,10 @@ class FitResult(_FitResult):
         The source File.
         """
         return self._source_file
+
+    @property
+    def _results(self) -> list[base.ResonatorFitter]:
+        return self._results_list
 
     @property
     def photon_nbr(self) -> NDArray:
@@ -282,7 +286,7 @@ class FitResult(_FitResult):
         numpy.array.
         """
         out = []
-        for fitter in self._results:
+        for fitter in self._results_list:
             try:
                 out.append(fitter.__getattribute__(name))
             except AttributeError:
@@ -309,7 +313,7 @@ class FitResult(_FitResult):
         """
         if all(isinstance(fitter, base.ResonatorFitter) for fitter in results):
             for res in results:
-                self._results.append(res)
+                self._results_list.append(res)
         else:
             raise TypeError(
                 "Must provide a list of only resonator.base.ResonatorFitter instances"

@@ -5,10 +5,11 @@ from graphinglib import SmartFigure, Curve, Inherit, INHERIT
 import graphinglib as gl
 import numpy as np
 from scipy.constants import e, hbar, k
+from matplotlib import pyplot as plt
+import cmcrameri as cm
 
 from .util import convert_complex_to_magphase
 from .typing import _FitResult
-from .file_loading import File
 
 
 FREQ_UNIT_CONVERSION = {"GHz": 1e9, "MHz": 1e6, "kHz": 1e3}
@@ -436,19 +437,68 @@ def plot_magnetic_field(
 
 
 def plot_power_dep_maps(
-    fit_results: _FitResult | list[_FitResult],
-    files: File | list[File],
+    fit_results: _FitResult,
+    savepath: Optional[str] = None,
     figure_style: str | Inherit = INHERIT,
-) -> SmartFigure:
+    additional_rc_params: Optional[dict] = None,
+) -> None:
+    plt.rcParams.update(
+        {
+            "xtick.direction": "in",
+            "ytick.direction": "in",
+            "path.snap": True,
+        }
+    )
+    if additional_rc_params:
+        plt.rcParams.update(additional_rc_params)
 
-    # TODO: Implement
+    magnitude = fit_results.source_file.s21_mag.range
+    normalized_mag = magnitude - magnitude[:, [0]]
+    power = (
+        fit_results.source_file.vna_power.range
+        - fit_results.source_file.variable_attenuator.range
+        + fit_results.source_file.cryostat_attenuation
+    )
+    freq = fit_results.source_file.vna_frequency.range
+    results = fit_results._results
+    fit_model = np.empty(magnitude.shape)
+    for i, res in enumerate(results):
+        fit_model[i, :] = res.evaluate_fit(freq)
+    diff = magnitude - fit_model
 
-    fig = SmartFigure(
-        num_rows=1,
-        num_cols=3,
-        size=(10.5, 5),
-        share_y=True,
+    fig, (ax1, ax2, ax3) = plt.subplots(
+        1,
+        3,
+        figsize=(10.5, 5),
+        sharey=True,
+        constrained_layout=True,
         width_ratios=(1, 1, 0.35),
     )
+    Nx, Ny = normalized_mag.shape
+    x_edges = np.linspace(freq[0], freq[-1], Nx + 1)
+    y_edges = np.linspace(power[0], power[-1], Ny + 1)
+    im = ax1.pcolormesh(
+        x_edges,
+        y_edges,
+        normalized_mag,
+        cmap=cm.oslo,
+        shading="flat",
+        edgecolors="face",
+        lw=0.1,
+    )
+    ax1.set_aspect("auto")
+    cb = plt.colorbar(im, location="top")
+    cb.ax.set_xlabel("Normalized $|S_{21}|$ (dB)")
 
-    return fig
+    imdiff = ax2.pcolormesh(
+        x_edges,
+        y_edges,
+        diff,
+        cmap=cm.bam_r,
+        shading="flat",
+        edgecolors="face",
+        lw=0.1,
+    )
+    ax2.set_aspect("auto")
+    cb2 = plt.colorbar(imdiff, location="top")
+    cb2.ax.set_xlabel(r"$|S_{21}^\mathrm{mes}|-|S_{21}^\mathrm{mod}|$ (dB)")
