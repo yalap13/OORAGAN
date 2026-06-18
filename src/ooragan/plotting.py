@@ -6,7 +6,6 @@ import graphinglib as gl
 import numpy as np
 from scipy.constants import e, hbar, k
 from matplotlib import pyplot as plt
-from cmcrameri import cm
 from matplotlib import ticker, colors
 
 from .util import convert_complex_to_magphase

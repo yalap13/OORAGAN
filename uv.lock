@@ -220,20 +220,6 @@ wheels = [
 ]
 
 [[package]]
-name = "cmcrameri"
-version = "1.9"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "packaging" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fe/18/61ac7ea74f7c4d82ce3a1d49e9a26492b0df5a8792025066efcb318a88e2/cmcrameri-1.9.tar.gz", hash = "sha256:56faf9b7f53eb03fed450137bec7dc25c1854929d7b841b9c75616fc2c357640", size = 260122, upload-time = "2024-04-22T08:23:54.5Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f9/a2/4c88f17ee50af5093978c4d989936883f959d7d81e1e2fa093863b080c1c/cmcrameri-1.9-py3-none-any.whl", hash = "sha256:daefca10cc405f437ad292bad52f704c2ba8ae692b3e100da8c25f641997e337", size = 277448, upload-time = "2024-04-22T08:23:52.894Z" },
-]
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -967,7 +953,6 @@ name = "ooragan"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "cmcrameri" },
     { name = "easygui" },
     { name = "graphinglib" },
     { name = "h5py" },
@@ -995,7 +980,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cmcrameri", specifier = ">=1.9" },
     { name = "easygui", specifier = ">=0.98.3" },
     { name = "graphinglib", specifier = ">=1.6.1" },
     { name = "h5py", specifier = ">=3.13.0" },
@@ -1096,7 +1080,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess" },
+    { name = "ptyprocess", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [
