@@ -6,7 +6,8 @@ import graphinglib as gl
 import numpy as np
 from scipy.constants import e, hbar, k
 from matplotlib import pyplot as plt
-import cmcrameri as cm
+from cmcrameri import cm
+from matplotlib import ticker, colors
 
 from .util import convert_complex_to_magphase
 from .typing import _FitResult
@@ -437,11 +438,29 @@ def plot_magnetic_field(
 
 
 def plot_power_dep_maps(
-    fit_results: _FitResult,
+    fit_result: _FitResult,
     savepath: Optional[str] = None,
-    figure_style: str | Inherit = INHERIT,
-    additional_rc_params: Optional[dict] = None,
+    additional_rcparams: Optional[dict] = None,
 ) -> None:
+    """
+    Plots the magnitude as function of frequency for all input powers as a 2D map. Also shows
+    the difference of the data with the fitted model for each input powers and the :math:`R^2`.
+    This is useful to get an overview of the quality of the fits.
+
+    Parameters
+    ----------
+    fit_result : FitResult
+        Fit result to plot.
+    savepath : str, optional
+        If specified, the figure will be saved at this path instead of being shown.
+    additional_rcparams : dict, optional
+        Additional rcParams for the figure.
+
+    Note
+    ----
+    Compared to the other plotting functions, this uses matplotlib directly which is why it does
+    not return the figure object.
+    """
     plt.rcParams.update(
         {
             "xtick.direction": "in",
@@ -449,22 +468,28 @@ def plot_power_dep_maps(
             "path.snap": True,
         }
     )
-    if additional_rc_params:
-        plt.rcParams.update(additional_rc_params)
+    if additional_rcparams:
+        plt.rcParams.update(additional_rcparams)
 
-    magnitude = fit_results.source_file.s21_mag.range
+    magnitude = fit_result.source_file.s21_mag.range
     normalized_mag = magnitude - magnitude[:, [0]]
+    Ny, Nx = normalized_mag.shape
     power = (
-        fit_results.source_file.vna_power.range
-        - fit_results.source_file.variable_attenuator.range
-        + fit_results.source_file.cryostat_attenuation
+        fit_result.source_file.vna_power.range
+        - fit_result.source_file.variable_attenuator.range
+        + fit_result.source_file.cryostat_attenuation
     )
-    freq = fit_results.source_file.vna_frequency.range
-    results = fit_results._results
+    freq = fit_result.source_file.vna_frequency.range
+    results = fit_result._results
     fit_model = np.empty(magnitude.shape)
     for i, res in enumerate(results):
-        fit_model[i, :] = res.evaluate_fit(freq)
-    diff = magnitude - fit_model
+        fit_model[i, :] = 20 * np.log10(np.abs(res.evaluate_fit(freq)))
+    normalized_fit_model = fit_model - fit_model[:, [0]]
+    diff = normalized_mag - normalized_fit_model
+    mean = np.mean(normalized_mag, axis=1)
+    RSS = np.sum(diff**2, axis=1)
+    TSS = np.sum(np.square(normalized_mag - mean[:, None]), axis=1)
+    R_squared = np.ones((Ny,)) - RSS / TSS
 
     fig, (ax1, ax2, ax3) = plt.subplots(
         1,
@@ -474,8 +499,9 @@ def plot_power_dep_maps(
         constrained_layout=True,
         width_ratios=(1, 1, 0.35),
     )
-    Nx, Ny = normalized_mag.shape
-    x_edges = np.linspace(freq[0], freq[-1], Nx + 1)
+    print(f"{Nx=}, {Ny=}, {normalized_mag.shape=}")
+
+    x_edges = np.linspace(freq[0] / 1e9, freq[-1] / 1e9, Nx + 1)
     y_edges = np.linspace(power[0], power[-1], Ny + 1)
     im = ax1.pcolormesh(
         x_edges,
@@ -498,7 +524,26 @@ def plot_power_dep_maps(
         shading="flat",
         edgecolors="face",
         lw=0.1,
+        norm=colors.TwoSlopeNorm(vcenter=0, vmin=diff.min(), vmax=diff.max()),
     )
     ax2.set_aspect("auto")
     cb2 = plt.colorbar(imdiff, location="top")
     cb2.ax.set_xlabel(r"$|S_{21}^\mathrm{mes}|-|S_{21}^\mathrm{mod}|$ (dB)")
+
+    ax3.plot(
+        R_squared,
+        np.linspace(power[0], power[-1], Ny),
+        lw=2,
+        marker="o",
+        markersize=6,
+        c="firebrick",
+    )
+    ax3.set_xlabel("$R^2$")
+    fig.supxlabel("Frequency (GHz)", va="baseline", size="medium", x=0.45, y=0.01)
+    ax1.set_ylabel("Power (dBm)")
+    ax1.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.5f"))
+    ax2.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.5f"))
+    if savepath:
+        plt.savefig(savepath)
+    else:
+        plt.show()

@@ -32,6 +32,7 @@ Plot results quickly using these plotting helper functions.
    plot_quality_factors
    plot_losses
    plot_magnetic_field
+   plot_power_dep_maps
 
 Utils
 -----
