@@ -31,3 +31,4 @@ docs/_build
 !unit_testing/**/*.txt
 !unit_testing/Fit results
 !docs/requirements.txt
+!docs/images/*.svg

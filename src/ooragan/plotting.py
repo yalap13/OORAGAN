@@ -236,7 +236,7 @@ def plot_quality_factors(
             label="{:.3f} {}".format(
                 np.mean(fr.f_r) / FREQ_UNIT_CONVERSION[freq_unit], freq_unit
             ),
-            color=gl.get_color(figure_style, i),
+            color=gl.get_color(figure_style, i % 7),
         )
         elements.append(qi)
         if show_Qc:
@@ -244,7 +244,7 @@ def plot_quality_factors(
                 fr.photon_nbr,
                 fr.Q_c,
                 line_style="--",
-                color=gl.get_color(figure_style, i),
+                color=gl.get_color(figure_style, i % 7),
             )
             elements.append(qc)
 
@@ -299,7 +299,7 @@ def plot_losses(
             label="{:.3f} {}".format(
                 np.mean(fr.f_r) / FREQ_UNIT_CONVERSION[freq_unit], freq_unit
             ),
-            color=gl.get_color(figure_style, i),
+            color=gl.get_color(figure_style, i % 7),
         )
         elements.append(di)
         if show_deltac:
@@ -307,7 +307,7 @@ def plot_losses(
                 fr.photon_nbr,
                 fr.coupling_loss,
                 line_style="--",
-                color=gl.get_color(figure_style, i),
+                color=gl.get_color(figure_style, i % 7),
             )
             elements.append(dc)
 
@@ -470,6 +470,15 @@ def plot_power_dep_maps(
     ----
     Compared to the other plotting functions, this uses matplotlib directly which is why it does
     not return the figure object.
+
+    Examples
+    --------
+
+    .. figure:: ../images/power_dep_maps.svg
+        :scale: 100%
+        :align: center
+        :class: margin-bottom
+
     """
     plt.rcParams.update(
         {
