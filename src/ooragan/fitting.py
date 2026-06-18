@@ -144,6 +144,7 @@ class FitResult(_FitResult):
         self,
         results: list[base.ResonatorFitter],
         photon_nbr: list[float],
+        source_file: File,
         magnet_field: Optional[list[float]] = None,
     ) -> None:
         if all(isinstance(fitter, base.ResonatorFitter) for fitter in results):
@@ -153,7 +154,15 @@ class FitResult(_FitResult):
                 "Must provide a list of only resonator.base.ResonatorFitter instances"
             )
         self._photon_number = photon_nbr
+        self._source_file = source_file
         self._magnet_field = magnet_field if magnet_field is not None else []
+
+    @property
+    def source_file(self) -> File:
+        """
+        The source File.
+        """
+        return self._source_file
 
     @property
     def photon_nbr(self) -> NDArray:
@@ -508,7 +517,11 @@ class Fitter:
                 self._fit_results[str(file)].append(temp, temp_photon, temp_magnet)
             else:
                 self._fit_results.update(
-                    {str(file): FitResult(temp, temp_photon, temp_magnet)}
+                    {
+                        str(file): FitResult(
+                            temp, temp_photon, self._files[str(file)], temp_magnet
+                        )
+                    }
                 )
         print("{} fit failures".format(fail_count))
 

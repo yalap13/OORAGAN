@@ -24,7 +24,13 @@ from .file_loading import Dataset, File
 from .fitting import Fitter, FitResult
 from .resonator_attribution import Resonator, ResonatorAttribution
 from .ppms_analysis import PPMSAnalysis
-from .plotting import plot_triptych, plot_quality_factors, plot_losses, plot_magnetic_field
+from .plotting import (
+    plot_triptych,
+    plot_quality_factors,
+    plot_losses,
+    plot_magnetic_field,
+    plot_power_dep_maps,
+)
 
 __all__ = [
     "str_to_time",
@@ -44,4 +50,5 @@ __all__ = [
     "plot_quality_factors",
     "plot_losses",
     "plot_magnetic_field",
+    "plot_power_dep_maps",
 ]

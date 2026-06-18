@@ -1,3 +1,4 @@
+from .file_loading import File
 from numpy.typing import NDArray
 from typing import Protocol, runtime_checkable
 
@@ -7,6 +8,9 @@ class _FitResult(Protocol):
     """
     Type for fit results. Only for typing purposes.
     """
+
+    @property
+    def source_file(self) -> File: ...
 
     @property
     def photon_nbr(self) -> NDArray: ...
