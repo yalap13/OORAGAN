@@ -15,6 +15,17 @@ from .typing import _FitResult
 
 FREQ_UNIT_CONVERSION = {"GHz": 1e9, "MHz": 1e6, "kHz": 1e3}
 
+deep_blue = "#000a1a"
+blue = "#0099ff"
+white = "#ffffff"
+orange = "#ff6600"
+deep_orange = "#662900"
+
+clist = list(map(colors.to_rgb, [deep_blue, white]))
+cmap = colors.LinearSegmentedColormap.from_list("cmap", clist)
+div_clist = list(map(colors.to_rgb, [deep_blue, blue, white, orange, deep_orange]))
+div_cmap = colors.LinearSegmentedColormap.from_list("div_cmap", div_clist)
+
 
 def plot_triptych(
     freq: ArrayLike,
@@ -499,7 +510,6 @@ def plot_power_dep_maps(
         constrained_layout=True,
         width_ratios=(1, 1, 0.35),
     )
-    print(f"{Nx=}, {Ny=}, {normalized_mag.shape=}")
 
     x_edges = np.linspace(freq[0] / 1e9, freq[-1] / 1e9, Nx + 1)
     y_edges = np.linspace(power[0], power[-1], Ny + 1)
@@ -507,7 +517,7 @@ def plot_power_dep_maps(
         x_edges,
         y_edges,
         normalized_mag,
-        cmap=cm.oslo,
+        cmap=cmap,
         shading="flat",
         edgecolors="face",
         lw=0.1,
@@ -520,7 +530,7 @@ def plot_power_dep_maps(
         x_edges,
         y_edges,
         diff,
-        cmap=cm.bam_r,
+        cmap=div_cmap,
         shading="flat",
         edgecolors="face",
         lw=0.1,
@@ -543,6 +553,9 @@ def plot_power_dep_maps(
     ax1.set_ylabel("Power (dBm)")
     ax1.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.5f"))
     ax2.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.5f"))
+
+    fig.suptitle(f"Fit resonator @ {np.mean(freq) / 1e9} GHz")
+
     if savepath:
         plt.savefig(savepath)
     else:
