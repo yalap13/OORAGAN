@@ -7,6 +7,7 @@ from datetime import datetime
 from numpy.typing import NDArray, ArrayLike
 from typing import Optional
 
+
 def choice(
     title: Optional[str] = None,
     msg: Optional[str] = None,
@@ -136,6 +137,7 @@ def level_phase(phase: ArrayLike, deg: bool = False) -> ArrayLike:
     """
     Levels the phase by substracting the slope.
     """
+    phase = np.asarray(phase)
     unwrapped_phase = np.unwrap(phase, 180) if deg else np.unwrap(phase)
     pointA = unwrapped_phase[0]
     pointB = unwrapped_phase[-1]

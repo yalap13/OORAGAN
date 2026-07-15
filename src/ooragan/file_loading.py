@@ -47,7 +47,7 @@ def _broadcast_along_axis(array: NDArray, shape: tuple, axis: int) -> NDArray:
 def _walk_hdf(
     file_or_group: Any,
     additional_params: list[str],
-) -> dict[str, NDArray]:
+) -> dict[str, dict]:
     """Walks an HDF file hierarchy and converts it into a dictionary."""
     out = {}
     for key in file_or_group.keys():
