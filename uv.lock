@@ -221,15 +221,6 @@ wheels = [
 ]
 
 [[package]]
-name = "colorcet"
-version = "3.2.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3f/af/b969f541242b84cbbacabdf20862e487689e352bf0f02f90df2795d29da5/colorcet-3.2.1.tar.gz", hash = "sha256:48d9a67e6e59dc5c0a965aa1b46fe5d59cdc95cc36a95949f29313f950ac59f7", size = 2202958, upload-time = "2026-04-28T16:25:37.43Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1b/24/e95471ae93c08d3606c9c7343cf65d490f154daa88b50581957a0aa780f4/colorcet-3.2.1-py3-none-any.whl", hash = "sha256:3f6fde13cef2169222dd5fe2a2bf847c02d644470fdf167ed566f6421df470f7", size = 262291, upload-time = "2026-04-28T16:25:35.365Z" },
-]
-
-[[package]]
 name = "comm"
 version = "0.2.3"
 source = { registry = "https://pypi.org/simple" }
@@ -359,15 +350,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ae/b6/03bb70946330e88ffec97aefd3ea75ba575cb2e762061e0e62a213befee8/docutils-0.22.4.tar.gz", hash = "sha256:4db53b1fde9abecbb74d91230d32ab626d94f6badfc575d6db9194a49df29968", size = 2291750, upload-time = "2025-12-18T19:00:26.443Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/02/10/5da547df7a391dcde17f59520a231527b8571e6f46fc8efb02ccb370ab12/docutils-0.22.4-py3-none-any.whl", hash = "sha256:d0013f540772d1420576855455d050a2180186c91c15779301ac2ccb3eeb68de", size = 633196, upload-time = "2025-12-18T19:00:18.077Z" },
-]
-
-[[package]]
-name = "easygui"
-version = "0.98.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/cc/ad/e35f7a30272d322be09dc98592d2f55d27cc933a7fde8baccbbeb2bd9409/easygui-0.98.3.tar.gz", hash = "sha256:d653ff79ee1f42f63b5a090f2f98ce02335d86ad8963b3ce2661805cafe99a04", size = 85583, upload-time = "2022-04-01T13:15:50.752Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8e/a7/b276ff776533b423710a285c8168b52551cb2ab0855443131fdc7fd8c16f/easygui-0.98.3-py2.py3-none-any.whl", hash = "sha256:33498710c68b5376b459cd3fc48d1d1f33822139eb3ed01defbc0528326da3ba", size = 92655, upload-time = "2022-04-01T13:15:49.568Z" },
 ]
 
 [[package]]
@@ -931,13 +913,11 @@ name = "ooragan"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "easygui" },
     { name = "graphinglib" },
     { name = "h5py" },
     { name = "ipython" },
     { name = "loess" },
     { name = "pandas" },
-    { name = "progress" },
     { name = "resonator" },
     { name = "seaborn" },
     { name = "tabulate" },
@@ -945,7 +925,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "colorcet" },
     { name = "ipykernel" },
     { name = "numpydoc" },
     { name = "pydata-sphinx-theme" },
@@ -959,13 +938,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "easygui", specifier = ">=0.98.3" },
     { name = "graphinglib", git = "https://github.com/graphinglib/graphinglib" },
     { name = "h5py", specifier = ">=3.13.0" },
     { name = "ipython", specifier = ">=8.32.0" },
     { name = "loess", specifier = ">=2.1.2" },
     { name = "pandas", specifier = ">=2.2.3" },
-    { name = "progress", specifier = ">=1.6" },
     { name = "resonator", git = "https://github.com/danielflanigan/resonator.git" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "tabulate", specifier = ">=0.9.0" },
@@ -973,7 +950,6 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "colorcet", specifier = ">=3.1.0" },
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "numpydoc", specifier = ">=1.8.0" },
     { name = "pydata-sphinx-theme", specifier = ">=0.16.1" },
@@ -1138,15 +1114,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7c/5a/cef917c0fae1b104b44fb505a0ff8273ab19969612cfd5ce52ed4a9d0f3a/plotbin-3.2.0.tar.gz", hash = "sha256:9173f4d22ee7f71346e158ba464c29c5c39d983803ce1206934b0d9f630377b3", size = 16266, upload-time = "2026-07-10T18:08:11.347Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0e/93/d8c6c68b24d5b691be3b39685d0b4c97457169052fff638083dec5a7ae0f/plotbin-3.2.0-py3-none-any.whl", hash = "sha256:d219855e532ef0cfe94af47bb4e969b86558ef9b6bcd0e60c41a40f1a99aeebb", size = 19445, upload-time = "2026-07-10T18:08:10.308Z" },
-]
-
-[[package]]
-name = "progress"
-version = "1.6.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ac/26/3b086f0c5d6c1c18c2430d6fac3a99d79553884ca6cdf759cf256dd43b7d/progress-1.6.1.tar.gz", hash = "sha256:c1ba719f862ce885232a759eab47971fe74dfc7bb76ab8a51ef5940bad35086c", size = 7164, upload-time = "2025-07-01T05:50:43.33Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/42/59/123aee44a039b212cfb8d90be1adf06496a99b313ee1683aadf90b3d9799/progress-1.6.1-py3-none-any.whl", hash = "sha256:5239f22f305c12fdc8ce6e0e47f70f21622a935e16eafc4535617112e7c7ea0b", size = 9761, upload-time = "2025-07-01T05:50:40.963Z" },
 ]
 
 [[package]]

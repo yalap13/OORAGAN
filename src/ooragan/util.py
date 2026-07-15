@@ -1,29 +1,9 @@
-import easygui as eg
 import numpy as np
 import pandas as pd
 import re
 
 from datetime import datetime
 from numpy.typing import NDArray, ArrayLike
-from typing import Optional
-
-
-def choice(
-    title: Optional[str] = None,
-    msg: Optional[str] = None,
-) -> bool | None:
-    """
-    Function that opens a choice box for the user to choose between yes or no.
-    Returns True if yes, False if no.
-    """
-    if title is None:
-        title = "Overwrite warning"
-    if msg is None:
-        msg = (
-            "Do you really want to save the figure? It could delete an existing figure."
-        )
-    user_choice = eg.ynbox(msg=msg, title=title)
-    return user_choice
 
 
 def str_to_time(time_string: str) -> float:

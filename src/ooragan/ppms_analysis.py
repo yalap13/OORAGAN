@@ -18,8 +18,7 @@ from numpy import genfromtxt, isnan, where, array, ndarray
 from tabulate import tabulate
 from loess.loess_1d import loess_1d
 from scipy.constants import pi, hbar, k
-from numpy.typing import ArrayLike
-from typing import Optional, Literal, Iterable
+from typing import Optional, Literal
 from graphinglib import Figure, Inherit, INHERIT
 from seaborn import color_palette
 

@@ -5,41 +5,14 @@ from typing import Optional, Literal, Any, overload, cast
 from numpy import float64, floating, ndarray, ndindex, arange, mean, array, tanh, dtype
 from resonator import background, base, shunt, reflection
 from numpy.typing import ArrayLike, NDArray
-from graphinglib import SmartFigure, FitFromFunction, Curve
+from graphinglib import FitFromFunction, Curve
 from warnings import warn
 from scipy.constants import hbar, k
+from matplotlib.pyplot import close
 
 from .file_loading import Dataset, File
-from .plotting import plot_triptych
-from .util import choice
+from .plotting import plot_power_dep_maps
 from .typing import _FitResult
-
-
-def _plot_fit(
-    result: base.ResonatorFitter,
-    complex_data: NDArray,
-    frequency: NDArray,
-    name: str = "",
-    savepath: str = "",
-    nodialog: bool = False,
-) -> SmartFigure:
-    """
-    Utilitary function to plot the fit result as a triptych (resonator.see.triptych).
-    """
-    fig = plot_triptych(
-        frequency,
-        complex_data,
-        resonator_fitter=result,
-        three_ticks=True,
-    )
-    filename = os.path.join(savepath, name + ".svg")
-    if os.path.exists(filename) and not nodialog:
-        overwrite = choice()
-        if overwrite:
-            fig.save(filename)
-    else:
-        fig.save(filename)
-    return fig
 
 
 def _test_fit(
@@ -393,7 +366,7 @@ class Fitter:
         write : bool, optional
             If ``True``, saves the fit results in a .txt file in the "fit_results"
             folder in the directory specified by ``savepath``. The default is ``False``.
-        threshold : float, optional
+        threshold : float or ndarray, optional
             A value greater than 0 which determine the error tolerance on fit values.
             The default is ``0.5`` (50%).
         trim_start : int, optional
@@ -501,19 +474,6 @@ class Fitter:
                         temp_photon.append(photon)
                         if "Magnet" in file_obj.list_params():
                             temp_magnet.append(file_obj.magnet.range[idx])
-                        if save_fig:
-                            _ = _plot_fit(
-                                fitter,
-                                complex_trim,
-                                frequency_trim,
-                                name=_file_naming_util(
-                                    self._files[str(file)], idx, mean(frequency)
-                                ),
-                                savepath=os.path.join(
-                                    self._savepath, "results", "fit_images"
-                                ),
-                                nodialog=not overwrite_warn,
-                            )
                         break
                 if not succeeded:
                     fail_count += 1
@@ -528,6 +488,17 @@ class Fitter:
                         )
                     }
                 )
+            if save_fig:
+                plot_power_dep_maps(
+                    self._fit_results[str(file)],
+                    savepath=os.path.join(
+                        self._savepath,
+                        "results",
+                        "fit_images",
+                        f"fit_{mean(frequency) / 1e9:.4f}GHz.svg",
+                    ),
+                )
+                close()
         print("{} fit failures".format(fail_count))
 
     def __getattribute__(self, name: str) -> FitResult | Any:
