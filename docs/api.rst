@@ -17,8 +17,6 @@ Objects
    Fitter
    FitResult
    PPMSAnalysis
-   Resonator
-   ResonatorAttribution
 
 Plotting functions
 ------------------
