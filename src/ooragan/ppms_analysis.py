@@ -14,13 +14,12 @@ import numpy as np
 import graphinglib as gl
 import os
 
-from numpy import genfromtxt, isnan, where, array
+from numpy import genfromtxt, isnan, where, array, ndarray
 from tabulate import tabulate
-from lmfit.models import LinearModel
 from loess.loess_1d import loess_1d
-from scipy.constants import pi, hbar, k, e, h
+from scipy.constants import pi, hbar, k
 from numpy.typing import ArrayLike
-from typing import Optional, Literal
+from typing import Optional, Literal, Iterable
 from graphinglib import Figure, Inherit, INHERIT
 from seaborn import color_palette
 
@@ -98,7 +97,7 @@ def pick_not_nan(data):
     """For data, provide a single row of data.
     It will return the list of columns where the data is not NaN
     """
-    sel = where(isnan(data) == False)[0]
+    sel = where(~isnan(data))[0]
     return sel
 
 
@@ -112,10 +111,6 @@ def read_one_ppms_dat(filename, sel_i=0, nbcols=None, encoding="latin1"):
     hdrs = []
     titles = []
     i = 0
-    kwargs = {}
-    if nbcols is not None:
-        kwargs["usecols"] = list(range(nbcols))
-        kwargs["invalid_raise"] = False
     with io.open(filename, "r", encoding=encoding) as f:
         while True:
             line = f.readline().rstrip()
@@ -130,9 +125,22 @@ def read_one_ppms_dat(filename, sel_i=0, nbcols=None, encoding="latin1"):
         hdrs.append(line)
         titles = quoted_split(line)
     titles = np.array(titles)
-    v = genfromtxt(
-        filename, skip_header=i, delimiter=",", encoding=encoding, **kwargs
-    ).T
+    if nbcols:
+        v = genfromtxt(
+            filename,
+            skip_header=i,
+            delimiter=",",
+            encoding=encoding,
+            usecols=list(range(nbcols)),
+            invalid_raise=False,
+        ).T
+    else:
+        v = genfromtxt(
+            filename,
+            skip_header=i,
+            delimiter=",",
+            encoding=encoding,
+        ).T
     if v.ndim == 1:
         # There was only one line:
         v = v[:, np.newaxis]
@@ -324,7 +332,7 @@ class QD_Data(object):
         elif year == "log":
             is_log = True
             offset = timestamp_offset_log()
-        elif year in ["auto", "auto_year"]:
+        elif year == "auto" or year == "auto_year":
             # do not use t.min, I have seen missing time datapoints
             #   cause by an empty line in the data logs (wrapped BRlog)
             if year == "auto" and np.nanmin(t) > 10 * 365 * 24 * 3600:
@@ -332,13 +340,14 @@ class QD_Data(object):
                 offset = timestamp_offset_log()
             else:  # auto_year
                 year = None
-                for h in self.headers:
-                    if h.startswith("FILEOPENTIME"):
-                        # looks like: FILEOPENTIME,1636641706.00,11/11/2021,9:41 AM
-                        # or for brlog:
-                        #  FILEOPENTIME, 3846454070.154991 11/19/2021, 3:27:44 AM
-                        year = int(h.split(",")[-2].split("/")[-1])
-                        break
+                if self.headers:
+                    for h in self.headers:
+                        if h.startswith("FILEOPENTIME"):
+                            # looks like: FILEOPENTIME,1636641706.00,11/11/2021,9:41 AM
+                            # or for brlog:
+                            #  FILEOPENTIME, 3846454070.154991 11/19/2021, 3:27:44 AM
+                            year = int(h.split(",")[-2].split("/")[-1])
+                            break
                 offset = timestamp_offset(year)
         elif 1970 < year:
             offset = timestamp_offset(year)
@@ -495,7 +504,7 @@ class PPMSAnalysis:
             ]
 
     def _separator(
-        self, temperature: ArrayLike, start: float, end: float, tolerance: float
+        self, temperature: ndarray, start: float, end: float, tolerance: float
     ) -> dict:
         """
         Finds the indices of the different temperature sweeps and stores them in a
@@ -503,7 +512,7 @@ class PPMSAnalysis:
 
         Parameters
         ----------
-        temperature : ArrayLike
+        temperature : ndarray
             Array of temperatures from PPMS file.
         start : int or float, optional
             Start of temperature sweep. The default is 18.

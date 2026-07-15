@@ -1,8 +1,8 @@
 import os
 import re
 import lmfit
-from typing import Optional, Literal, Any, overload
-from numpy import float64, floating, ndarray, ndindex, arange, mean, array, tanh
+from typing import Optional, Literal, Any, overload, cast
+from numpy import float64, floating, ndarray, ndindex, arange, mean, array, tanh, dtype
 from resonator import background, base, shunt, reflection
 from numpy.typing import ArrayLike, NDArray
 from graphinglib import SmartFigure, FitFromFunction, Curve
@@ -143,7 +143,7 @@ class FitResult(_FitResult):
     def __init__(
         self,
         results: list[base.ResonatorFitter],
-        photon_nbr: list[float],
+        photon_nbr: list[ArrayLike],
         source_file: File,
         magnet_field: Optional[list[float]] = None,
     ) -> None:
@@ -296,7 +296,7 @@ class FitResult(_FitResult):
     def append(
         self,
         results: list[base.ResonatorFitter],
-        photon_nbr: list[float],
+        photon_nbr: list[ArrayLike],
         magnet_field: Optional[list[float]] = None,
     ) -> None:
         """
@@ -370,7 +370,7 @@ class Fitter:
         files: list[int] = [],
         background: base.BackgroundModel = background.MagnitudePhaseDelay(),
         fit_method: Literal["shunt", "reflection", "kerr_shunt"] = "shunt",
-        threshold: float | NDArray[float64] = 0.5,
+        threshold: float | ndarray[tuple[int, ...], dtype[float64]] = 0.5,
         trim_start: int = 0,
         trim_jump: int = 10,
         save_fig: bool = False,
@@ -440,6 +440,7 @@ class Fitter:
 
         # Verify the shape of the threshold matches the shape of the files' data
         if isinstance(threshold, ndarray):
+            threshold = cast(ndarray[tuple[int, ...], dtype[float64]], threshold)
             if self._assert_all_files_same_shape():
                 dim = self._files["0"].shape[:-1]
                 if dim != threshold.shape:
@@ -449,8 +450,7 @@ class Fitter:
                     )
             else:
                 raise ValueError(
-                    "All files must be of the same shape to provide a threshold"
-                    + "array"
+                    "All files must be of the same shape to provide a threshold array"
                 )
         fail_count = 0
         for file in files:
@@ -462,6 +462,7 @@ class Fitter:
             temp_photon = []
             temp_magnet = []
             for idx in ndindex(file_obj.shape[:-1]):
+                idx = cast(tuple[int, ...], idx)
                 real = file_obj.s21_real.range[idx]
                 imag = file_obj.s21_imag.range[idx]
                 complex = real + 1j * imag

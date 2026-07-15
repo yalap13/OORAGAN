@@ -22,7 +22,6 @@ from .util import (
 from .parameters import Parameter, NullParameter
 from .file_loading import Dataset, File
 from .fitting import Fitter, FitResult
-from .resonator_attribution import Resonator, ResonatorAttribution
 from .ppms_analysis import PPMSAnalysis
 from .plotting import (
     plot_triptych,
@@ -43,8 +42,6 @@ __all__ = [
     "File",
     "Fitter",
     "FitResult",
-    "Resonator",
-    "ResonatorAttribution",
     "PPMSAnalysis",
     "plot_triptych",
     "plot_quality_factors",
