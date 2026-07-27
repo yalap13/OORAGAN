@@ -9,6 +9,7 @@ from graphinglib import FitFromFunction, Curve
 from warnings import warn
 from scipy.constants import hbar, k
 from matplotlib.pyplot import close
+from tqdm import tqdm
 
 from .file_loading import Dataset, File
 from .plotting import plot_power_dep_maps
@@ -426,6 +427,10 @@ class Fitter:
                     "All files must be of the same shape to provide a threshold array"
                 )
         fail_count = 0
+        total_fits = 0
+        for file in files:
+            total_fits += len(list(ndindex(self._files[str(file)].shape[:-1])))
+        progress = tqdm(total=total_fits)
         for file in files:
             if str(file) in self._fit_results.keys():
                 continue
@@ -477,6 +482,7 @@ class Fitter:
                         break
                 if not succeeded:
                     fail_count += 1
+                progress.update(n=1)
 
             if str(file) in self._fit_results.keys():
                 self._fit_results[str(file)].append(temp, temp_photon, temp_magnet)
