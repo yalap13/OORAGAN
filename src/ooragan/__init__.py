@@ -30,6 +30,11 @@ from .plotting import (
     plot_magnetic_field,
     plot_power_dep_maps,
 )
+from .models import (
+    SlowlyVaryingMagnitudePhaseDelay,
+    StandingWaveInterferenceReflection,
+    StandingWaveInterferenceReflectionFitter,
+)
 
 __all__ = [
     "str_to_time",
@@ -48,4 +53,7 @@ __all__ = [
     "plot_losses",
     "plot_magnetic_field",
     "plot_power_dep_maps",
+    "SlowlyVaryingMagnitudePhaseDelay",
+    "StandingWaveInterferenceReflection",
+    "StandingWaveInterferenceReflectionFitter",
 ]

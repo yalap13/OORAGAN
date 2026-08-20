@@ -42,3 +42,15 @@ Utils
    convert_complex_to_magphase
    convert_magphase_to_complex
    str_to_time
+
+Additional fitting models
+-------------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: class
+   :nosignatures:
+
+   StandingWaveInterferenceReflection
+   StandingWaveInterferenceReflectionFitter
+   SlowlyVaryingMagnitudePhaseDelay
