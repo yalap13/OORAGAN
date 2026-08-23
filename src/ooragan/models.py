@@ -25,7 +25,7 @@ class StandingWaveInterferenceReflection(base.ResonatorModel):
 
     .. math::
 
-        S_{11} (f) = e^{i\chi\cos\theta}-\frac{e^{2i\chi}\sin^2\theta e^{-2\pi i(f-f_c)\tau_{sw}}\Gamma_r (f)}{1-e^{i\chi}\cos\theta e^{-2\pi i(f-f_c)\tau_{sw}}\Gamma_r(f)}
+        S_{11} (f) = e^{i\chi}\cos\theta-\frac{e^{2i\chi}\sin^2\theta e^{-2\pi i(f-f_c)\tau_{sw}}\Gamma_r (f)}{1-e^{i\chi}\cos\theta e^{-2\pi i(f-f_c)\tau_{sw}}\Gamma_r(f)}
 
     with
 
@@ -168,7 +168,7 @@ class StandingWaveInterferenceReflectionFitter(base.ResonatorFitter):
 
     .. math::
 
-        S_{11} (f) = e^{i\chi\cos\theta}-\frac{e^{2i\chi}\sin^2\theta e^{-2\pi i(f-f_c)\tau_{sw}}\Gamma_r (f)}{1-e^{i\chi}\cos\theta e^{-2\pi i(f-f_c)\tau_{sw}}\Gamma_r(f)}
+        S_{11} (f) = e^{i\chi}\cos\theta-\frac{e^{2i\chi}\sin^2\theta e^{-2\pi i(f-f_c)\tau_{sw}}\Gamma_r (f)}{1-e^{i\chi}\cos\theta e^{-2\pi i(f-f_c)\tau_{sw}}\Gamma_r(f)}
 
     with
 

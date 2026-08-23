@@ -75,7 +75,11 @@ def _walk_hdf(
 def _read_hdf(path: str, additional_params: list[str]) -> dict:
     """Reads an HDF file from its path."""
     out = {"attributes": {}, "datasets": {}, "dimensions": []}
-    file = h5py.File(path, "r")
+    try:
+        file = h5py.File(path, "r")
+    except OSError as e:
+        print(path)
+        raise e
     for atr in file.attrs.keys():
         if atr in ["Ended", "Started"]:
             out["attributes"][atr] = str_to_time(file.attrs[atr])
