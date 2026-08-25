@@ -490,17 +490,18 @@ def plot_power_dep_maps(
     if additional_rcparams:
         plt.rcParams.update(additional_rcparams)
 
-    magnitude = fit_result.source_file.s21_mag.range
+    magnitude = fit_result.source_file.s21_mag.range.squeeze()
     normalized_mag = magnitude - magnitude[:, [0]]
-    Ny, Nx = normalized_mag.shape
-    power = (
+    shape = normalized_mag.shape
+    Ny, Nx = shape
+    power = np.squeeze(
         fit_result.source_file.vna_power.range
         - fit_result.source_file.variable_attenuator.range
         + fit_result.source_file.cryostat_attenuation
     )
-    freq = fit_result.source_file.vna_frequency.range
+    freq = fit_result.source_file.vna_frequency.range.squeeze()
     results = fit_result._results
-    fit_model = np.empty(magnitude.shape)
+    fit_model = np.empty(shape)
     for i, res in enumerate(results):
         fit_model[i, :] = 20 * np.log10(np.abs(res.evaluate_fit(freq)))
     normalized_fit_model = fit_model - fit_model[:, [0]]

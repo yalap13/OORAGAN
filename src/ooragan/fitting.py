@@ -9,7 +9,7 @@ from graphinglib import FitFromFunction, Curve
 from warnings import warn
 from scipy.constants import hbar, k
 from matplotlib.pyplot import close
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .file_loading import Dataset, File
 from .plotting import plot_power_dep_maps
