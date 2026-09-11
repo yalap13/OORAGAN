@@ -72,7 +72,7 @@ def _walk_hdf(
     return out
 
 
-def _read_hdf(path: str, additional_params: list[str]) -> dict:
+def _read_hdf(path: str | Path, additional_params: list[str]) -> dict:
     """Reads an HDF file from its path."""
     out = {"attributes": {}, "datasets": {}, "dimensions": []}
     try:
@@ -88,14 +88,18 @@ def _read_hdf(path: str, additional_params: list[str]) -> dict:
     out["datasets"] = _walk_hdf(file, additional_params)
     vna_group = file["VNA"]
     assert isinstance(vna_group, h5py.Group)
-    if "s21_real" in list(vna_group.keys()):
-        data = vna_group["s21_real"]
-        assert isinstance(data, h5py.Dataset)
-        dims = [dim.keys()[0] for dim in data.dims]
-    else:
-        data = vna_group["s21_mag"]
-        assert isinstance(data, h5py.Dataset)
-        dims = [dim.keys()[0] for dim in data.dims]
+    try:
+        if "s21_real" in list(vna_group.keys()):
+            data = vna_group["s21_real"]
+            assert isinstance(data, h5py.Dataset)
+            dims = [dim.keys()[0] for dim in data.dims]
+        else:
+            data = vna_group["s21_mag"]
+            assert isinstance(data, h5py.Dataset)
+            dims = [dim.keys()[0] for dim in data.dims]
+    except KeyError as e:
+        print(path)
+        raise e
     out["dimensions"] = dims
     file.close()
     return out
@@ -138,7 +142,7 @@ class File:
 
     def __init__(
         self,
-        path: str,
+        path: str | Path,
         cryostat_attenuation: float,
         additional_params: Optional[list[str]] = None,
     ) -> None:
@@ -310,7 +314,7 @@ class File:
 
 
 def _load_files_from_path(
-    path: str,
+    path: str | Path,
     cryostat_attenuation: float,
     additional_params: list[str],
 ) -> list[File]:
@@ -372,7 +376,7 @@ class Dataset:
 
     def __init__(
         self,
-        path: Optional[str] = None,
+        path: Optional[str | Path] = None,
         cryostat_attenuation: Optional[float] = None,
         files: Optional[list[File]] = None,
         additional_params: Optional[list[str]] = None,
